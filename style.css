@@ -335,6 +335,50 @@ canvas {
   color: var(--text-primary);
 }
 
+/* ── Collaboration popovers (Share / Join) ───────────────────── */
+.collab-popover {
+  position: fixed;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 1000;
+  padding: 12px;
+  min-width: 280px;
+  animation: ctx-pop 0.1s ease;
+}
+
+.collab-popover-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-label);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.collab-popover-row {
+  display: flex;
+  gap: 8px;
+}
+
+.collab-code-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+}
+
+.collab-code-input:focus {
+  border-color: var(--accent-dim);
+}
+
 .slider {
   -webkit-appearance: none;
   width: 70px;

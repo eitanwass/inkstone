@@ -61,4 +61,9 @@
     <circle cx="15" cy="15" r="2.2" stroke="currentColor" stroke-width="1.4" fill="none"/>
     <path d="M7 9l6-3M7 11l6 3" stroke="currentColor" stroke-width="1.4"/>
   </symbol>
+
+  <symbol id="icon-join" viewBox="0 0 20 20">
+    <path d="M8 12a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 8a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
 </svg>
