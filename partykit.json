@@ -1,0 +1,6 @@
+{
+  "$schema": "https://www.partykit.io/schema.json",
+  "name": "inkstone",
+  "main": "party/server.js",
+  "compatibilityDate": "2026-06-27"
+}
