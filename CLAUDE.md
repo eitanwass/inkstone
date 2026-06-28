@@ -33,11 +33,14 @@ forgetting that a token's center is the clicked cell's origin *plus*
 runs this suite on every push/PR to `main`.
 
 Live collaboration (see Collaboration below) needs a second process:
-`npm run party:dev` runs the PartyKit relay locally on port 1999 (the
-client defaults to `localhost:1999` via `VITE_PARTYKIT_HOST` — see
-`.env.example`). `npm run party:deploy` deploys it to PartyKit's
-infrastructure for real cross-machine use; `VITE_PARTYKIT_HOST` then needs
-to point at the deployed `*.partykit.dev` host before running `npm run build`.
+`npm run party:dev` runs the relay locally via `wrangler dev` on port 8787
+(the client defaults to `localhost:8787` via `VITE_PARTYKIT_HOST` — see
+`.env.example`). `npm run party:deploy` (`wrangler deploy`) pushes it to
+your own Cloudflare account for real cross-machine use — `CLOUDFLARE_ACCOUNT_ID`
+and `CLOUDFLARE_API_TOKEN` in `.env` authenticate this (wrangler loads `.env`
+automatically); no custom domain is needed, it deploys to a free
+`*.workers.dev` subdomain. `VITE_PARTYKIT_HOST` then needs to point at that
+deployed host before running `npm run build`.
 
 ## Module layout
 
@@ -68,7 +71,7 @@ chain, so there are no circular imports to reason about.
 | `view-actions.js` | Reset View, Clear All, Export PNG. |
 | `shortcuts.js` | Global keyboard shortcuts. |
 | `toast.js` | Toast notifications. |
-| `collab.js` | Live multi-user sync over a PartyKit room (see Collaboration below). |
+| `collab.js` | Live multi-user sync over a Durable Object room (see Collaboration below). |
 | `main.js` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 When extending an element type, the three functions that must change together
@@ -246,11 +249,18 @@ directly (so exports are independent of current viewport resolution).
 
 **Collaboration** (`collab.js`) is a thin sync layer on top of the existing
 whole-document snapshot model, not a separate state system. A session is a
-PartyKit room ([party/server.js](party/server.js), a pure relay with no
-merge logic) keyed by a random id carried in the URL (`?session=...`).
-Clicking "Share" (`btn-share`) generates that id with `crypto.randomUUID()`,
-puts it in the URL via `history.replaceState`, connects, and copies the
-link. Every local `pushHistory()`/`undo()`/`redo()` broadcasts the full
+Durable Object room ([party/server.js](party/server.js), a pure relay with
+no merge logic — one `InkstoneRoom` instance per session id, addressed by
+a Worker `fetch` handler that routes `/parties/<name>/<room>` requests to
+it) keyed by a random id carried in the URL (`?session=...`). Clicking
+"Share" (`btn-share`) lazily creates that id with `crypto.randomUUID()`
+the first time (a session is never created just by opening the app),
+puts it in the URL via `history.replaceState`, connects, and opens a
+popover showing the code with a "Copy Link" button. "Join" (`btn-join`)
+opens a sibling popover where a user pastes another session's code or
+full invite link (`extractSessionId()` accepts either) to connect to it
+without creating a new session. Every local `pushHistory()`/`undo()`/`redo()`
+broadcasts the full
 `state.elements` array to the room; an incoming snapshot from a peer is
 applied via `applyRemoteSnapshot()` (in `history.js`) the same way undo/redo
 already swaps in a full snapshot — except it deliberately does *not* go
@@ -274,8 +284,14 @@ the `open` event, gated by a `seed` flag passed to `connect()`); a client
 own (likely stale or empty) local board could race the server's reply and
 stomp the room's actual state before the real snapshot arrives.
 
-Running this locally needs the PartyKit dev relay alongside Vite —
-`npm run party:dev` (defaults to `localhost:1999`, matching `collab.js`'s
+Running this locally needs the `wrangler dev` relay alongside Vite —
+`npm run party:dev` (defaults to `localhost:8787`, matching `collab.js`'s
 fallback `VITE_PARTYKIT_HOST`). For real multi-machine use the relay needs
-deploying (`npm run party:deploy`) and `VITE_PARTYKIT_HOST` pointed at the
-deployed host before building the frontend; see `.env.example`.
+deploying (`npm run party:deploy`, i.e. `wrangler deploy`, authenticated via
+`CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` in `.env`) and
+`VITE_PARTYKIT_HOST` pointed at the resulting `*.workers.dev` host before
+building the frontend; see `.env.example`. (The client (`partysocket`)
+only ever speaks plain WebSocket, so this backend swap from a PartyKit-
+hosted room to a self-deployed Worker + Durable Object needed no change
+on the client side — see `party/server.js` for why the managed PartyKit
+platform was dropped.)

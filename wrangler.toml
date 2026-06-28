@@ -1,0 +1,11 @@
+name = "inkstone"
+main = "party/server.js"
+compatibility_date = "2025-07-18"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "InkstoneRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["InkstoneRoom"]

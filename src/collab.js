@@ -1,23 +1,30 @@
 // ── Realtime collaboration ───────────────────────────────────────
-// Each session is a PartyKit room keyed by a random id carried in the URL
-// (?session=...). Every local pushHistory()/undo()/redo() broadcasts the
-// full elements array to the room (registered via setHistoryListener — see
-// history.js for why that's a callback, not a direct import); an incoming
-// snapshot from a peer overwrites local state the same way. This is last-
-// write-wins: edits to different elements never collide, but two people
-// editing the *same* element at the same instant just have one of them win.
-// No per-action merge logic is worth the complexity for a hand-drawn map.
+// Each session is a Durable Object room (see party/server.js) keyed by a
+// random id carried in the URL (?session=...). Every local
+// pushHistory()/undo()/redo() broadcasts the full elements array to the
+// room (registered via setHistoryListener — see history.js for why that's
+// a callback, not a direct import); an incoming snapshot from a peer
+// overwrites local state the same way. This is last-write-wins: edits to
+// different elements never collide, but two people editing the *same*
+// element at the same instant just have one of them win. No per-action
+// merge logic is worth the complexity for a hand-drawn map.
 //
 // A room is only ever created when the user clicks "Share" — opening the
-// app cold never talks to PartyKit. "Join" lets a user key in another
+// app cold never talks to the relay. "Join" lets a user key in another
 // session's code (or paste its link) instead of clicking a shared link.
+//
+// The client side here only ever speaks plain WebSocket (via `partysocket`,
+// a reconnecting-WebSocket wrapper) — it has no dependency on PartyKit's
+// backend specifically, which is why party/server.js could be swapped from
+// a PartyKit-hosted room to a self-deployed Cloudflare Worker + Durable
+// Object without any change in this file beyond the default port below.
 
 import PartySocket from 'partysocket';
 import { state } from './state.js';
 import { applyRemoteSnapshot, setHistoryListener } from './history.js';
 import { showToast } from './toast.js';
 
-const PARTYKIT_HOST = import.meta.env.VITE_PARTYKIT_HOST || 'localhost:1999';
+const RELAY_HOST = import.meta.env.VITE_RELAY_HOST || 'localhost:8787';
 
 let socket = null;
 
@@ -38,7 +45,7 @@ function setStatus(connected) {
 // actual current state and could stomp it with a stale/empty local board.
 function connect(sessionId, { seed = false } = {}) {
   if (socket) socket.close();
-  socket = new PartySocket({ host: PARTYKIT_HOST, room: sessionId });
+  socket = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket.addEventListener('open', () => {
     setStatus(true);
     showToast('Connected — this map is now shared live');
