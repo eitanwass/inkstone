@@ -16,48 +16,79 @@ import { pushHistory } from './history.js';
 import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
 
-function onContextMenu(e) {
-  e.preventDefault();
+// Set by pointer.js right before it opens the menu itself for a touch
+// long-press, so the native 'contextmenu' event some browsers (Android
+// Chrome) still fire for that same gesture doesn't reopen/re-hit-test it.
+let suppressNextContextMenu = false;
+export function suppressNativeContextMenu() {
+  suppressNextContextMenu = true;
+}
+
+// Shared by the native 'contextmenu' event (mouse right-click) and the
+// touch long-press gesture in pointer.js, which has no native equivalent —
+// iOS Safari never fires 'contextmenu' for a canvas long-press.
+export function openContextMenuAt(clientX, clientY) {
   hideContextMenus();
 
   const rect = iCanvas.getBoundingClientRect();
-  const sx = e.clientX - rect.left;
-  const sy = e.clientY - rect.top;
+  const sx = clientX - rect.left;
+  const sy = clientY - rect.top;
   const world = screenToWorld(sx, sy);
 
   const idx = hitTest(world.x, world.y);
 
   if (idx !== null && state.elements[idx].type === 'token') {
-    showTokenContextMenu(e.clientX, e.clientY, idx);
+    showTokenContextMenu(clientX, clientY, idx);
   } else if (idx !== null) {
     if (!state.selected.includes(idx)) state.selected = [idx];
     drawMain();
-    showElementContextMenu(e.clientX, e.clientY);
+    showElementContextMenu(clientX, clientY);
   } else if (clipboard.length) {
-    showCanvasContextMenu(e.clientX, e.clientY, world);
+    showCanvasContextMenu(clientX, clientY, world);
   }
 }
 
-function showElementContextMenu(cx, cy) {
-  const menu = document.getElementById('context-menu');
+// Touch long-press already opens the menu itself (see pointer.js) since
+// iOS never fires 'contextmenu' for a canvas; on platforms that do fire it
+// for a touch long-press (e.g. Android Chrome), skip the native event so
+// the menu isn't opened/hit-tested twice for one gesture.
+function onContextMenu(e) {
+  e.preventDefault();
+  if (suppressNextContextMenu) {
+    suppressNextContextMenu = false;
+    return;
+  }
+  openContextMenuAt(e.clientX, e.clientY);
+}
+
+// Phone screens are small enough that a menu opened near an edge (very
+// plausible — a long-press works anywhere on the map, not just the
+// roomy center of a desktop window) can otherwise render partly
+// off-screen with no way to reach its lower items.
+function placeMenu(menu, cx, cy) {
   menu.style.left = cx + 'px';
   menu.style.top  = cy + 'px';
   menu.classList.remove('hidden');
+  const { offsetWidth: w, offsetHeight: h } = menu;
+  const maxLeft = window.innerWidth - w - 8;
+  const maxTop = window.innerHeight - h - 8;
+  if (cx > maxLeft) menu.style.left = Math.max(8, maxLeft) + 'px';
+  if (cy > maxTop) menu.style.top = Math.max(8, maxTop) + 'px';
+}
+
+function showElementContextMenu(cx, cy) {
+  placeMenu(document.getElementById('context-menu'), cx, cy);
 }
 
 function showTokenContextMenu(cx, cy, idx) {
   const menu = document.getElementById('token-context-menu');
-  menu.style.left = cx + 'px';
-  menu.style.top  = cy + 'px';
-  menu.classList.remove('hidden');
+  placeMenu(menu, cx, cy);
   menu._targetIdx = idx;
 }
 
 function showCanvasContextMenu(cx, cy, world) {
   const menu = document.getElementById('canvas-context-menu');
-  menu.style.left = cx + 'px';
-  menu.style.top  = cy + 'px';
-  menu.classList.remove('hidden');
+  placeMenu(menu, cx, cy);
   menu._pasteAt = world;
 }
 

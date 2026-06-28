@@ -21,11 +21,12 @@
 html, body {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   font-family: 'Segoe UI', system-ui, sans-serif;
   background: var(--canvas-bg);
 }
 
-button { font-family: inherit; }
+button { font-family: inherit; touch-action: manipulation; }
 
 button:focus-visible {
   outline: 2px solid var(--accent);
@@ -52,12 +53,23 @@ canvas {
 
 #grid-canvas    { z-index: 1; }
 #main-canvas    { z-index: 2; }
-#interaction-canvas { z-index: 3; cursor: crosshair; }
+#interaction-canvas {
+  z-index: 3;
+  cursor: crosshair;
+  /* Pinch-zoom/pan and long-press are handled ourselves in pointer.js —
+     touch-action: none stops the browser's own scroll/zoom/callout from
+     racing our gesture handling for the same touch. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 /* ── Ambient brand mark (top-left, faded; hover-interactive for the spin) */
 #brand-mark {
   position: fixed;
-  top: 22px; left: 24px;
+  top: calc(22px + env(safe-area-inset-top, 0px));
+  left: calc(24px + env(safe-area-inset-left, 0px));
   display: flex;
   align-items: center;
   gap: 10px;
@@ -89,7 +101,8 @@ canvas {
 /* ── Ambient HUD readout (bottom-right, faded, non-interactive) */
 #hud-meta {
   position: fixed;
-  bottom: 20px; right: 24px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: calc(24px + env(safe-area-inset-right, 0px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -151,22 +164,37 @@ canvas {
   flex-shrink: 0;
 }
 
+/* #tool-dock and #style-panel fall back to overflow-x: auto on narrow
+   screens (see the max-width media query) instead of wrapping — but flex
+   items shrink to fit by default, which on a tight viewport squeezed
+   .color-swatches down until it wrapped into a vertical stack instead of
+   actually scrolling. Keeping every direct child at its natural width is
+   what makes the scrollbar (rather than a squashed layout) the fallback. */
+.floating-panel > * { flex-shrink: 0; }
+
 /* ── Action cluster (top-right) ──────────────────────────────── */
 #action-cluster {
-  top: 20px; right: 24px;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  right: calc(24px + env(safe-area-inset-right, 0px));
 }
 
 /* ── Tool dock (bottom-center) ───────────────────────────────── */
 #tool-dock {
-  bottom: 24px; left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
   transform: translateX(-50%);
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
 }
 
 /* ── Style panel (bottom-center, above the dock, contextual) ── */
 #style-panel {
-  bottom: 92px; left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
   transform: translateX(-50%);
   gap: 12px;
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
 }
 
 .style-group {
@@ -579,3 +607,51 @@ body.tool-text      #interaction-canvas { cursor: text; }
 body.tool-token     #interaction-canvas { cursor: crosshair; }
 body.tool-rect      #interaction-canvas { cursor: crosshair; }
 body.tool-wall      #interaction-canvas { cursor: crosshair; }
+
+/* ── Touch targets: coarse pointers (phones/tablets) get bigger hit areas
+   than the mouse-tuned defaults above, since a fingertip is far less
+   precise than a cursor. ────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .icon-btn { width: 42px; height: 42px; }
+  .tool-btn { width: 48px; height: 48px; }
+  .swatch { width: 22px; height: 22px; }
+  .slider::-webkit-slider-thumb { width: 18px; height: 18px; }
+  .slider::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--accent); }
+  .ctx-item { padding: 10px 16px; }
+}
+
+/* ── Narrow viewports (phones): the bottom-center dock + style panel are
+   wide enough together to overflow a portrait phone screen, so they trade
+   some breathing room for fitting — overflow-x on both (set above) is the
+   fallback once even that isn't enough. The ambient brand mark and HUD
+   are decorative, so they're the first things dropped for space. ───── */
+@media (max-width: 640px) {
+  #brand-mark { display: none; }
+  #hud-meta { display: none; }
+
+  .floating-panel { padding: 5px; gap: 2px; }
+  #style-panel { gap: 8px; }
+  .style-group { gap: 6px; padding: 0 2px; }
+  .panel-divider { margin: 0 1px; }
+
+  #action-cluster { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); }
+  #tool-dock { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  #style-panel { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+  /* The action cluster's bigger touch targets (pointer: coarse, below) make
+     it wide enough to sit under the centered welcome/action toast — drop
+     the toast below that row instead of letting them overlap. */
+  #toast { top: calc(66px + env(safe-area-inset-top, 0px)); }
+
+  /* Popovers/modals size to their anchor button or to viewport center, so
+     their min-width (set for desktop) is what risks overflow here. */
+  .collab-popover, .color-popover { min-width: 0; max-width: calc(100vw - 32px); }
+  #modal, #token-name-modal, #text-label-modal { min-width: 0; width: calc(100vw - 48px); max-width: 360px; }
+}
+
+/* ── Short/landscape phones: less vertical room, so pull the floating
+   panels in from the edges a bit too. ───────────────────────────────── */
+@media (max-height: 420px) {
+  #action-cluster { top: calc(8px + env(safe-area-inset-top, 0px)); }
+  #tool-dock { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  #style-panel { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+}
