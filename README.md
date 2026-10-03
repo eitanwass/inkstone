@@ -63,7 +63,9 @@ npm run party:dev   # relay on localhost:8787, which the app uses by default
 ```
 
 To use sessions on a deployed site, deploy the relay to your own Cloudflare
-account and point the build at it:
+account and point the build at it. A production build without
+`VITE_RELAY_HOST` has sharing switched off (Share and Join say so) instead of
+trying to reach a relay on the visitor's own machine:
 
 ```sh
 npm run party:deploy               # needs CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN in .env

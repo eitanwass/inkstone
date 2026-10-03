@@ -5,6 +5,11 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.4.1 - 2026-10-03
+
+- Fixed: on the live site, Share no longer makes Chrome ask to access apps and
+  services on your device. Sharing now says clearly when it isn't set up.
+
 ## 0.4.0 - 2026-10-03
 
 - A red "Live" indicator appears in the top-right while your map is shared. It

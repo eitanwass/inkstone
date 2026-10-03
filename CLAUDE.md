@@ -372,6 +372,15 @@ happened. (Making the local map win instead would overwrite peers' work, and
 needs care around the relay's catch-up message.) Messages from the relay go
 through `parseElements` first (see `validate.ts`).
 
+The relay address comes from `resolveRelayHost` (`relay-host.ts`): the
+`VITE_RELAY_HOST` build variable, else `localhost:8787` **only on the dev
+server**. A production build with no `VITE_RELAY_HOST` has sharing off: Share,
+Join and `?session=` links show "Sharing isn't set up on this site" and never
+open a socket. (An earlier fallback to localhost in production made Chrome ask
+visitors to allow access to "apps and services on this device", and could
+never have worked.) Set `VITE_RELAY_HOST` in the Vercel project's environment
+variables, then redeploy; changing a variable alone doesn't trigger a build.
+
 Running this locally needs the `wrangler dev` relay alongside Vite —
 `npm run party:dev` (defaults to `localhost:8787`, matching `collab.ts`'s
 fallback `VITE_RELAY_HOST`). For real multi-machine use the relay needs

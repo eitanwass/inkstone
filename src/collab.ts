@@ -23,11 +23,26 @@ import PartySocket from 'partysocket';
 import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
 import { closePopover, positionPopover } from './popover';
+import { resolveRelayHost } from './relay-host';
 import { state } from './state';
 import { showToast } from './toast';
 import { parseElements } from './validate';
 
-const RELAY_HOST = import.meta.env.VITE_RELAY_HOST || 'localhost:8787';
+// Null in a production build that wasn't given a relay (see relay-host.ts):
+// sharing is then unavailable, rather than quietly aimed at localhost.
+const RELAY_HOST = resolveRelayHost({
+  VITE_RELAY_HOST: import.meta.env.VITE_RELAY_HOST,
+  DEV: import.meta.env.DEV,
+});
+
+const SHARING_UNAVAILABLE = "Sharing isn't set up on this site yet.";
+
+// Whether sharing can be used; if not, tells the user why.
+function requireSharing(): boolean {
+  if (RELAY_HOST) return true;
+  showToast(SHARING_UNAVAILABLE);
+  return false;
+}
 
 let socket: PartySocket | null = null;
 
@@ -74,6 +89,7 @@ const UNREACHABLE_AFTER_MS = 8000;
 // a stale/empty local board. The same goes for reconnecting: once a client
 // has been away, the room's copy is the truth.
 function connect(sessionId: string, { seed = false } = {}): void {
+  if (!RELAY_HOST) return;
   if (socket) socket.close();
   const current = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket = current;
@@ -135,6 +151,7 @@ function hideSharePopover() {
 }
 
 function openSharePopover() {
+  if (!requireSharing()) return;
   let sessionId = currentUrlSessionId();
   if (!sessionId) {
     sessionId = crypto.randomUUID();
@@ -172,6 +189,7 @@ function hideJoinPopover() {
 }
 
 function openJoinPopover() {
+  if (!requireSharing()) return;
   joinCodeInput.value = '';
   hideSharePopover();
   positionPopover(joinPopover, joinBtn);
@@ -222,4 +240,14 @@ document.addEventListener('click', (e) => {
 // Loading a shared link still auto-connects (no popover needed) — only a
 // manually-entered code goes through the Join popover.
 const initialSession = currentUrlSessionId();
-if (initialSession) connect(initialSession);
+if (initialSession) {
+  if (RELAY_HOST) {
+    connect(initialSession);
+  } else {
+    // Wait a tick past the load handler, whose welcome toast would otherwise
+    // replace this one.
+    window.addEventListener('load', () =>
+      setTimeout(() => showToast(`This link is for a shared map. ${SHARING_UNAVAILABLE}`), 0),
+    );
+  }
+}
