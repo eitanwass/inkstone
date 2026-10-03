@@ -126,3 +126,13 @@ describe('the files the function reads at runtime', () => {
     for (const file of RUNTIME_FILES) expect(existsSync(file), file).toBe(true);
   });
 });
+
+describe('the card text', () => {
+  it('is drawn with real letters, not the same box for every character', async () => {
+    // Satori draws a missing glyph as an identical box, so two names of the same length
+    // look alike if the fonts didn't load properly (this happened in production).
+    const { renderCard } = await import('../../api/_card');
+    const [narrow, wide] = await Promise.all([renderCard('iiiiiiii'), renderCard('WWWWWWWW')]);
+    expect(Buffer.from(narrow).equals(Buffer.from(wide))).toBe(false);
+  });
+});

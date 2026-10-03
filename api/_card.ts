@@ -5,6 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { inflateSync } from 'node:zlib';
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import satori from 'satori';
 
@@ -47,8 +48,47 @@ export const RUNTIME_FILES: readonly string[] = [
 
 const read = (file: string) => readFileSync(join(process.cwd(), file));
 
+// Satori's own WOFF reader returns empty glyphs for these fonts (every letter draws as a
+// box), so the WOFF is unpacked to plain TrueType/OpenType here: a WOFF is the same tables,
+// each one optionally zlib-compressed.
+export function woffToSfnt(woff: Buffer): Buffer {
+  const count = woff.readUInt16BE(12);
+  const head = Buffer.alloc(12 + count * 16);
+  woff.copy(head, 0, 4, 8); // font flavor
+  head.writeUInt16BE(count, 4);
+  const entrySelector = Math.floor(Math.log2(count));
+  const searchRange = 2 ** entrySelector * 16;
+  head.writeUInt16BE(searchRange, 6);
+  head.writeUInt16BE(entrySelector, 8);
+  head.writeUInt16BE(count * 16 - searchRange, 10);
+  const tables: Buffer[] = [];
+  let offset = head.length;
+  for (let i = 0; i < count; i++) {
+    const entry = 44 + i * 20; // WOFF table directory: tag, offset, compLength, origLength, checksum
+    const start = woff.readUInt32BE(entry + 4);
+    const compLength = woff.readUInt32BE(entry + 8);
+    const origLength = woff.readUInt32BE(entry + 12);
+    const stored = woff.subarray(start, start + compLength);
+    const data = compLength < origLength ? inflateSync(stored) : stored;
+    const out = 12 + i * 16;
+    woff.copy(head, out, entry, entry + 4);
+    head.writeUInt32BE(woff.readUInt32BE(entry + 16), out + 4);
+    head.writeUInt32BE(offset, out + 8);
+    head.writeUInt32BE(origLength, out + 12);
+    const padding = Buffer.alloc((4 - (data.length % 4)) % 4);
+    tables.push(data, padding);
+    offset += data.length + padding.length;
+  }
+  return Buffer.concat([head, ...tables]);
+}
+
 function loadFonts() {
-  return FONTS.map((f) => ({ name: f.name, weight: f.weight, style: 'normal' as const, data: read(f.file) }));
+  return FONTS.map((f) => ({
+    name: f.name,
+    weight: f.weight,
+    style: 'normal' as const,
+    data: woffToSfnt(read(f.file)),
+  }));
 }
 
 // The map's dot grid as a repeating tile (Satori doesn't draw a CSS radial-gradient grid).

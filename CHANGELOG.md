@@ -5,6 +5,10 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.6.3 - 2026-10-03
+
+- Fixed the text on shared-map preview cards, which showed as empty boxes.
+
 ## 0.6.2 - 2026-10-03
 
 - Fixed the preview card for shared map links: links to a shared map now open
