@@ -30,10 +30,12 @@ Each item is meant to ship on its own.
 
 ## Next: drawing speed and polish (S to M)
 
-- **Snap and precision options.** A grid-snap toggle (hold a key to bypass) and
-  half-cell snapping for walls. (M)
-- **Ruler / distance measuring** in cells and feet. The most-used table tool that
-  we don't have. (M)
+- ~~**Ruler / distance measuring** in cells and feet.~~
+  - ~~Ruler tool (M): drag to measure, 5 ft a square, straight-line distance.~~
+  - ~~A ruler on a shape's width and height shows while it is drawn or resized.~~
+- **Settings menu with a "Board" panel**: the unit (ft, m, squares) and how much one
+  square is worth, plus an optional "diagonals count as one square" rule (D&D 5e). The ruler and size rulers already read both
+  from `scale` in `src/measure.ts`, so this is the panel and saving it. (M)
 - **More stock shapes**: doors and windows on walls, circles, stairs, and a line
   with an arrow. Rooms and walls cover dungeons; doors are what people draw next. (M)
 - **Token polish**: colour per token, initials or an emoji/icon, a condition

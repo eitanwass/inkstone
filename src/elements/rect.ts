@@ -3,13 +3,49 @@
 // own center. See index.js for what each method is for.
 
 import { rectCornerLocal, rotatePoint } from '../geometry';
+import { formatDistance } from '../measure';
 import { GRID } from '../state';
-import type { Corner, ElementBehavior, Point, RectElement } from '../types';
+import type { Corner, Dimension, ElementBehavior, Point, RectElement } from '../types';
 
 const center = (el: RectElement): Point => ({ x: el.x + el.w / 2, y: el.y + el.h / 2 });
 
 export const rect: ElementBehavior<RectElement> = {
   center,
+
+  // The width, along the bottom edge, and the height, along the right edge, each its own
+  // ruler. A room still being dragged out can have a negative width or height, which is
+  // the same room, and a side that has no length yet gets no ruler.
+  dimensions(el) {
+    const w = Math.abs(el.w),
+      h = Math.abs(el.h);
+    const left = Math.min(el.x, el.x + el.w),
+      top = Math.min(el.y, el.y + el.h);
+    const pivot = center(el);
+    const rotation = el.rotation || 0;
+    const turn = (x: number, y: number): Point => rotatePoint({ x, y }, pivot, rotation);
+    // The directions "below" and "to the right" of the room, turned with it
+    const down = { x: -Math.sin(rotation), y: Math.cos(rotation) };
+    const right = { x: Math.cos(rotation), y: Math.sin(rotation) };
+
+    const found: Dimension[] = [];
+    if (w) {
+      found.push({
+        from: turn(left, top + h),
+        to: turn(left + w, top + h),
+        text: formatDistance(w / GRID),
+        offset: down,
+      });
+    }
+    if (h) {
+      found.push({
+        from: turn(left + w, top),
+        to: turn(left + w, top + h),
+        text: formatDistance(h / GRID),
+        offset: right,
+      });
+    }
+    return found;
+  },
 
   draw(ctx, el) {
     const { x, y, w, h } = el;

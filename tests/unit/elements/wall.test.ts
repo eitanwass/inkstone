@@ -132,3 +132,29 @@ describe('wall geometry', () => {
     expect(rotate.from).toEqual({ x: 20, y: 0 });
   });
 });
+
+describe('wall.dimensions', () => {
+  it('is one ruler along the wall, saying its straight-line length', () => {
+    const [d] = wall.dimensions?.(horizontal) ?? [];
+    expect(d).toMatchObject({ text: '15 ft', from: { x: 0, y: 20 }, to: { x: 120, y: 20 } });
+  });
+
+  it('is longer for a diagonal wall than a straight one with the same reach', () => {
+    const diagonal: WallElement = { ...horizontal, x1: 0, y1: 0, x2: 240, y2: 240 };
+    expect(wall.dimensions?.(diagonal)?.[0].text).toBe('42.4 ft');
+  });
+
+  it('puts the ruler beside the wall, on its lower or right-hand side', () => {
+    expect(wall.dimensions?.(horizontal)?.[0].offset).toEqual({ x: -0, y: 1 });
+    const up: WallElement = { ...horizontal, x1: 0, y1: 0, x2: 0, y2: -120 };
+    const offset = wall.dimensions?.(up)?.[0].offset;
+    expect(offset?.x).toBeCloseTo(1);
+    expect(offset?.y).toBeCloseTo(0);
+    const backwards: WallElement = { ...horizontal, x1: 120, y1: 20, x2: 0, y2: 20 };
+    expect(wall.dimensions?.(backwards)?.[0].offset.y).toBeCloseTo(1); // same side whichever end it was drawn from
+  });
+
+  it('has no ruler for a wall with no length yet', () => {
+    expect(wall.dimensions?.({ ...horizontal, x2: 0 })).toEqual([]);
+  });
+});

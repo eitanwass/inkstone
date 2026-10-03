@@ -76,7 +76,25 @@ export interface BoardSnapshot {
   name?: string;
 }
 
-export type Tool = 'select' | 'rect' | 'wall' | 'token' | 'text' | 'erase';
+export type Tool = 'select' | 'rect' | 'wall' | 'token' | 'text' | 'erase' | 'ruler';
+
+// One measured stretch of a shape, e.g. a room's width: from `from` to `to` (world coordinates),
+// its length as text, and which way to push the ruler line off the shape (a unit vector, so
+// it sits beside the edge instead of on it).
+export interface Dimension {
+  from: Point;
+  to: Point;
+  text: string;
+  offset: Point;
+}
+
+// The line the ruler tool has drawn, in world coordinates. Never saved or shared.
+export interface Ruler {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
 
 export type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
@@ -146,6 +164,7 @@ export interface ElementBehavior<T extends BoardElement, S extends Coords = Coor
   draw(ctx: CanvasRenderingContext2D, el: T, isSelected: boolean): void;
   bounds(el: T): Bounds;
   hit(el: T, wx: number, wy: number): boolean;
+  dimensions?(el: T): Dimension[];
   occupiesCell?(el: T, cellX: number, cellY: number): boolean;
   erase?(el: T, cellX: number, cellY: number): EraseTarget | null;
   snapshot?(el: T): S;

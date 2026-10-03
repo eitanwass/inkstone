@@ -237,6 +237,7 @@ chain, so there are no circular imports to reason about.
 | `history.ts` | Undo/redo stack + localStorage persistence. |
 | `selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `erase.ts` | Erase tool targeting + hover preview. |
+| `measure.ts` | Pure measuring rules: `scale` (unit and size of a square, 5 ft by default; the future settings panel's one input), `gridDistance` (true straight-line distance, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
 | `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
 | `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
@@ -325,8 +326,8 @@ pan/zoom is applied via `ctx.translate`/`ctx.scale` in `drawMain`, so element
 coordinates are always stored in world space.
 
 **Tools** are selected via `state.tool` and dispatched in the `onMouseDown`
-switch statement; each tool (`select`, `rect`, `wall`, `token`, `text`, `erase`)
-has its own placement/drag logic. Keyboard shortcuts and toolbar buttons both
+switch statement; each tool (`select`, `rect`, `wall`, `token`, `text`, `erase`,
+`ruler`) has its own placement/drag logic. Keyboard shortcuts and toolbar buttons both
 funnel through `setTool()`.
 
 **Selection** (`state.selected`) is always an array of indices, supporting
@@ -376,6 +377,21 @@ gold wouldn't read on parchment): a yellow spinner while saving (held for 600ms,
 a localStorage write is instant and would otherwise give no sign), a green check once
 saved, a red X at once if the browser refused. Its hover text says which. That is the
 persistent counterpart to the once-per-load "can't be saved" toast.
+
+**Measuring.** The ruler tool (`M`) drags a line between half-square points (a grid
+line or the middle of a square, where tokens sit) and reads its length from
+`measure.ts`. The line lives in `state.ruler`, not in `state.elements`, so it is never
+saved, shared or an undo step; it stays after release and goes on a click that goes
+nowhere, Escape, or another tool. Distances are straight-line (a 45° line is √2 times
+a straight one), in `gridDistance`. Shapes show a ruler along their measured sides while
+drawn or resized (not while moved or rotated): each element type's optional
+`dimensions(el)` lists the stretches (a room's width along its bottom edge and its
+height along its right edge, each its own ruler; a wall's length; a token's width) with
+a text and which way to push the ruler off the shape. `render.ts` draws each as a line
+beside the edge with end ticks and the length in the same pill as the rotation readout,
+moving it to the shape's other side when the bottom panels would cover it. The canvas
+can't be read by assistive tech or tests, so `render.ts` also writes the current
+measurement ("30 ft × 20 ft" for a room) into the hidden `#measure-readout`.
 
 **Resize/rotate handles** (rect, wall, and token, single-selection only) are
 computed by `getHandles()` and hit-tested by `hitHandle()`; dragging one sets

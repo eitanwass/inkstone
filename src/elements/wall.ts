@@ -3,6 +3,7 @@
 // rotates both endpoints around their shared midpoint.
 
 import { clipSegmentToCell, dist, rotatePoint } from '../geometry';
+import { formatDistance, gridDistance } from '../measure';
 import { GRID, state } from '../state';
 import type { ElementBehavior, Point, WallCoords, WallElement } from '../types';
 
@@ -12,6 +13,20 @@ const center = (el: WallElement): Point => ({ x: (el.x1 + el.x2) / 2, y: (el.y1 
 
 export const wall: ElementBehavior<WallElement, WallCoords> = {
   center,
+
+  // Its length, as a ruler running beside it (on the lower or right-hand side).
+  dimensions(el) {
+    const dx = el.x2 - el.x1,
+      dy = el.y2 - el.y1;
+    const length = gridDistance(dx, dy);
+    if (!length) return [];
+    const reach = Math.hypot(dx, dy);
+    let offset = { x: -dy / reach, y: dx / reach };
+    if (offset.y < 0 || (offset.y === 0 && offset.x < 0)) offset = { x: -offset.x, y: -offset.y };
+    return [
+      { from: { x: el.x1, y: el.y1 }, to: { x: el.x2, y: el.y2 }, text: formatDistance(length), offset },
+    ];
+  },
 
   draw(ctx, el) {
     ctx.beginPath();

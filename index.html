@@ -156,6 +156,9 @@
     <button class="tool-btn" id="tool-erase" aria-label="Erase" aria-pressed="false" aria-keyshortcuts="E" data-tool="erase" title="Erase (E)">
       <svg width="20" height="20"><use href="/icons.svg#icon-erase"></use></svg>
     </button>
+    <button class="tool-btn" id="tool-ruler" aria-label="Measure distance" aria-pressed="false" aria-keyshortcuts="M" data-tool="ruler" title="Measure (M)">
+      <svg width="20" height="20"><use href="/icons.svg#icon-ruler"></use></svg>
+    </button>
   </div>
 
   </nav>
@@ -185,6 +188,10 @@
     </div>
   </section>
 
+  <!-- The measurement on screen (ruler distance, or the size of the shape being drawn), as text:
+       the canvas draws it, this lets screen readers and the tests read it. -->
+  <p id="measure-readout" class="visually-hidden"></p>
+
   <!-- Zoom controls: bottom-left (see zoomIn / zoomOut / fitMapToScreen in src/controls.ts) -->
   <div id="zoom-controls" class="floating-panel" role="toolbar" aria-label="Zoom">
     <button class="icon-btn" id="btn-zoom-out" aria-label="Zoom out" aria-keyshortcuts="-" title="Zoom out (-)">
@@ -211,6 +218,7 @@
         <dt><kbd>T</kbd></dt><dd>Token</dd>
         <dt><kbd>L</kbd></dt><dd>Label</dd>
         <dt><kbd>E</kbd></dt><dd>Erase</dd>
+        <dt><kbd>M</kbd></dt><dd>Measure distance</dd>
       </dl>
     </div>
     <div class="shortcuts-group">
@@ -252,7 +260,7 @@
   <main id="canvas-container">
     <canvas id="grid-canvas"></canvas>
     <canvas id="main-canvas"></canvas>
-    <canvas id="interaction-canvas" role="application" aria-label="Map canvas. Press V, R, W, T, L or E to choose a tool."></canvas>
+    <canvas id="interaction-canvas" role="application" aria-label="Map canvas. Press V, R, W, T, L, E or M to choose a tool."></canvas>
   </main>
 
   <!-- Context menu -->

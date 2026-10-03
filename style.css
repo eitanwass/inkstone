@@ -558,6 +558,19 @@ canvas {
   gap: 8px;
 }
 
+/* Text for assistive tech that is not drawn. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Zoom controls (bottom-left, level with the tool dock) ──────── */
 #zoom-controls {
   left: calc(24px + env(safe-area-inset-left, 0px));
@@ -1063,6 +1076,7 @@ body.tool-text      #interaction-canvas { cursor: text; }
 body.tool-token     #interaction-canvas { cursor: crosshair; }
 body.tool-rect      #interaction-canvas { cursor: crosshair; }
 body.tool-wall      #interaction-canvas { cursor: crosshair; }
+body.tool-ruler     #interaction-canvas { cursor: crosshair; }
 
 /* ── Touch targets: coarse pointers (phones/tablets) get bigger hit areas
    than the mouse-tuned defaults above, since a fingertip is far less

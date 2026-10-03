@@ -11,7 +11,7 @@ import { openTextDialog, openTokenDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
 import { eraseAtCell, updateEraseHover } from './erase';
-import { cellOf, dist, snapToGrid } from './geometry';
+import { cellOf, dist, snapToGrid, snapToHalfGrid } from './geometry';
 import { applyHandleDrag, handleCursor, hasHandles, hitHandle, startHandleDrag } from './handles';
 import { pushHistory } from './history';
 import { drawMain, setView } from './render';
@@ -101,6 +101,13 @@ function onPointerMove(e: PointerEvent): void {
     return;
   }
 
+  if (state.isMeasuring && state.ruler) {
+    state.ruler.x2 = snapToHalfGrid(world.x);
+    state.ruler.y2 = snapToHalfGrid(world.y);
+    drawMain();
+    return;
+  }
+
   const preview = state.preview;
   const s = state.dragStart;
   if (state.isDragging && preview && s) {
@@ -187,6 +194,15 @@ function onPointerDown(e: PointerEvent): void {
       break;
     }
 
+    case 'ruler': {
+      // From the nearest half square: a grid line, or the middle of a square (where tokens sit).
+      const start = { x: snapToHalfGrid(world.x), y: snapToHalfGrid(world.y) };
+      state.ruler = { x1: start.x, y1: start.y, x2: start.x, y2: start.y };
+      state.isMeasuring = true;
+      drawMain();
+      break;
+    }
+
     case 'erase': {
       // Erase the single element whose center/body covers the clicked grid cell
       eraseAtCell(cellOf(world.x), cellOf(world.y));
@@ -254,6 +270,14 @@ function onPointerUp(e: PointerEvent): void {
 
   if (state.isErasing) {
     state.isErasing = false;
+    return;
+  }
+  if (state.isMeasuring) {
+    // The line stays up to be read; a plain click with no drag leaves nothing behind.
+    state.isMeasuring = false;
+    const r = state.ruler;
+    if (r && r.x1 === r.x2 && r.y1 === r.y2) state.ruler = null;
+    drawMain();
     return;
   }
   if (state.isPanning) {

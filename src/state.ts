@@ -3,7 +3,16 @@
 // this same reference and mutates its properties directly, then calls
 // drawMain()/drawGrid() to re-render. No framework, no virtual DOM.
 
-import type { BoardElement, ElementDrag, EraseHover, HandleDrag, Point, SelectBox, Tool } from './types';
+import type {
+  BoardElement,
+  ElementDrag,
+  EraseHover,
+  HandleDrag,
+  Point,
+  Ruler,
+  SelectBox,
+  Tool,
+} from './types';
 
 export const GRID = 40; // px per grid cell (logical)
 
@@ -54,6 +63,9 @@ interface AppState {
   handleDrag: HandleDrag | null;
   // Erase drag
   isErasing: boolean;
+  // The ruler tool: the line on screen, and whether the pointer is still dragging it out
+  ruler: Ruler | null;
+  isMeasuring: boolean;
   // Element under the eraser cursor, shown as a deletion preview
   eraseHover: EraseHover | null;
 }
@@ -83,6 +95,8 @@ export const state: AppState = {
   elementDrag: null,
   handleDrag: null,
   isErasing: false,
+  ruler: null,
+  isMeasuring: false,
   eraseHover: null,
 };
 
@@ -99,4 +113,6 @@ export function cancelInProgressDrag() {
   state.elementDrag = null;
   state.handleDrag = null;
   state.isErasing = false;
+  state.isMeasuring = false;
+  state.ruler = null;
 }

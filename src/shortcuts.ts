@@ -29,6 +29,7 @@ const TOOL_KEYS: Record<string, Tool> = {
   t: 'token',
   l: 'text',
   e: 'erase',
+  m: 'ruler', // measure
 };
 
 const ARROWS: Record<string, [number, number]> = {

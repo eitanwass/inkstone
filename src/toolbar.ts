@@ -18,6 +18,8 @@ export function setTool(name: Tool): void {
   state.isBoxSelecting = false;
   state.selectBox = null;
   state.eraseHover = null;
+  state.ruler = null;
+  state.isMeasuring = false;
   document.querySelectorAll<HTMLElement>('.tool-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.tool === name);
     b.setAttribute('aria-pressed', String(b.dataset.tool === name));

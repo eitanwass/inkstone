@@ -5,6 +5,7 @@
 
 import { mCtx } from '../canvas';
 import { dist } from '../geometry';
+import { formatDistance } from '../measure';
 import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID } from '../state';
 import type { ElementBehavior, TokenElement } from '../types';
 
@@ -21,6 +22,20 @@ function lighten(hex: string, amount: number): string {
 }
 
 export const token: ElementBehavior<TokenElement> = {
+  // Its width, in whole squares (Medium is one square, 5 ft; Large two, and so on), as a ruler
+  // above it: the name is written below.
+  dimensions(el) {
+    const r = radiusOf(el);
+    return [
+      {
+        from: { x: el.x - r, y: el.y - r },
+        to: { x: el.x + r, y: el.y - r },
+        text: formatDistance(Math.max(1, Math.round((r * 2) / GRID))),
+        offset: { x: 0, y: -1 },
+      },
+    ];
+  },
+
   draw(ctx, el) {
     const r = radiusOf(el);
     const color = el.color || DEFAULT_COLOR;

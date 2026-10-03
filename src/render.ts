@@ -5,13 +5,14 @@
 
 import { mainCanvas, mCtx } from './canvas';
 import { byId } from './dom';
-import { drawElementShape, getElementBounds } from './elements';
+import { drawElementShape, getElementBounds, getElementDimensions } from './elements';
 import { normalizeRect } from './geometry';
 import { drawGrid } from './grid';
 import { getHandles, HANDLE_RADIUS_PX, hasHandles } from './handles';
 import { updateFirstVisitHint } from './hint';
+import { formatDistance, gridDistance } from './measure';
 import { state } from './state';
-import type { BoardElement, Bounds } from './types';
+import type { BoardElement, Bounds, Dimension, Ruler } from './types';
 
 // Sets the viewport transform and redraws. The one place that keeps the zoom
 // readout in sync with state.zoom.
@@ -47,6 +48,13 @@ export function drawMain() {
   if (state.isBoxSelecting && state.selectBox) drawSelectBox();
   if (state.tool === 'erase' && state.eraseHover) drawEraseHover();
   if (state.preview) drawElement(mCtx, state.preview, false, true);
+
+  // How big the shape being drawn or resized is. (A rotate drag has its own readout.)
+  const sized =
+    state.preview ?? (state.handleDrag && state.handleDrag.kind !== 'rotate' ? handleTarget : null);
+  const sizeText = sized ? drawDimensions(sized) : null;
+  const rulerText = state.ruler ? drawRuler(state.ruler) : null;
+  byId('measure-readout').textContent = rulerText ?? sizeText ?? '';
 
   mCtx.restore();
   updateFirstVisitHint();
@@ -197,20 +205,106 @@ function drawHandles(el: BoardElement): void {
 function drawRotationReadout(el: BoardElement, deg: number): void {
   const handle = getHandles(el).find((h) => h.kind === 'rotate');
   if (!handle) return;
-  const label = `${((deg % 360) + 360) % 360}°`;
+  drawReadout(`${((deg % 360) + 360) % 360}°`, handle.x, handle.y - 18 / state.zoom);
+}
 
+// A small dark pill with gold text, centred on (x, y) and the same size on screen at any zoom.
+function drawReadout(text: string, x: number, y: number): void {
   mCtx.save();
   mCtx.font = `${12 / state.zoom}px monospace`;
   mCtx.textAlign = 'center';
   mCtx.textBaseline = 'middle';
   const padX = 6 / state.zoom,
     padY = 4 / state.zoom;
-  const w = mCtx.measureText(label).width;
-  const lx = handle.x,
-    ly = handle.y - 18 / state.zoom;
+  const w = mCtx.measureText(text).width;
   mCtx.fillStyle = 'rgba(26,23,20,0.92)';
-  mCtx.fillRect(lx - w / 2 - padX, ly - 7 / state.zoom - padY, w + padX * 2, 14 / state.zoom + padY * 2);
+  mCtx.fillRect(x - w / 2 - padX, y - 7 / state.zoom - padY, w + padX * 2, 14 / state.zoom + padY * 2);
   mCtx.fillStyle = '#c9a84c';
-  mCtx.fillText(label, lx, ly);
+  mCtx.fillText(text, x, y);
   mCtx.restore();
+}
+
+// How much of the screen's bottom the tool dock and style panel can cover.
+const BOTTOM_PANELS_PX = 150;
+// How far a dimension's ruler sits off the shape, and how long its end ticks are (screen pixels).
+const DIMENSION_GAP_PX = 16;
+const DIMENSION_TICK_PX = 5;
+
+// A ruler along each stretch of the shape worth measuring (a room's width and its height, a
+// wall's length). Returns what they say ("30 ft × 20 ft") for the hidden readout, or null.
+function drawDimensions(el: BoardElement): string | null {
+  const dimensions = getElementDimensions(el);
+  if (!dimensions.length) return null;
+  for (const d of dimensions) drawDimension(d);
+  return dimensions.map((d) => d.text).join(' × ');
+}
+
+// One ruler: a line beside the edge with a tick at each end, the length in a pill on it, and
+// pale halo under the dark line like the ruler tool's. It goes to the shape's other side
+// when its usual one is under the tool dock and style panel.
+function drawDimension(d: Dimension): void {
+  const gap = DIMENSION_GAP_PX / state.zoom;
+  const tick = DIMENSION_TICK_PX / state.zoom;
+  let { x: ox, y: oy } = d.offset;
+  const lineY = (d.from.y + d.to.y) / 2 + oy * gap;
+  if (oy > 0 && lineY * state.zoom + state.panY > mainCanvas.height - BOTTOM_PANELS_PX) {
+    ox = -ox;
+    oy = -oy;
+  }
+  const a = { x: d.from.x + ox * gap, y: d.from.y + oy * gap };
+  const b = { x: d.to.x + ox * gap, y: d.to.y + oy * gap };
+
+  mCtx.save();
+  mCtx.lineCap = 'round';
+  for (const [color, width] of [
+    ['rgba(233,228,218,0.9)', 4.5],
+    ['#4a3f2e', 1.8],
+  ] as const) {
+    mCtx.strokeStyle = color;
+    mCtx.lineWidth = width / state.zoom;
+    mCtx.beginPath();
+    mCtx.moveTo(a.x, a.y);
+    mCtx.lineTo(b.x, b.y);
+    for (const p of [a, b]) {
+      mCtx.moveTo(p.x - ox * tick, p.y - oy * tick);
+      mCtx.lineTo(p.x + ox * tick, p.y + oy * tick);
+    }
+    mCtx.stroke();
+  }
+  mCtx.restore();
+  drawReadout(d.text, (a.x + b.x) / 2, (a.y + b.y) / 2);
+}
+
+// The ruler's line, end dots and length. A pale halo under the dark line keeps it readable on
+// both the parchment and the dark rooms.
+function drawRuler(r: Ruler): string {
+  mCtx.save();
+  mCtx.lineCap = 'round';
+  for (const [color, width] of [
+    ['rgba(233,228,218,0.9)', 6],
+    ['#4a3f2e', 2.5],
+  ] as const) {
+    mCtx.strokeStyle = color;
+    mCtx.lineWidth = width / state.zoom;
+    mCtx.beginPath();
+    mCtx.moveTo(r.x1, r.y1);
+    mCtx.lineTo(r.x2, r.y2);
+    mCtx.stroke();
+  }
+  for (const [x, y] of [
+    [r.x1, r.y1],
+    [r.x2, r.y2],
+  ]) {
+    mCtx.beginPath();
+    mCtx.arc(x, y, 4.5 / state.zoom, 0, Math.PI * 2);
+    mCtx.fillStyle = '#4a3f2e';
+    mCtx.fill();
+    mCtx.lineWidth = 1.5 / state.zoom;
+    mCtx.strokeStyle = 'rgba(233,228,218,0.9)';
+    mCtx.stroke();
+  }
+  mCtx.restore();
+  const text = formatDistance(gridDistance(r.x2 - r.x1, r.y2 - r.y1));
+  drawReadout(text, (r.x1 + r.x2) / 2, (r.y1 + r.y2) / 2 - 20 / state.zoom);
+  return text;
 }

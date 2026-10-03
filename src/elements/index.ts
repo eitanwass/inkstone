@@ -17,6 +17,9 @@
 //                               piecemeal (wall). Returns null for a miss, or
 //                               {pieces, highlight}: the elements left behind
 //                               and the part being removed.
+//   dimensions(el)              the stretches to measure while the shape is
+//                               drawn or resized: a room's width and height,
+//                               a wall's length, a token's width. Default none.
 //   center(el)                  default {x, y}.
 //   snapshot(el)                coordinates to restore from while dragging.
 //                               Default {x, y}.
@@ -33,6 +36,7 @@ import type {
   BoardElement,
   Bounds,
   Coords,
+  Dimension,
   ElementBehavior,
   ElementType,
   EraseTarget,
@@ -63,6 +67,11 @@ export function drawElementShape(ctx: CanvasRenderingContext2D, el: BoardElement
 
 export function getElementBounds(el: BoardElement): Bounds | null {
   return typeOf(el)?.bounds(el) ?? null;
+}
+
+// The stretches of el to show a ruler along while it is drawn or resized (none for a type without).
+export function getElementDimensions(el: BoardElement): Dimension[] {
+  return typeOf(el)?.dimensions?.(el) ?? [];
 }
 
 export function hitElement(el: BoardElement, wx: number, wy: number): boolean {

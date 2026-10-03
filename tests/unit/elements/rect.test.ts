@@ -78,3 +78,46 @@ describe('rect handles', () => {
     expect(el.rotation).toBe(1.25);
   });
 });
+
+describe('rect.dimensions', () => {
+  const [width, height] = rect.dimensions?.({ ...room, w: 240, h: 160 }) ?? [];
+
+  it('measures the width along the bottom edge and the height along the right edge', () => {
+    expect(width).toMatchObject({ text: '30 ft', from: { x: 0, y: 160 }, to: { x: 240, y: 160 } });
+    expect(height).toMatchObject({ text: '20 ft', from: { x: 240, y: 0 }, to: { x: 240, y: 160 } });
+  });
+
+  it('pushes each ruler off the room: the width below it, the height to its right', () => {
+    expect(width.offset).toEqual({ x: -0, y: 1 });
+    expect(height.offset).toEqual({ x: 1, y: 0 });
+  });
+
+  it('is two rulers, not one "width × height" label', () => {
+    expect(rect.dimensions?.(room)).toHaveLength(2);
+  });
+
+  it('gives a square its two rulers too', () => {
+    expect(rect.dimensions?.({ ...room, w: 80, h: 80 })?.map((d) => d.text)).toEqual(['10 ft', '10 ft']);
+  });
+
+  it('is the same room dragged up and to the left, where width and height are negative', () => {
+    const dragged = rect.dimensions?.({ ...room, x: 240, y: 160, w: -240, h: -160 }) ?? [];
+    expect(dragged.map((d) => d.text)).toEqual(['30 ft', '20 ft']);
+    expect(dragged[0].from).toEqual({ x: 0, y: 160 });
+    expect(dragged[1].to).toEqual({ x: 240, y: 160 });
+  });
+
+  it('has no ruler for a side with no length yet, as at the start of a drag', () => {
+    expect(rect.dimensions?.({ ...room, w: 0, h: 0 })).toEqual([]);
+    expect(rect.dimensions?.({ ...room, w: 80, h: 0 })?.map((d) => d.text)).toEqual(['10 ft']);
+  });
+
+  it('turns with a rotated room: a quarter turn puts the width on a vertical edge', () => {
+    const [w, h] = rect.dimensions?.(turned) ?? [];
+    expect(w.text).toBe('10 ft'); // still the room's width, 80 wide
+    expect(w.from.x).toBeCloseTo(w.to.x); // now running up and down
+    expect(w.offset.x).toBeCloseTo(-1); // "below" has turned to the left
+    expect(w.offset.y).toBeCloseTo(0);
+    expect(h.text).toBe('5 ft');
+  });
+});

@@ -20,6 +20,12 @@ export function snapToGrid(v: number): number {
   return Math.round(v / GRID) * GRID;
 }
 
+// Rounds to the nearest half square: lands on a grid line or on the middle of a square,
+// which is where tokens sit, so the ruler can run from one token's centre to another's.
+export function snapToHalfGrid(v: number): number {
+  return Math.round(v / (GRID / 2)) * (GRID / 2);
+}
+
 // Which grid cell's origin (top-left) a point falls inside — a floor, not a
 // round. Used for erase targeting: "nearest grid line" (snapToGrid) and
 // "the cell containing this point" disagree for any point past the
