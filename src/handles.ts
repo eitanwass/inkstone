@@ -3,11 +3,19 @@
 // are is up to each element type). Drawing the handles themselves lives in
 // render.ts (it needs canvas access this module doesn't otherwise care about).
 
-import { state, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state';
-import { rotatePoint, rotateVector, rectCornerLocal, dist, snapToGrid } from './geometry';
-import { elementCenter, snapshotCoords, elementHandles, rotateElement } from './elements';
+import { elementCenter, elementHandles, rotateElement, snapshotCoords } from './elements';
+import { dist, rectCornerLocal, rotatePoint, rotateVector, snapToGrid } from './geometry';
+import { GRID, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE, state } from './state';
 import type {
-  BoardElement, Corner, Handle, HandleDrag, HandleKind, Point, RectElement, TokenElement, WallElement,
+  BoardElement,
+  Corner,
+  Handle,
+  HandleDrag,
+  HandleKind,
+  Point,
+  RectElement,
+  TokenElement,
+  WallElement,
 } from './types';
 
 export const HANDLE_RADIUS_PX = 5;
@@ -36,7 +44,10 @@ export function handleCursor(handle: Handle): string {
   if (handle.kind === 'endpoint') return 'pointer';
   if (handle.kind === 'resize-radius') return 'nwse-resize';
   const cornerCursors: Record<string, string> = {
-    nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize',
+    nw: 'nwse-resize',
+    se: 'nwse-resize',
+    ne: 'nesw-resize',
+    sw: 'nesw-resize',
   };
   return cornerCursors[handle.id] || 'move';
 }
@@ -64,7 +75,7 @@ type HandleDragBehaviors = {
 
 const HANDLE_DRAGS: HandleDragBehaviors = {
   rotate: {
-    start(el, handle, world) {
+    start(el, _handle, world) {
       const center = elementCenter(el);
       return {
         center,
@@ -77,7 +88,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       const { center, startAngle, startRotation, startCoords } = drag;
       let rotation = startRotation + (Math.atan2(world.y - center.y, world.x - center.x) - startAngle);
       if (!precise) rotation = Math.round(rotation / ROTATE_SNAP_STEP) * ROTATE_SNAP_STEP;
-      drag.displayDeg = Math.round(rotation * 180 / Math.PI);
+      drag.displayDeg = Math.round((rotation * 180) / Math.PI);
       rotateElement(el, rotation, rotation - startRotation, center, startCoords);
     },
   },
@@ -87,7 +98,9 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
   resize: {
     start(el, handle) {
       const rotation = el.rotation || 0;
-      const anchorId = ({ nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' } as Record<Corner, Corner>)[handle.id as Corner];
+      const anchorId = ({ nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' } as Record<Corner, Corner>)[
+        handle.id as Corner
+      ];
       const anchorWorld = rotatePoint(rectCornerLocal(el, anchorId), elementCenter(el), rotation);
       return { corner: handle.id as Corner, rotation, anchorWorld };
     },
@@ -100,33 +113,45 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       const dy = snapToGrid(local.y - anchorWorld.y);
 
       const signs = {
-        se: { sx: 1, sy: 1 }, nw: { sx: -1, sy: -1 },
-        ne: { sx: 1, sy: -1 }, sw: { sx: -1, sy: 1 },
+        se: { sx: 1, sy: 1 },
+        nw: { sx: -1, sy: -1 },
+        ne: { sx: 1, sy: -1 },
+        sw: { sx: -1, sy: 1 },
       }[corner];
       const w = Math.max(MIN_SHAPE_SIZE, dx * signs.sx);
       const h = Math.max(MIN_SHAPE_SIZE, dy * signs.sy);
 
       // Offset of the (fixed) anchor corner from the box center, in local axes.
       const anchorOffset = {
-        se: { ax: -w / 2, ay: -h / 2 }, nw: { ax: w / 2, ay: h / 2 },
-        ne: { ax: -w / 2, ay: h / 2 }, sw: { ax: w / 2, ay: -h / 2 },
+        se: { ax: -w / 2, ay: -h / 2 },
+        nw: { ax: w / 2, ay: h / 2 },
+        ne: { ax: -w / 2, ay: h / 2 },
+        sw: { ax: w / 2, ay: -h / 2 },
       }[corner];
       const rotated = rotateVector(anchorOffset.ax, anchorOffset.ay, rotation);
       const cx = anchorWorld.x - rotated.x;
       const cy = anchorWorld.y - rotated.y;
 
-      el.w = w; el.h = h;
-      el.x = cx - w / 2; el.y = cy - h / 2;
+      el.w = w;
+      el.h = h;
+      el.x = cx - w / 2;
+      el.y = cy - h / 2;
     },
   },
 
   // Wall endpoint: just follows the mouse, snapped to the grid.
   endpoint: {
-    start: (el, handle) => ({ which: handle.id }),
+    start: (_el, handle) => ({ which: handle.id }),
     apply(el, drag, world) {
-      const sx = snapToGrid(world.x), sy = snapToGrid(world.y);
-      if (drag.which === 'p1') { el.x1 = sx; el.y1 = sy; }
-      else { el.x2 = sx; el.y2 = sy; }
+      const sx = snapToGrid(world.x),
+        sy = snapToGrid(world.y);
+      if (drag.which === 'p1') {
+        el.x1 = sx;
+        el.y1 = sy;
+      } else {
+        el.x2 = sx;
+        el.y2 = sy;
+      }
     },
   },
 
@@ -135,7 +160,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
   // current radius, so an un-moved drag naturally re-resolves to ~the same size.
   'resize-radius': {
     start: () => ({}),
-    apply(el, drag, world) {
+    apply(el, _drag, world) {
       const step = GRID / 2;
       const rawR = dist(el.x, el.y, world.x, world.y);
       el.radius = Math.max(step, Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step));

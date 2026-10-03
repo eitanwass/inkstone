@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeRoom, placeToken } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import { boardElements, placeRoom, placeToken, resetBoard, worldToScreenFn } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);
@@ -12,9 +12,11 @@ test('Ctrl+C / Ctrl+V copies the selection and pastes it at the cursor', async (
 
   await page.click('#tool-select');
   let p = toScreen(100, 100);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(600, 350);
-  await page.mouse.move(p.x, p.y, { steps: 5 }); await page.mouse.up();
+  await page.mouse.move(p.x, p.y, { steps: 5 });
+  await page.mouse.up();
 
   await page.keyboard.press('Control+c');
   await expect(page.locator('#toast')).toContainText('Copied');

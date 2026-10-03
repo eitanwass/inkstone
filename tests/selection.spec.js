@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeRoom, placeToken } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import { boardElements, placeRoom, placeToken, resetBoard, worldToScreenFn } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);
@@ -13,17 +13,21 @@ test('rubber-band select + drag moves the whole selection together', async ({ pa
   await page.click('#tool-select');
   // Rubber-band over both elements.
   let p = toScreen(100, 100);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(600, 350);
-  await page.mouse.move(p.x, p.y, { steps: 5 }); await page.mouse.up();
+  await page.mouse.move(p.x, p.y, { steps: 5 });
+  await page.mouse.up();
 
   const before = await boardElements(page);
 
   // Drag from a point on the room (now selected) to move the group.
   p = toScreen(240, 220);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(240 + 80, 220 + 40);
-  await page.mouse.move(p.x, p.y, { steps: 5 }); await page.mouse.up();
+  await page.mouse.move(p.x, p.y, { steps: 5 });
+  await page.mouse.up();
 
   const after = await boardElements(page);
   expect(after[0].x - before[0].x).toBeCloseTo(80, 0);
@@ -37,7 +41,8 @@ test('Escape clears the selection box mid-drag without placing anything', async 
   const toScreen = await worldToScreenFn(page);
   await page.click('#tool-select');
   let p = toScreen(100, 100);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(300, 300);
   await page.mouse.move(p.x, p.y, { steps: 5 });
   await page.keyboard.press('Escape');

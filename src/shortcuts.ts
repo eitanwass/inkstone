@@ -3,16 +3,16 @@
 // Modifier+letter never falls through to the bare tool-shortcut map (so
 // Ctrl+V doesn't also switch to the Select tool via the 'v' shortcut).
 
-import { state } from './state';
-import { setTool } from './toolbar';
-import { resetView } from './view-actions';
-import { deleteSelected, copySelection, pasteClipboard, duplicateSelected } from './selection';
-import { undo, redo } from './history';
+import { redo, undo } from './history';
 import { showConfirm } from './modal';
 import { lastMoveW } from './pointer';
+import { copySelection, deleteSelected, duplicateSelected, pasteClipboard } from './selection';
+import { state } from './state';
+import { setTool } from './toolbar';
 import type { Tool } from './types';
+import { resetView } from './view-actions';
 
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLElement && e.target.tagName === 'INPUT') return;
   const map: Record<string, Tool> = { v: 'select', r: 'rect', w: 'wall', t: 'token', l: 'text', e: 'erase' };
   if (!e.ctrlKey && !e.metaKey && map[e.key.toLowerCase()]) setTool(map[e.key.toLowerCase()]);
@@ -23,12 +23,13 @@ document.addEventListener('keydown', e => {
   }
 
   if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected.length) {
-    const hasToken = state.selected.some(i => state.elements[i]?.type === 'token');
+    const hasToken = state.selected.some((i) => state.elements[i]?.type === 'token');
     if (hasToken) {
       const only = state.elements[state.selected[0]];
-      const msg = state.selected.length > 1
-        ? `Remove ${state.selected.length} selected elements?`
-        : `Remove token "${only.type === 'token' ? only.name : ''}"?`;
+      const msg =
+        state.selected.length > 1
+          ? `Remove ${state.selected.length} selected elements?`
+          : `Remove token "${only.type === 'token' ? only.name : ''}"?`;
       showConfirm(msg, deleteSelected);
     } else {
       deleteSelected();

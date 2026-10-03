@@ -4,13 +4,13 @@
 // is removed. updateEraseHover mirrors eraseAtCell's own targeting logic so
 // the hover preview always matches what a click would actually remove.
 
-import { state } from './state';
-import { cellOf } from './geometry';
 import { eraseTarget } from './elements';
-import type { EraseHover, Point } from './types';
-import { adjustSelectionForSplice } from './selection';
-import { drawMain } from './render';
+import { cellOf } from './geometry';
 import { pushHistory } from './history';
+import { drawMain } from './render';
+import { adjustSelectionForSplice } from './selection';
+import { state } from './state';
+import type { EraseHover, Point } from './types';
 
 export function eraseAtCell(cellX: number, cellY: number): void {
   for (let i = state.elements.length - 1; i >= 0; i--) {
@@ -36,16 +36,15 @@ function eraseHoverEquals(a: EraseHover | null, b: EraseHover | null): boolean {
 }
 
 export function updateEraseHover(world: Point): void {
-  const cellX = cellOf(world.x), cellY = cellOf(world.y);
+  const cellX = cellOf(world.x),
+    cellY = cellOf(world.y);
   let hit: EraseHover | null = null;
   for (let i = state.elements.length - 1; i >= 0; i--) {
     const target = eraseTarget(state.elements[i], cellX, cellY);
     if (!target) continue;
     // Wrap just the part that would actually be removed (a wall segment),
     // not the whole element or grid cell.
-    hit = target.highlight
-      ? { kind: 'segment', ...target.highlight }
-      : { kind: 'element', idx: i };
+    hit = target.highlight ? { kind: 'segment', ...target.highlight } : { kind: 'element', idx: i };
     break;
   }
   if (!eraseHoverEquals(hit, state.eraseHover)) {

@@ -3,9 +3,9 @@
 // variable sizing have no radius, so every reader falls back to
 // DEFAULT_TOKEN_RADIUS.
 
-import { GRID, DEFAULT_TOKEN_RADIUS, FONT_FAMILY } from '../state';
 import { mCtx } from '../canvas';
 import { dist } from '../geometry';
+import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID } from '../state';
 import type { ElementBehavior, TokenElement } from '../types';
 
 const DEFAULT_COLOR = '#e05c5c';
@@ -82,8 +82,7 @@ export const token: ElementBehavior<TokenElement> = {
   // a large token erases from any cell it visually covers.
   occupiesCell(el, cellX, cellY) {
     const r = radiusOf(el);
-    return cellX < el.x + r && cellX + GRID > el.x - r &&
-           cellY < el.y + r && cellY + GRID > el.y - r;
+    return cellX < el.x + r && cellX + GRID > el.x - r && cellY < el.y + r && cellY + GRID > el.y - r;
   },
 
   // One handle at the SE edge (45°, matching the rect SE corner). Radius is

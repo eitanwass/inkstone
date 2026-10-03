@@ -96,9 +96,7 @@ export interface SegmentHighlight {
   strokeWidth?: number;
 }
 
-export type EraseHover =
-  | ({ kind: 'segment' } & SegmentHighlight)
-  | { kind: 'element'; idx: number };
+export type EraseHover = ({ kind: 'segment' } & SegmentHighlight) | { kind: 'element'; idx: number };
 
 // ── In-progress interactions (live on `state`) ──────────────────
 

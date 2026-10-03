@@ -5,11 +5,11 @@
 // second button). Each on* function returns true when it consumed the event,
 // so pointer.js knows to skip its normal tool handling.
 
-import { state, cancelInProgressDrag } from './state';
 import { iCanvas } from './canvas';
-import { dist, clampZoom } from './geometry';
-import { drawMain, setView } from './render';
 import { openContextMenuAt, suppressNativeContextMenu } from './context-menu';
+import { clampZoom, dist } from './geometry';
+import { drawMain, setView } from './render';
+import { cancelInProgressDrag, state } from './state';
 import type { Point } from './types';
 
 // pointerId -> last known {x, y} in screen (client) coordinates.

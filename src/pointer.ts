@@ -4,20 +4,27 @@
 // (pinch-zoom/pan, long-press menu) live in touch.js and get first look at
 // each event.
 
-import { byId } from './dom';
-import { state, cancelInProgressDrag, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state';
-import { iCanvas, clientToCanvas, clientToWorld } from './canvas';
-import { snapToGrid, cellOf, dist, clampZoom } from './geometry';
-import type { Point } from './types';
-import { hitTest } from './elements';
-import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles';
-import { drawMain, setView } from './render';
-import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection';
-import { updateEraseHover, eraseAtCell } from './erase';
-import { pushHistory } from './history';
-import { openTokenDialog, openTextDialog } from './dialogs';
+import { clientToCanvas, clientToWorld, iCanvas } from './canvas';
 import { hideContextMenus } from './context-menu';
-import { armLongPress, onTouchDown, onTouchMove, onTouchUp, onTouchCancel } from './touch';
+import { openTextDialog, openTokenDialog } from './dialogs';
+import { byId } from './dom';
+import { hitTest } from './elements';
+import { eraseAtCell, updateEraseHover } from './erase';
+import { cellOf, clampZoom, dist, snapToGrid } from './geometry';
+import { applyHandleDrag, handleCursor, hasHandles, hitHandle, startHandleDrag } from './handles';
+import { pushHistory } from './history';
+import { drawMain, setView } from './render';
+import { applyElementDrag, finishBoxSelect, startElementDrag } from './selection';
+import {
+  cancelInProgressDrag,
+  DEFAULT_TOKEN_RADIUS,
+  GRID,
+  MAX_TOKEN_RADIUS,
+  MIN_SHAPE_SIZE,
+  state,
+} from './state';
+import { armLongPress, onTouchCancel, onTouchDown, onTouchMove, onTouchUp } from './touch';
+import type { Point } from './types';
 
 export let lastMoveW = { x: 0, y: 0 };
 
@@ -28,7 +35,10 @@ export function updateHoverCursor(world: Point): void {
     const el = state.elements[state.selected[0]];
     if (hasHandles(el)) {
       const h = hitHandle(el, world);
-      if (h) { iCanvas.style.cursor = handleCursor(h); return; }
+      if (h) {
+        iCanvas.style.cursor = handleCursor(h);
+        return;
+      }
     }
   }
 
@@ -36,11 +46,11 @@ export function updateHoverCursor(world: Point): void {
     const idx = hitTest(world.x, world.y);
     if (state.tool === 'token') {
       const prevHover = state.hoveredToken;
-      state.hoveredToken = (idx !== null && state.elements[idx]?.type === 'token') ? idx : null;
+      state.hoveredToken = idx !== null && state.elements[idx]?.type === 'token' ? idx : null;
       if (state.hoveredToken !== prevHover) drawMain();
     }
     if (state.tool === 'select') {
-      iCanvas.style.cursor = (idx !== null) ? 'move' : 'default';
+      iCanvas.style.cursor = idx !== null ? 'move' : 'default';
     }
   }
 
@@ -110,9 +120,10 @@ function onPointerMove(e: PointerEvent): void {
       // the size up to the first snap step.
       const step = GRID / 2;
       const rawR = dist(s.x, s.y, world.x, world.y);
-      preview.radius = rawR <= DEFAULT_TOKEN_RADIUS
-        ? DEFAULT_TOKEN_RADIUS
-        : Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step);
+      preview.radius =
+        rawR <= DEFAULT_TOKEN_RADIUS
+          ? DEFAULT_TOKEN_RADIUS
+          : Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step);
     }
     drawMain();
     return;
@@ -159,9 +170,7 @@ function onPointerDown(e: PointerEvent): void {
       if (idx !== null) {
         if (e.shiftKey) {
           const pos = state.selected.indexOf(idx);
-          state.selected = pos === -1
-            ? [...state.selected, idx]
-            : state.selected.filter(s => s !== idx);
+          state.selected = pos === -1 ? [...state.selected, idx] : state.selected.filter((s) => s !== idx);
         } else {
           if (!state.selected.includes(idx)) state.selected = [idx];
           startElementDrag(world);
@@ -189,7 +198,10 @@ function onPointerDown(e: PointerEvent): void {
       state.dragStart = { x: snappedX, y: snappedY };
       state.preview = {
         type: 'rect',
-        x: snappedX, y: snappedY, w: 0, h: 0,
+        x: snappedX,
+        y: snappedY,
+        w: 0,
+        h: 0,
         strokeColor: state.strokeColor,
         fillColor: state.fillColor,
         strokeWidth: state.strokeWidth,
@@ -202,8 +214,10 @@ function onPointerDown(e: PointerEvent): void {
       state.dragStart = { x: snappedX, y: snappedY };
       state.preview = {
         type: 'wall',
-        x1: snappedX, y1: snappedY,
-        x2: snappedX, y2: snappedY,
+        x1: snappedX,
+        y1: snappedY,
+        x2: snappedX,
+        y2: snappedY,
         strokeColor: state.strokeColor,
         strokeWidth: state.strokeWidth,
       };
@@ -219,7 +233,8 @@ function onPointerDown(e: PointerEvent): void {
       state.dragStart = center;
       state.preview = {
         type: 'token',
-        x: center.x, y: center.y,
+        x: center.x,
+        y: center.y,
         radius: DEFAULT_TOKEN_RADIUS,
         color: '#e05c5c',
       };
@@ -290,8 +305,14 @@ function onPointerUp(e: PointerEvent): void {
     valid = Math.abs(p.w) > MIN_SHAPE_SIZE && Math.abs(p.h) > MIN_SHAPE_SIZE;
     if (valid) {
       // Normalize
-      if (p.w < 0) { p.x += p.w; p.w = -p.w; }
-      if (p.h < 0) { p.y += p.h; p.h = -p.h; }
+      if (p.w < 0) {
+        p.x += p.w;
+        p.w = -p.w;
+      }
+      if (p.h < 0) {
+        p.y += p.h;
+        p.h = -p.h;
+      }
     }
   } else if (p.type === 'wall') {
     valid = dist(p.x1, p.y1, p.x2, p.y2) > MIN_SHAPE_SIZE;
@@ -332,15 +353,21 @@ iCanvas.addEventListener('pointercancel', onPointerCancel);
 iCanvas.addEventListener('wheel', onWheel, { passive: false });
 
 // ── Alt-to-pan cursor hint ─────────────────────────────────────
-window.addEventListener('keydown', e => {
+window.addEventListener('keydown', (e) => {
   if (e.key !== 'Alt' || state.altHeld) return;
   state.altHeld = true;
-  if (!state.isPanning && !state.elementDrag && !state.handleDrag && !state.isDragging && !state.isBoxSelecting) {
+  if (
+    !state.isPanning &&
+    !state.elementDrag &&
+    !state.handleDrag &&
+    !state.isDragging &&
+    !state.isBoxSelecting
+  ) {
     iCanvas.style.cursor = 'grab';
   }
 });
 
-window.addEventListener('keyup', e => {
+window.addEventListener('keyup', (e) => {
   if (e.key !== 'Alt') return;
   state.altHeld = false;
   if (!state.isPanning) {
@@ -353,7 +380,7 @@ window.addEventListener('blur', () => {
   state.altHeld = false;
 });
 
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     hideContextMenus();
     cancelInProgressDrag();

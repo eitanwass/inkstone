@@ -1,8 +1,8 @@
 // ── Text label ────────────────────────────────────────────────
 
-import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../state';
 import { mCtx } from '../canvas';
 import { cellOf } from '../geometry';
+import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../state';
 import type { ElementBehavior, LabelElement } from '../types';
 
 const DEFAULT_COLOR = '#e8dcc8';
@@ -34,7 +34,8 @@ export const label: ElementBehavior<LabelElement> = {
   },
 
   hit(el, wx, wy) {
-    const w = textWidth(el), h = fontSizeOf(el);
+    const w = textWidth(el),
+      h = fontSizeOf(el);
     return wx >= el.x - 2 && wx <= el.x + w + 2 && wy >= el.y - 2 && wy <= el.y + h + 2;
   },
 

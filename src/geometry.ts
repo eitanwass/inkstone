@@ -2,8 +2,8 @@
 // Coordinate conversion, rotation, and segment/cell clipping. No DOM, no
 // element-type knowledge — just numbers in, numbers out.
 
-import { state, GRID, MIN_ZOOM, MAX_ZOOM } from './state';
-import type { Point, Bounds, Corner, RectElement } from './types';
+import { GRID, MAX_ZOOM, MIN_ZOOM, state } from './state';
+import type { Bounds, Corner, Point, RectElement } from './types';
 
 export function screenToWorld(sx: number, sy: number): Point {
   return {
@@ -36,8 +36,10 @@ export function dist(ax: number, ay: number, bx: number, by: number): number {
 // rotated rects and for resize/rotate handle math (de-rotating mouse coords
 // into an element's local frame).
 export function rotatePoint(p: Point, pivot: Point, angle: number): Point {
-  const cos = Math.cos(angle), sin = Math.sin(angle);
-  const dx = p.x - pivot.x, dy = p.y - pivot.y;
+  const cos = Math.cos(angle),
+    sin = Math.sin(angle);
+  const dx = p.x - pivot.x,
+    dy = p.y - pivot.y;
   return {
     x: pivot.x + dx * cos - dy * sin,
     y: pivot.y + dx * sin + dy * cos,
@@ -45,16 +47,17 @@ export function rotatePoint(p: Point, pivot: Point, angle: number): Point {
 }
 
 export function rotateVector(x: number, y: number, angle: number): Point {
-  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const cos = Math.cos(angle),
+    sin = Math.sin(angle);
   return { x: x * cos - y * sin, y: x * sin + y * cos };
 }
 
 export function rectCornerLocal(el: RectElement, id: Corner): Point {
   const map = {
-    nw: { x: el.x,         y: el.y },
-    ne: { x: el.x + el.w,  y: el.y },
-    sw: { x: el.x,         y: el.y + el.h },
-    se: { x: el.x + el.w,  y: el.y + el.h },
+    nw: { x: el.x, y: el.y },
+    ne: { x: el.x + el.w, y: el.y },
+    sw: { x: el.x, y: el.y + el.h },
+    se: { x: el.x + el.w, y: el.y + el.h },
   };
   return map[id];
 }
@@ -65,8 +68,14 @@ export function normalizeRect(x1: number, y1: number, x2: number, y2: number): B
 }
 
 export function rectsOverlap(
-  ax: number, ay: number, aw: number, ah: number,
-  bx: number, by: number, bw: number, bh: number,
+  ax: number,
+  ay: number,
+  aw: number,
+  ah: number,
+  bx: number,
+  by: number,
+  bw: number,
+  bh: number,
 ): boolean {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
@@ -74,17 +83,35 @@ export function rectsOverlap(
 // Liang-Barsky segment-vs-cell clip. Returns the [tMin, tMax] parametric
 // interval (0..1 along the segment) that lies inside the cell, or null.
 export function clipSegmentToCell(
-  x1: number, y1: number, x2: number, y2: number,
-  cx: number, cy: number, size: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cx: number,
+  cy: number,
+  size: number,
 ): { tMin: number; tMax: number } | null {
-  const minX = cx, maxX = cx + size, minY = cy, maxY = cy + size;
-  const dx = x2 - x1, dy = y2 - y1;
-  let tMin = 0, tMax = 1;
-  for (const [p, q] of [[-dx, x1 - minX], [dx, maxX - x1], [-dy, y1 - minY], [dy, maxY - y1]]) {
-    if (p === 0) { if (q < 0) return null; continue; }
+  const minX = cx,
+    maxX = cx + size,
+    minY = cy,
+    maxY = cy + size;
+  const dx = x2 - x1,
+    dy = y2 - y1;
+  let tMin = 0,
+    tMax = 1;
+  for (const [p, q] of [
+    [-dx, x1 - minX],
+    [dx, maxX - x1],
+    [-dy, y1 - minY],
+    [dy, maxY - y1],
+  ]) {
+    if (p === 0) {
+      if (q < 0) return null;
+      continue;
+    }
     const t = q / p;
     if (p < 0) tMin = Math.max(tMin, t);
-    else       tMax = Math.min(tMax, t);
+    else tMax = Math.min(tMax, t);
     if (tMin > tMax) return null;
   }
   return { tMin, tMax };

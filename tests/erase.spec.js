@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeRoom, placeWall, placeToken } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import { boardElements, placeRoom, placeToken, placeWall, resetBoard, worldToScreenFn } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);
@@ -15,7 +15,7 @@ test('erasing the middle of a wall splits it into two pieces', async ({ page }) 
 
   const els = await boardElements(page);
   expect(els).toHaveLength(2);
-  expect(els.every(e => e.type === 'wall')).toBe(true);
+  expect(els.every((e) => e.type === 'wall')).toBe(true);
 });
 
 test('erasing a rect removes the whole element', async ({ page }) => {

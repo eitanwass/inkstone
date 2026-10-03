@@ -30,15 +30,25 @@
 
 import { state } from '../state';
 import type {
-  BoardElement, Bounds, Coords, ElementBehavior, ElementType, EraseTarget, Handle, Point,
+  BoardElement,
+  Bounds,
+  Coords,
+  ElementBehavior,
+  ElementType,
+  EraseTarget,
+  Handle,
+  Point,
 } from '../types';
-import { rect } from './rect';
-import { wall } from './wall';
-import { token } from './token';
 import { label } from './label';
+import { rect } from './rect';
+import { token } from './token';
+import { wall } from './wall';
 
 const ELEMENT_TYPES: { [K in ElementType]: ElementBehavior<Extract<BoardElement, { type: K }>> } = {
-  rect, wall, token, label,
+  rect,
+  wall,
+  token,
+  label,
 };
 
 // Undefined for a type this version doesn't know (e.g. from a newer save), so
@@ -101,7 +111,11 @@ export function elementHandles(el: BoardElement, rotateOffset: number): Handle[]
 }
 
 export function rotateElement(
-  el: BoardElement, rotation: number, delta: number, pivot: Point, startCoords: Coords,
+  el: BoardElement,
+  rotation: number,
+  delta: number,
+  pivot: Point,
+  startCoords: Coords,
 ): void {
   typeOf(el)?.rotate?.(el, rotation, delta, pivot, startCoords);
 }

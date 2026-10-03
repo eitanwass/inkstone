@@ -12,7 +12,10 @@ export function showConfirm(msg: string, onConfirm: () => void): void {
 
 byId('modal-confirm').addEventListener('click', () => {
   byId('modal-overlay').classList.add('hidden');
-  if (confirmCallback) { confirmCallback(); confirmCallback = null; }
+  if (confirmCallback) {
+    confirmCallback();
+    confirmCallback = null;
+  }
 });
 
 byId('modal-cancel').addEventListener('click', () => {

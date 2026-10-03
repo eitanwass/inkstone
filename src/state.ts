@@ -3,9 +3,7 @@
 // this same reference and mutates its properties directly, then calls
 // drawMain()/drawGrid() to re-render. No framework, no virtual DOM.
 
-import type {
-  BoardElement, EraseHover, ElementDrag, HandleDrag, Point, SelectBox, Tool,
-} from './types';
+import type { BoardElement, ElementDrag, EraseHover, HandleDrag, Point, SelectBox, Tool } from './types';
 
 export const GRID = 40; // px per grid cell (logical)
 

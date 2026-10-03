@@ -10,7 +10,7 @@ import type { Point } from './types';
 
 export const gridCanvas = byId<HTMLCanvasElement>('grid-canvas');
 export const mainCanvas = byId<HTMLCanvasElement>('main-canvas');
-export const iCanvas    = byId<HTMLCanvasElement>('interaction-canvas');
+export const iCanvas = byId<HTMLCanvasElement>('interaction-canvas');
 
 function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const ctx = canvas.getContext('2d');

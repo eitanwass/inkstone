@@ -3,17 +3,22 @@
 // recolor don't make sense for a multi-selection), and the empty-canvas
 // menu (Paste only, shown when the clipboard has something in it).
 
+import { clientToWorld, iCanvas } from './canvas';
 import { byId } from './dom';
-import { state } from './state';
-import { iCanvas, clientToWorld } from './canvas';
 import { hitTest } from './elements';
-import { drawMain } from './render';
-import {
-  copySelection, pasteClipboard, deleteSelected, duplicateSelected,
-  bringSelectedToFront, sendSelectedToBack, clipboard,
-} from './selection';
 import { pushHistory } from './history';
 import { showConfirm } from './modal';
+import { drawMain } from './render';
+import {
+  bringSelectedToFront,
+  clipboard,
+  copySelection,
+  deleteSelected,
+  duplicateSelected,
+  pasteClipboard,
+  sendSelectedToBack,
+} from './selection';
+import { state } from './state';
 import { showToast } from './toast';
 import type { Point, TokenElement } from './types';
 
@@ -72,14 +77,14 @@ function onContextMenu(e: MouseEvent): void {
 // roomy center of a desktop window) can otherwise render partly
 // off-screen with no way to reach its lower items.
 function placeMenu(menu: HTMLElement, cx: number, cy: number): void {
-  menu.style.left = cx + 'px';
-  menu.style.top  = cy + 'px';
+  menu.style.left = `${cx}px`;
+  menu.style.top = `${cy}px`;
   menu.classList.remove('hidden');
   const { offsetWidth: w, offsetHeight: h } = menu;
   const maxLeft = window.innerWidth - w - 8;
   const maxTop = window.innerHeight - h - 8;
-  if (cx > maxLeft) menu.style.left = Math.max(8, maxLeft) + 'px';
-  if (cy > maxTop) menu.style.top = Math.max(8, maxTop) + 'px';
+  if (cx > maxLeft) menu.style.left = `${Math.max(8, maxLeft)}px`;
+  if (cy > maxTop) menu.style.top = `${Math.max(8, maxTop)}px`;
 }
 
 function showElementContextMenu(cx: number, cy: number): void {

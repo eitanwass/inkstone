@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeRoom } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import { boardElements, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);
@@ -21,15 +21,16 @@ test('rotate handle snaps to 15 degree increments by default', async ({ page }) 
   await page.mouse.click(p.x, p.y);
 
   p = toScreen(260, 136); // rotate handle
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   // Drag to ~40 degrees above horizontal -> nearest 15-degree step is 45.
-  const rad = 40 * Math.PI / 180;
+  const rad = (40 * Math.PI) / 180;
   p = toScreen(260 + 100 * Math.cos(rad), 220 - 100 * Math.sin(rad));
   await page.mouse.move(p.x, p.y, { steps: 10 });
   await page.mouse.up();
 
   const els = await boardElements(page);
-  const deg = els[0].rotation * 180 / Math.PI;
+  const deg = (els[0].rotation * 180) / Math.PI;
   expect(Math.round(deg)).toBe(45);
 });
 
@@ -42,16 +43,17 @@ test('Shift held while rotating gives free (unsnapped) rotation', async ({ page 
   await page.mouse.click(p.x, p.y);
 
   p = toScreen(260, 136);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   await page.keyboard.down('Shift');
-  const rad = 40 * Math.PI / 180;
+  const rad = (40 * Math.PI) / 180;
   p = toScreen(260 + 100 * Math.cos(rad), 220 - 100 * Math.sin(rad));
   await page.mouse.move(p.x, p.y, { steps: 10 });
   await page.mouse.up();
   await page.keyboard.up('Shift');
 
   const els = await boardElements(page);
-  const deg = els[0].rotation * 180 / Math.PI;
+  const deg = (els[0].rotation * 180) / Math.PI;
   // 40 degrees, free — should NOT have snapped to the nearest 15-degree step (45).
   expect(Math.round(deg) % 15).not.toBe(0);
 });
@@ -66,7 +68,8 @@ test('resizing a rect from a corner keeps the opposite corner anchored', async (
 
   // Drag the se corner (360,280) further out.
   p = toScreen(360, 280);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(440, 360);
   await page.mouse.move(p.x, p.y, { steps: 5 });
   await page.mouse.up();

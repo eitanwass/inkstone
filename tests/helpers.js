@@ -17,7 +17,8 @@ export async function resetBoard(page) {
 // exact grid cells without re-deriving the canvas's on-screen position.
 export async function worldToScreenFn(page) {
   const box = await page.locator('#interaction-canvas').boundingBox();
-  const panX = box.width * 0.1, panY = box.height * 0.1;
+  const panX = box.width * 0.1,
+    panY = box.height * 0.1;
   return (wx, wy) => ({ x: box.x + panX + wx, y: box.y + panY + wy });
 }
 
@@ -28,23 +29,28 @@ export function boardElements(page) {
 export async function placeRoom(page, toScreen, x1, y1, x2, y2) {
   await page.click('#tool-rect');
   let p = toScreen(x1, y1);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(x2, y2);
-  await page.mouse.move(p.x, p.y, { steps: 5 }); await page.mouse.up();
+  await page.mouse.move(p.x, p.y, { steps: 5 });
+  await page.mouse.up();
 }
 
 export async function placeWall(page, toScreen, x1, y1, x2, y2) {
   await page.click('#tool-wall');
   let p = toScreen(x1, y1);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(x2, y2);
-  await page.mouse.move(p.x, p.y, { steps: 5 }); await page.mouse.up();
+  await page.mouse.move(p.x, p.y, { steps: 5 });
+  await page.mouse.up();
 }
 
 export async function placeToken(page, toScreen, x, y, name, dragTo) {
   await page.click('#tool-token');
   let p = toScreen(x, y);
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   if (dragTo) {
     p = toScreen(dragTo.x, dragTo.y);
     await page.mouse.move(p.x, p.y, { steps: 8 });

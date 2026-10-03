@@ -4,10 +4,10 @@
 // no fill, labels have no fill or width), and labels repurpose the "Size"
 // slider to mean font size instead of stroke width.
 
-import { byId } from './dom';
-import { state } from './state';
 import { iCanvas } from './canvas';
+import { byId } from './dom';
 import { drawMain } from './render';
+import { state } from './state';
 import type { Tool } from './types';
 
 export function setTool(name: Tool): void {
@@ -18,8 +18,9 @@ export function setTool(name: Tool): void {
   state.isBoxSelecting = false;
   state.selectBox = null;
   state.eraseHover = null;
-  document.querySelectorAll<HTMLElement>('.tool-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.tool === name));
+  document.querySelectorAll<HTMLElement>('.tool-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tool === name);
+  });
   document.body.className = `tool-${name}`;
   iCanvas.style.cursor = '';
   updateStylePanel();
@@ -76,7 +77,7 @@ export function updateLabelPreview() {
   preview.style.fontSize = `${state.fontSize}px`;
 }
 
-document.querySelectorAll<HTMLElement>('.tool-btn').forEach(btn => {
+document.querySelectorAll<HTMLElement>('.tool-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     setTool(btn.dataset.tool as Tool);
   });
@@ -84,7 +85,7 @@ document.querySelectorAll<HTMLElement>('.tool-btn').forEach(btn => {
 
 const widthSlider = byId<HTMLInputElement>('stroke-width');
 widthSlider.addEventListener('input', () => {
-  const value = parseInt(widthSlider.value);
+  const value = parseInt(widthSlider.value, 10);
   if (state.tool === 'text') state.fontSize = value;
   else state.strokeWidth = value;
   byId('stroke-width-val').textContent = widthSlider.value;

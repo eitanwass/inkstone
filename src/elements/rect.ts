@@ -2,9 +2,9 @@
 // Stored as x/y/w/h plus an optional rotation in radians, rotating around its
 // own center. See index.js for what each method is for.
 
+import { rectCornerLocal, rotatePoint } from '../geometry';
 import { GRID } from '../state';
-import { rotatePoint, rectCornerLocal } from '../geometry';
-import type { ElementBehavior, Corner, Point, RectElement } from '../types';
+import type { Corner, ElementBehavior, Point, RectElement } from '../types';
 
 const center = (el: RectElement): Point => ({ x: el.x + el.w / 2, y: el.y + el.h / 2 });
 
@@ -31,20 +31,26 @@ export const rect: ElementBehavior<RectElement> = {
     const rotation = el.rotation || 0;
     if (!rotation) return { x: el.x, y: el.y, w: el.w, h: el.h };
     const c = center(el);
-    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[])
-      .map(id => rotatePoint(rectCornerLocal(el, id), c, rotation));
-    const xs = corners.map(p => p.x), ys = corners.map(p => p.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[]).map((id) =>
+      rotatePoint(rectCornerLocal(el, id), c, rotation),
+    );
+    const xs = corners.map((p) => p.x),
+      ys = corners.map((p) => p.y);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs);
+    const minY = Math.min(...ys),
+      maxY = Math.max(...ys);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   },
 
   hit(el, wx, wy) {
     const rotation = el.rotation || 0;
-    let px = wx, py = wy;
+    let px = wx,
+      py = wy;
     if (rotation) {
       const local = rotatePoint({ x: wx, y: wy }, center(el), -rotation);
-      px = local.x; py = local.y;
+      px = local.x;
+      py = local.y;
     }
     const { x, y, w, h } = el;
     const rx = w < 0 ? x + w : x;
@@ -55,15 +61,14 @@ export const rect: ElementBehavior<RectElement> = {
   // ponytail: ignores rotation (uses the unrotated footprint) — erase is
   // whole-object for rects anyway, only the hit-area shape is approximate.
   occupiesCell(el, cellX, cellY) {
-    return cellX < el.x + el.w && cellX + GRID > el.x &&
-           cellY < el.y + el.h && cellY + GRID > el.y;
+    return cellX < el.x + el.w && cellX + GRID > el.x && cellY < el.y + el.h && cellY + GRID > el.y;
   },
 
   // Four corner resize handles plus a rotate handle above the top edge.
   handles(el, rotateOffset) {
     const rotation = el.rotation || 0;
     const c = center(el);
-    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[]).map(id => {
+    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[]).map((id) => {
       const p = rotatePoint(rectCornerLocal(el, id), c, rotation);
       return { id, kind: 'resize' as const, x: p.x, y: p.y };
     });

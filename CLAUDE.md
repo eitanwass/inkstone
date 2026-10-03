@@ -21,8 +21,11 @@ unmodified rather than processing.
 Vite strips types without checking them, so `npm run typecheck` is what
 actually enforces them (CI runs it). Shared types live in
 [src/types.ts](src/types.ts); `dom.ts` has `byId`/`qs`, which throw on a
-missing element so callers get non-null typed elements. There are no linters
-or formatters configured yet. There is a Playwright Test
+missing element so callers get non-null typed elements. Biome handles
+linting, formatting and import order: `npm run lint` checks (CI runs it),
+`npm run format` fixes. Style is 2-space indent, single quotes, semicolons,
+110 columns; [.editorconfig](.editorconfig) and [.gitattributes](.gitattributes)
+pin LF line endings. There is a Playwright Test
 suite in [tests/](tests/) — `npm test` runs it (the config auto-starts the
 dev server). It drives the real UI (clicking toolbar buttons, dragging on
 the canvas) rather than calling module internals, since there's no exposed
@@ -59,6 +62,9 @@ chain, so there are no circular imports to reason about.
 | File | Responsibility |
 |---|---|
 | `state.ts` | The shared `state` object and the `GRID` constant. |
+| `types.ts` | Shared types: the `BoardElement` union, `ElementBehavior`, drag/hover shapes. |
+| `dom.ts` | `byId` / `qs`: typed element lookups that throw if the element is missing. |
+| `validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements. |
 | `canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
 | `geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
 | `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.ts`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |

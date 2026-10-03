@@ -3,16 +3,13 @@
 // kept together since the two flows are nearly identical in shape.
 
 import { byId } from './dom';
-import { state } from './state';
-import { drawMain } from './render';
 import { pushHistory } from './history';
+import { drawMain } from './render';
+import { state } from './state';
 import { showToast } from './toast';
 import type { Point } from './types';
 
-const TOKEN_COLORS = [
-  '#e05c5c', '#5c8ae0', '#5cba6a', '#e0a85c',
-  '#9a5ce0', '#5ce0d4', '#e05caa', '#c8e05c',
-];
+const TOKEN_COLORS = ['#e05c5c', '#5c8ae0', '#5cba6a', '#e0a85c', '#9a5ce0', '#5ce0d4', '#e05caa', '#c8e05c'];
 let tokenColorIdx = 0;
 
 let pendingToken: (Point & { radius: number }) | null = null;
@@ -52,7 +49,7 @@ byId('token-name-cancel').addEventListener('click', () => {
   pendingToken = null;
 });
 
-byId<HTMLInputElement>('token-name-input').addEventListener('keydown', e => {
+byId<HTMLInputElement>('token-name-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') byId('token-name-confirm').click();
   if (e.key === 'Escape') byId('token-name-cancel').click();
 });
@@ -89,7 +86,7 @@ byId('text-label-cancel').addEventListener('click', () => {
   pendingTextPos = null;
 });
 
-byId<HTMLInputElement>('text-label-input').addEventListener('keydown', e => {
+byId<HTMLInputElement>('text-label-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') byId('text-label-confirm').click();
   if (e.key === 'Escape') byId('text-label-cancel').click();
 });

@@ -1,5 +1,13 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeRoom, placeWall, placeToken, placeLabel } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import {
+  boardElements,
+  placeLabel,
+  placeRoom,
+  placeToken,
+  placeWall,
+  resetBoard,
+  worldToScreenFn,
+} from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);

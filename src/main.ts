@@ -4,16 +4,16 @@
 // the pure-side-effect modules (color swatches, keyboard shortcuts) that
 // nothing else imports, so their DOM wiring actually runs.
 
+import { version } from '../package.json';
+import { gridCanvas, iCanvas, mainCanvas } from './canvas';
 import { byId } from './dom';
-import { state } from './state';
-import { gridCanvas, mainCanvas, iCanvas } from './canvas';
-import { drawMain } from './render';
 import { drawGrid } from './grid';
+import { loadPersistedBoard, pushHistory } from './history';
+import { drawMain } from './render';
+import { state } from './state';
+import { showToast } from './toast';
 import { setTool } from './toolbar';
 import { resetView } from './view-actions';
-import { loadPersistedBoard, pushHistory } from './history';
-import { showToast } from './toast';
-import { version } from '../package.json';
 
 import './color-swatches';
 import './shortcuts';
@@ -22,8 +22,8 @@ import './collab';
 byId('version-label').textContent = `v${version}`;
 
 function resize() {
-  [gridCanvas, mainCanvas, iCanvas].forEach(c => {
-    c.width  = c.offsetWidth;
+  [gridCanvas, mainCanvas, iCanvas].forEach((c) => {
+    c.width = c.offsetWidth;
     c.height = c.offsetHeight;
   });
   drawGrid();

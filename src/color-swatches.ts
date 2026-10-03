@@ -27,15 +27,16 @@ function setupColorRow(
   }
 
   function rememberColor(color: string): void {
-    const recent = [color, ...getHistoryColors().filter(c => c !== color)].slice(0, 8);
+    const recent = [color, ...getHistoryColors().filter((c) => c !== color)].slice(0, 8);
     localStorage.setItem(storageKey, JSON.stringify(recent));
   }
 
   function selectColor(color: string): void {
-    container.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    for (const x of container.querySelectorAll('.swatch')) x.classList.remove('active');
     addBtn.classList.remove('active');
-    const builtIn = [...container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)')]
-      .find(b => b.dataset.color === color);
+    const builtIn = [...container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)')].find(
+      (b) => b.dataset.color === color,
+    );
     if (builtIn) {
       builtIn.classList.add('active');
     } else {
@@ -47,7 +48,7 @@ function setupColorRow(
 
   function renderPopoverSwatches() {
     swatchesEl.innerHTML = '';
-    getHistoryColors().forEach(color => {
+    getHistoryColors().forEach((color) => {
       const b = document.createElement('button');
       b.className = 'swatch';
       b.style.background = color;
@@ -74,14 +75,14 @@ function setupColorRow(
     popover.classList.add('hidden');
   }
 
-  container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)').forEach(btn => {
+  container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)').forEach((btn) => {
     btn.addEventListener('click', () => {
       addBtn.style.background = '';
       selectColor(btn.dataset.color ?? '');
     });
   });
 
-  addBtn.addEventListener('click', e => {
+  addBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (popover.classList.contains('hidden')) showPopover();
     else hidePopover();
@@ -99,10 +100,21 @@ function setupColorRow(
     picker.click();
   });
 
-  document.addEventListener('click', e => {
+  document.addEventListener('click', (e) => {
     if (!popover.contains(e.target as Node) && e.target !== addBtn) hidePopover();
   });
 }
 
-setupColorRow('stroke-swatches', 'stroke-custom-add', 'stroke-color-popover', 'tavernmap-custom-stroke', (c) => { state.strokeColor = c; updateLabelPreview(); });
-setupColorRow('fill-swatches',   'fill-custom-add',   'fill-color-popover',   'tavernmap-custom-fill',   (c) => { state.fillColor = c; });
+setupColorRow(
+  'stroke-swatches',
+  'stroke-custom-add',
+  'stroke-color-popover',
+  'tavernmap-custom-stroke',
+  (c) => {
+    state.strokeColor = c;
+    updateLabelPreview();
+  },
+);
+setupColorRow('fill-swatches', 'fill-custom-add', 'fill-color-popover', 'tavernmap-custom-fill', (c) => {
+  state.fillColor = c;
+});

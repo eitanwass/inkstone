@@ -3,24 +3,22 @@
 // state.elements here must route index shifts through
 // adjustSelectionForSplice to keep state.selected valid.
 
-import { state, GRID } from './state';
-import { snapToGrid, rectsOverlap, normalizeRect } from './geometry';
 import { getElementBounds, snapshotCoords, translateElement } from './elements';
-import { drawMain } from './render';
+import { normalizeRect, rectsOverlap, snapToGrid } from './geometry';
 import { pushHistory } from './history';
+import { drawMain } from './render';
+import { GRID, state } from './state';
 import { showToast } from './toast';
 import type { BoardElement, Point } from './types';
 
 export function adjustSelectionForSplice(removeIdx: number, insertedCount: number): void {
   const shift = insertedCount - 1;
-  state.selected = state.selected
-    .filter(s => s !== removeIdx)
-    .map(s => s > removeIdx ? s + shift : s);
+  state.selected = state.selected.filter((s) => s !== removeIdx).map((s) => (s > removeIdx ? s + shift : s));
 }
 
 export function deleteSelected() {
   const idxs = [...state.selected].sort((a, b) => b - a);
-  idxs.forEach(i => state.elements.splice(i, 1));
+  for (const i of idxs) state.elements.splice(i, 1);
   state.selected = [];
   drawMain();
   pushHistory();
@@ -46,13 +44,13 @@ function addAndSelect(els: BoardElement[], { atBack = false } = {}): void {
 // their original z-order.
 function takeSelected() {
   const idxs = selectedIndices();
-  const taken = idxs.map(i => state.elements[i]);
-  [...idxs].reverse().forEach(i => state.elements.splice(i, 1));
+  const taken = idxs.map((i) => state.elements[i]);
+  for (const i of [...idxs].reverse()) state.elements.splice(i, 1);
   return taken;
 }
 
 export function duplicateSelected() {
-  const clones = selectedIndices().map(i => {
+  const clones = selectedIndices().map((i) => {
     const el = structuredClone(state.elements[i]);
     translateElement(el, GRID, GRID);
     return el;
@@ -67,17 +65,22 @@ export let clipboard: BoardElement[] = [];
 
 export function copySelection() {
   if (!state.selected.length) return;
-  clipboard = selectedIndices().map(i => structuredClone(state.elements[i]));
+  clipboard = selectedIndices().map((i) => structuredClone(state.elements[i]));
   showToast(clipboard.length > 1 ? `Copied ${clipboard.length} elements` : 'Copied element');
 }
 
 function clipboardBounds() {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
   for (const el of clipboard) {
     const b = getElementBounds(el);
     if (!b) continue;
-    minX = Math.min(minX, b.x); minY = Math.min(minY, b.y);
-    maxX = Math.max(maxX, b.x + b.w); maxY = Math.max(maxY, b.y + b.h);
+    minX = Math.min(minX, b.x);
+    minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);
+    maxY = Math.max(maxY, b.y + b.h);
   }
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
@@ -87,9 +90,11 @@ function clipboardBounds() {
 export function pasteClipboard(anchorWorld: Point): void {
   if (!clipboard.length) return;
   const bounds = clipboardBounds();
-  const cx = bounds.x + bounds.w / 2, cy = bounds.y + bounds.h / 2;
-  const dx = snapToGrid(anchorWorld.x - cx), dy = snapToGrid(anchorWorld.y - cy);
-  const clones = clipboard.map(el => {
+  const cx = bounds.x + bounds.w / 2,
+    cy = bounds.y + bounds.h / 2;
+  const dx = snapToGrid(anchorWorld.x - cx),
+    dy = snapToGrid(anchorWorld.y - cy);
+  const clones = clipboard.map((el) => {
     const clone = structuredClone(el);
     translateElement(clone, dx, dy);
     return clone;
@@ -111,7 +116,7 @@ export function startElementDrag(world: Point): void {
   state.elementDrag = {
     moved: false,
     origin: { x: world.x, y: world.y },
-    snapshot: state.selected.map(i => ({ i, coords: snapshotCoords(state.elements[i]) })),
+    snapshot: state.selected.map((i) => ({ i, coords: snapshotCoords(state.elements[i]) })),
   };
 }
 

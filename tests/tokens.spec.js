@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { resetBoard, worldToScreenFn, boardElements, placeToken } from './helpers.js';
+import { expect, test } from '@playwright/test';
+import { boardElements, placeToken, resetBoard, worldToScreenFn } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await resetBoard(page);
@@ -37,7 +37,9 @@ test('the dragged radius is clamped to a sane maximum', async ({ page }) => {
   expect(el.radius).toBe(100); // GRID * 2.5
 });
 
-test('an already-placed token can be resized via its single SE handle and stays circular', async ({ page }) => {
+test('an already-placed token can be resized via its single SE handle and stays circular', async ({
+  page,
+}) => {
   const toScreen = await worldToScreenFn(page);
   await placeToken(page, toScreen, 500, 400, 'Resizeme');
   let [tok] = await boardElements(page);
@@ -50,7 +52,8 @@ test('an already-placed token can be resized via its single SE handle and stays 
 
   // Drag the SE handle (sitting on the circle's edge at 45deg) outward.
   p = toScreen(cx + startRadius * Math.cos(a), cy + startRadius * Math.sin(a));
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(cx + 90 * Math.cos(a), cy + 90 * Math.sin(a));
   await page.mouse.move(p.x, p.y, { steps: 8 });
   await page.mouse.up();
@@ -62,7 +65,8 @@ test('an already-placed token can be resized via its single SE handle and stays 
 
   // Drag the same handle inward to shrink it back down.
   p = toScreen(cx + tok.radius * Math.cos(a), cy + tok.radius * Math.sin(a));
-  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
   p = toScreen(cx + 25 * Math.cos(a), cy + 25 * Math.sin(a));
   await page.mouse.move(p.x, p.y, { steps: 8 });
   await page.mouse.up();

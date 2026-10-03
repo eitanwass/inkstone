@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npm run lint
       - run: npm run typecheck
       - run: npx playwright install --with-deps chromium
       - run: npm test

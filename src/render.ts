@@ -3,13 +3,13 @@
 // drawMain() is the one function nearly every interaction handler calls after
 // mutating state.
 
-import { byId } from './dom';
-import { state } from './state';
 import { mainCanvas, mCtx } from './canvas';
-import { drawGrid } from './grid';
+import { byId } from './dom';
+import { drawElementShape, getElementBounds } from './elements';
 import { normalizeRect } from './geometry';
-import { getElementBounds, drawElementShape } from './elements';
-import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles';
+import { drawGrid } from './grid';
+import { getHandles, HANDLE_RADIUS_PX, hasHandles } from './handles';
+import { state } from './state';
 import type { BoardElement, Bounds } from './types';
 
 // Sets the viewport transform and redraws. The one place that keeps the zoom
@@ -35,9 +35,7 @@ export function drawMain() {
   });
 
   const handleTarget =
-    state.tool === 'select' && state.selected.length === 1
-      ? state.elements[state.selected[0]]
-      : null;
+    state.tool === 'select' && state.selected.length === 1 ? state.elements[state.selected[0]] : null;
   const showsHandles = hasHandles(handleTarget);
 
   if (state.tool === 'select') drawSelectionHighlights(showsHandles ? state.selected[0] : -1);
@@ -64,16 +62,24 @@ interface HighlightStyle {
 }
 
 const SELECTION_STYLE: HighlightStyle = {
-  stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.15)',
-  padPx: 4, lineWidthPx: 1.5, dashPx: [5, 3],
+  stroke: 'rgba(80, 160, 255, 0.9)',
+  fill: 'rgba(80, 160, 255, 0.15)',
+  padPx: 4,
+  lineWidthPx: 1.5,
+  dashPx: [5, 3],
 };
 const BOX_SELECT_STYLE: HighlightStyle = {
-  stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.12)',
-  padPx: 0, lineWidthPx: 1,
+  stroke: 'rgba(80, 160, 255, 0.9)',
+  fill: 'rgba(80, 160, 255, 0.12)',
+  padPx: 0,
+  lineWidthPx: 1,
 };
 const ERASE_STYLE: HighlightStyle = {
-  stroke: 'rgba(160, 64, 64, 0.85)', fill: 'rgba(160, 64, 64, 0.18)',
-  padPx: 6, lineWidthPx: 1.5, dashPx: [4, 3],
+  stroke: 'rgba(160, 64, 64, 0.85)',
+  fill: 'rgba(160, 64, 64, 0.18)',
+  padPx: 6,
+  lineWidthPx: 1.5,
+  dashPx: [4, 3],
 };
 
 // Draws a translucent outlined box around bounds. The padding is the style's
@@ -131,19 +137,22 @@ function drawEraseHover(): void {
 }
 
 export function drawElement(
-  ctx: CanvasRenderingContext2D, el: BoardElement, isSelected: boolean, isPreview = false,
+  ctx: CanvasRenderingContext2D,
+  el: BoardElement,
+  isSelected: boolean,
+  isPreview = false,
 ): void {
   ctx.save();
   ctx.globalAlpha = isPreview ? 0.55 : 1;
   ctx.strokeStyle = el.strokeColor || '#e8dcc8';
-  ctx.fillStyle   = el.fillColor   || 'transparent';
-  ctx.lineWidth   = el.strokeWidth  || 2;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
+  ctx.fillStyle = el.fillColor || 'transparent';
+  ctx.lineWidth = el.strokeWidth || 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 
   if (isSelected) {
     ctx.shadowColor = '#c9a84c';
-    ctx.shadowBlur  = 10;
+    ctx.shadowBlur = 10;
   }
 
   drawElementShape(ctx, el, isSelected);
@@ -153,7 +162,7 @@ export function drawElement(
 function drawHandles(el: BoardElement): void {
   const handles = getHandles(el);
   const hr = HANDLE_RADIUS_PX / state.zoom;
-  const rotateHandle = handles.find(h => h.kind === 'rotate');
+  const rotateHandle = handles.find((h) => h.kind === 'rotate');
 
   mCtx.save();
   if (rotateHandle?.from) {
@@ -165,7 +174,7 @@ function drawHandles(el: BoardElement): void {
     mCtx.stroke();
   }
 
-  handles.forEach(h => {
+  handles.forEach((h) => {
     mCtx.beginPath();
     if (h.kind === 'rotate') {
       mCtx.fillStyle = '#50a0ff';
@@ -184,7 +193,7 @@ function drawHandles(el: BoardElement): void {
 }
 
 function drawRotationReadout(el: BoardElement, deg: number): void {
-  const handle = getHandles(el).find(h => h.kind === 'rotate');
+  const handle = getHandles(el).find((h) => h.kind === 'rotate');
   if (!handle) return;
   const label = `${((deg % 360) + 360) % 360}°`;
 
@@ -192,9 +201,11 @@ function drawRotationReadout(el: BoardElement, deg: number): void {
   mCtx.font = `${12 / state.zoom}px monospace`;
   mCtx.textAlign = 'center';
   mCtx.textBaseline = 'middle';
-  const padX = 6 / state.zoom, padY = 4 / state.zoom;
+  const padX = 6 / state.zoom,
+    padY = 4 / state.zoom;
   const w = mCtx.measureText(label).width;
-  const lx = handle.x, ly = handle.y - 18 / state.zoom;
+  const lx = handle.x,
+    ly = handle.y - 18 / state.zoom;
   mCtx.fillStyle = 'rgba(26,23,20,0.92)';
   mCtx.fillRect(lx - w / 2 - padX, ly - 7 / state.zoom - padY, w + padX * 2, 14 / state.zoom + padY * 2);
   mCtx.fillStyle = '#c9a84c';
