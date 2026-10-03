@@ -12,51 +12,70 @@ import { setTool } from './toolbar';
 import type { Tool } from './types';
 import { resetView } from './view-actions';
 
+const TOOL_KEYS: Record<string, Tool> = {
+  v: 'select',
+  r: 'rect',
+  w: 'wall',
+  t: 'token',
+  l: 'text',
+  e: 'erase',
+};
+
+function confirmAndDeleteSelected(): void {
+  const hasToken = state.selected.some((i) => state.elements[i]?.type === 'token');
+  if (!hasToken) {
+    deleteSelected();
+    return;
+  }
+  const only = state.elements[state.selected[0]];
+  const msg =
+    state.selected.length > 1
+      ? `Remove ${state.selected.length} selected elements?`
+      : `Remove token "${only.type === 'token' ? only.name : ''}"?`;
+  showConfirm(msg, deleteSelected);
+}
+
 document.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLElement && e.target.tagName === 'INPUT') return;
-  const map: Record<string, Tool> = { v: 'select', r: 'rect', w: 'wall', t: 'token', l: 'text', e: 'erase' };
-  if (!e.ctrlKey && !e.metaKey && map[e.key.toLowerCase()]) setTool(map[e.key.toLowerCase()]);
 
-  if (e.key === 'Home') {
+  // Lowercased so Shift doesn't change the letter (Ctrl+Shift+Z reports 'Z').
+  const key = e.key.toLowerCase();
+  const mod = e.ctrlKey || e.metaKey;
+
+  if (!mod && TOOL_KEYS[key]) setTool(TOOL_KEYS[key]);
+
+  if (key === 'home') {
     resetView();
     e.preventDefault();
   }
 
-  if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected.length) {
-    const hasToken = state.selected.some((i) => state.elements[i]?.type === 'token');
-    if (hasToken) {
-      const only = state.elements[state.selected[0]];
-      const msg =
-        state.selected.length > 1
-          ? `Remove ${state.selected.length} selected elements?`
-          : `Remove token "${only.type === 'token' ? only.name : ''}"?`;
-      showConfirm(msg, deleteSelected);
-    } else {
-      deleteSelected();
-    }
+  if ((key === 'delete' || key === 'backspace') && state.selected.length) {
+    confirmAndDeleteSelected();
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+  if (!mod) return;
+
+  if (key === 'z' && !e.shiftKey) {
     undo();
     e.preventDefault();
   }
 
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+  if (key === 'y' || (key === 'z' && e.shiftKey)) {
     redo();
     e.preventDefault();
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+  if (key === 'c') {
     copySelection();
     e.preventDefault();
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+  if (key === 'v') {
     pasteClipboard(lastMoveW);
     e.preventDefault();
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+  if (key === 'd') {
     if (state.selected.length) duplicateSelected();
     e.preventDefault();
   }

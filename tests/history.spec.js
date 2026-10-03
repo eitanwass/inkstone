@@ -37,3 +37,20 @@ test('the board persists across a reload', async ({ page }) => {
   // A fresh reload starts a new history baseline — nothing to undo to yet.
   await expect(page.locator('#btn-undo')).toBeDisabled();
 });
+
+test('Ctrl+Z undoes, and both Ctrl+Y and Ctrl+Shift+Z redo', async ({ page }) => {
+  const toScreen = await worldToScreenFn(page);
+  await placeRoom(page, toScreen, 160, 160, 320, 280);
+
+  await page.keyboard.press('Control+z');
+  expect(await boardElements(page)).toHaveLength(0);
+
+  await page.keyboard.press('Control+y');
+  expect(await boardElements(page)).toHaveLength(1);
+
+  await page.keyboard.press('Control+z');
+  expect(await boardElements(page)).toHaveLength(0);
+
+  await page.keyboard.press('Control+Shift+Z');
+  expect(await boardElements(page)).toHaveLength(1);
+});

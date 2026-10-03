@@ -1,6 +1,5 @@
 // ── Token & text-label placement dialogs ─────────────────────
-// Both tools open a single-input modal before committing a new element;
-// kept together since the two flows are nearly identical in shape.
+// Both tools open a single-input modal before committing a new element.
 
 import { byId } from './dom';
 import { pushHistory } from './history';
@@ -9,84 +8,101 @@ import { state } from './state';
 import { showToast } from './toast';
 import type { Point } from './types';
 
+// Wires up the modal whose elements are `<prefix>-overlay`, `-input`,
+// `-confirm` and `-cancel`. onConfirm gets the trimmed text; onCancel fires
+// for the Cancel button and Escape. Returns a function that opens the dialog
+// with an empty, focused input.
+function setupInputDialog(
+  prefix: string,
+  onConfirm: (text: string) => void,
+  onCancel: () => void,
+): () => void {
+  const overlay = byId(`${prefix}-overlay`);
+  const input = byId<HTMLInputElement>(`${prefix}-input`);
+  const confirmBtn = byId(`${prefix}-confirm`);
+  const cancelBtn = byId(`${prefix}-cancel`);
+
+  confirmBtn.addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    onConfirm(input.value.trim());
+  });
+  cancelBtn.addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    onCancel();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') confirmBtn.click();
+    if (e.key === 'Escape') cancelBtn.click();
+  });
+
+  return () => {
+    input.value = '';
+    overlay.classList.remove('hidden');
+    setTimeout(() => input.focus(), 50);
+  };
+}
+
+// ── Token ──────────────────────────────────────────────────────
 const TOKEN_COLORS = ['#e05c5c', '#5c8ae0', '#5cba6a', '#e0a85c', '#9a5ce0', '#5ce0d4', '#e05caa', '#c8e05c'];
 let tokenColorIdx = 0;
 
 let pendingToken: (Point & { radius: number }) | null = null;
 
+const showTokenDialog = setupInputDialog(
+  'token-name',
+  (text) => {
+    if (!pendingToken) return;
+    const name = text || '?';
+    state.elements.push({
+      type: 'token',
+      x: pendingToken.x,
+      y: pendingToken.y,
+      radius: pendingToken.radius,
+      name,
+      color: TOKEN_COLORS[tokenColorIdx % TOKEN_COLORS.length],
+    });
+    tokenColorIdx++;
+    pendingToken = null;
+    drawMain();
+    pushHistory();
+    showToast(`Token "${name}" placed`);
+  },
+  () => {
+    pendingToken = null;
+  },
+);
+
 export function openTokenDialog(wx: number, wy: number, radius: number): void {
   pendingToken = { x: wx, y: wy, radius };
-  byId<HTMLInputElement>('token-name-input').value = '';
-  byId('token-name-overlay').classList.remove('hidden');
-  setTimeout(() => byId<HTMLInputElement>('token-name-input').focus(), 50);
+  showTokenDialog();
 }
 
-function placeToken(name: string): void {
-  if (!pendingToken) return;
-  state.elements.push({
-    type: 'token',
-    x: pendingToken.x,
-    y: pendingToken.y,
-    radius: pendingToken.radius,
-    name: name || '?',
-    color: TOKEN_COLORS[tokenColorIdx % TOKEN_COLORS.length],
-  });
-  tokenColorIdx++;
-  pendingToken = null;
-  drawMain();
-  pushHistory();
-  showToast(`Token "${name}" placed`);
-}
-
-byId('token-name-confirm').addEventListener('click', () => {
-  const name = byId<HTMLInputElement>('token-name-input').value.trim();
-  byId('token-name-overlay').classList.add('hidden');
-  placeToken(name || '?');
-});
-
-byId('token-name-cancel').addEventListener('click', () => {
-  byId('token-name-overlay').classList.add('hidden');
-  pendingToken = null;
-});
-
-byId<HTMLInputElement>('token-name-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') byId('token-name-confirm').click();
-  if (e.key === 'Escape') byId('token-name-cancel').click();
-});
-
+// ── Text label ─────────────────────────────────────────────────
 let pendingTextPos: Point | null = null;
+
+const showTextDialog = setupInputDialog(
+  'text-label',
+  (text) => {
+    if (text && pendingTextPos) {
+      state.elements.push({
+        type: 'label',
+        x: pendingTextPos.x,
+        y: pendingTextPos.y,
+        text,
+        fontSize: state.fontSize,
+        strokeColor: state.strokeColor,
+      });
+      drawMain();
+      pushHistory();
+    }
+    pendingTextPos = null;
+  },
+  () => {
+    pendingTextPos = null;
+  },
+);
 
 export function openTextDialog(wx: number, wy: number): void {
   pendingTextPos = { x: wx, y: wy };
-  byId<HTMLInputElement>('text-label-input').value = '';
-  byId('text-label-overlay').classList.remove('hidden');
-  setTimeout(() => byId<HTMLInputElement>('text-label-input').focus(), 50);
+  showTextDialog();
 }
-
-byId('text-label-confirm').addEventListener('click', () => {
-  const text = byId<HTMLInputElement>('text-label-input').value.trim();
-  byId('text-label-overlay').classList.add('hidden');
-  if (text && pendingTextPos) {
-    state.elements.push({
-      type: 'label',
-      x: pendingTextPos.x,
-      y: pendingTextPos.y,
-      text,
-      fontSize: state.fontSize,
-      strokeColor: state.strokeColor,
-    });
-    drawMain();
-    pushHistory();
-  }
-  pendingTextPos = null;
-});
-
-byId('text-label-cancel').addEventListener('click', () => {
-  byId('text-label-overlay').classList.add('hidden');
-  pendingTextPos = null;
-});
-
-byId<HTMLInputElement>('text-label-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') byId('text-label-confirm').click();
-  if (e.key === 'Escape') byId('text-label-cancel').click();
-});

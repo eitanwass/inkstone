@@ -42,12 +42,12 @@ runs this suite on every push/PR to `main`.
 
 Live collaboration (see Collaboration below) needs a second process:
 `npm run party:dev` runs the relay locally via `wrangler dev` on port 8787
-(the client defaults to `localhost:8787` via `VITE_PARTYKIT_HOST` — see
+(the client defaults to `localhost:8787` via `VITE_RELAY_HOST` — see
 `.env.example`). `npm run party:deploy` (`wrangler deploy`) pushes it to
 your own Cloudflare account for real cross-machine use — `CLOUDFLARE_ACCOUNT_ID`
 and `CLOUDFLARE_API_TOKEN` in `.env` authenticate this (wrangler loads `.env`
 automatically); no custom domain is needed, it deploys to a free
-`*.workers.dev` subdomain. `VITE_PARTYKIT_HOST` then needs to point at that
+`*.workers.dev` subdomain. `VITE_RELAY_HOST` then needs to point at that
 deployed host before running `npm run build`.
 
 ## Module layout
@@ -300,10 +300,10 @@ stomp the room's actual state before the real snapshot arrives.
 
 Running this locally needs the `wrangler dev` relay alongside Vite —
 `npm run party:dev` (defaults to `localhost:8787`, matching `collab.ts`'s
-fallback `VITE_PARTYKIT_HOST`). For real multi-machine use the relay needs
+fallback `VITE_RELAY_HOST`). For real multi-machine use the relay needs
 deploying (`npm run party:deploy`, i.e. `wrangler deploy`, authenticated via
 `CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` in `.env`) and
-`VITE_PARTYKIT_HOST` pointed at the resulting `*.workers.dev` host before
+`VITE_RELAY_HOST` pointed at the resulting `*.workers.dev` host before
 building the frontend; see `.env.example`. (The client (`partysocket`)
 only ever speaks plain WebSocket, so this backend swap from a PartyKit-
 hosted room to a self-deployed Worker + Durable Object needed no change
