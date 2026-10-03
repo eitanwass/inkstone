@@ -12,9 +12,11 @@ Each item is meant to ship on its own.
 
 ## Now: quick wins (all S)
 
-- **Keyboard shortcuts you'd expect.** Arrow keys nudge the selection by a cell,
-  Ctrl+A selects all, `+` / `-` zoom, Escape deselects. Today the keyboard covers
-  only tools, undo/redo, copy/paste/duplicate, delete and Home.
+- ~~**Keyboard shortcuts you'd expect.**~~
+  - ~~Arrow keys nudge the selection by a cell~~
+  - ~~Ctrl+A selects all~~
+  - ~~`+` / `-` zoom~~
+  - ~~Escape deselects.~~
 - **Shortcut cheat sheet.** `?` opens a small list of every shortcut. The tooltips
   already carry them, but nobody finds them by hovering.
 - **Zoom controls.** On-screen `+` / `-` and "fit map to screen". Right now zooming

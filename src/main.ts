@@ -8,6 +8,7 @@ import '@fontsource-variable/inter'; // the UI and map-text font
 import '@fontsource/eb-garamond/500.css'; // the wordmark
 import { version } from '../package.json';
 import { gridCanvas, iCanvas, mainCanvas } from './canvas';
+import { resetView } from './controls';
 import { byId } from './dom';
 import { drawGrid } from './grid';
 import { loadPersistedBoard, pushHistory } from './history';
@@ -15,10 +16,10 @@ import { drawMain } from './render';
 import { FONT_FAMILY, state } from './state';
 import { showToast } from './toast';
 import { setTool } from './toolbar';
-import { resetView } from './view-actions';
 
 import './color-swatches';
 import './shortcuts';
+import './view-actions';
 import './map-name';
 import './collab';
 import './changelog';

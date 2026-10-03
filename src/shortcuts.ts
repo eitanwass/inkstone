@@ -1,8 +1,10 @@
 // ── Global keyboard shortcuts ──────────────────────────────────
-// Tool switching, Home (reset view), Delete/Backspace, undo/redo, copy/paste.
+// Tool switching, Home (reset view), +/- zoom, arrow-key nudge, Select all,
+// Delete/Backspace, undo/redo, copy/paste.
 // Modifier+letter never falls through to the bare tool-shortcut map (so
 // Ctrl+V doesn't also switch to the Select tool via the 'v' shortcut).
 
+import { nudgeSelected, resetView, selectAll, zoomIn, zoomOut } from './controls';
 import { redo, undo } from './history';
 import { showConfirm } from './modal';
 import { lastMoveW } from './pointer';
@@ -10,7 +12,6 @@ import { copySelection, deleteSelected, duplicateSelected, pasteClipboard } from
 import { state } from './state';
 import { setTool } from './toolbar';
 import type { Tool } from './types';
-import { resetView } from './view-actions';
 
 const TOOL_KEYS: Record<string, Tool> = {
   v: 'select',
@@ -19,6 +20,13 @@ const TOOL_KEYS: Record<string, Tool> = {
   t: 'token',
   l: 'text',
   e: 'erase',
+};
+
+const ARROWS: Record<string, [number, number]> = {
+  arrowleft: [-1, 0],
+  arrowright: [1, 0],
+  arrowup: [0, -1],
+  arrowdown: [0, 1],
 };
 
 function confirmAndDeleteSelected(): void {
@@ -49,6 +57,16 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
   }
 
+  // Plus is Shift+= on most keyboards, so both zoom in. Ctrl+plus stays the browser's.
+  if (!mod && (key === '+' || key === '=')) zoomIn();
+  if (!mod && key === '-') zoomOut();
+
+  const arrow = ARROWS[key];
+  if (arrow && !mod && state.selected.length) {
+    nudgeSelected(arrow[0], arrow[1]);
+    e.preventDefault();
+  }
+
   if ((key === 'delete' || key === 'backspace') && state.selected.length) {
     confirmAndDeleteSelected();
   }
@@ -62,6 +80,11 @@ document.addEventListener('keydown', (e) => {
 
   if (key === 'y' || (key === 'z' && e.shiftKey)) {
     redo();
+    e.preventDefault();
+  }
+
+  if (key === 'a') {
+    selectAll();
     e.preventDefault();
   }
 

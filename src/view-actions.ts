@@ -1,21 +1,16 @@
 // ── View & document-level actions ─────────────────────────────
-// Reset View, Clear All, Export PNG.
+// Reset View button, Clear All, Export PNG.
 
-import { iCanvas, mainCanvas } from './canvas';
+import { mainCanvas } from './canvas';
+import { resetView } from './controls';
 import { byId } from './dom';
 import { drawGridDots } from './grid';
 import { pushHistory } from './history';
 import { mapFileName } from './map-name';
 import { showConfirm } from './modal';
-import { drawElement, drawMain, setView } from './render';
+import { drawElement, drawMain } from './render';
 import { state } from './state';
 import { showToast } from './toast';
-
-// Single source of truth for the "default" viewport — used both at load and
-// by the Reset View button, so the two can never disagree on where "home" is.
-export function resetView() {
-  setView(iCanvas.offsetWidth * 0.1, iCanvas.offsetHeight * 0.1, 1);
-}
 
 byId('btn-reset-view').addEventListener('click', resetView);
 

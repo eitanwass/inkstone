@@ -6,11 +6,12 @@
 
 import { clientToCanvas, clientToWorld, iCanvas } from './canvas';
 import { hideContextMenus } from './context-menu';
+import { zoomAround } from './controls';
 import { openTextDialog, openTokenDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
 import { eraseAtCell, updateEraseHover } from './erase';
-import { cellOf, clampZoom, dist, snapToGrid } from './geometry';
+import { cellOf, dist, snapToGrid } from './geometry';
 import { applyHandleDrag, handleCursor, hasHandles, hitHandle, startHandleDrag } from './handles';
 import { pushHistory } from './history';
 import { drawMain, setView } from './render';
@@ -338,12 +339,7 @@ function onWheel(e: WheelEvent): void {
   const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
   const { x: sx, y: sy } = clientToCanvas(e.clientX, e.clientY);
 
-  // Zoom toward cursor: keep the world point under it fixed on screen.
-  const wx = (sx - state.panX) / state.zoom;
-  const wy = (sy - state.panY) / state.zoom;
-  const zoom = clampZoom(state.zoom * factor);
-
-  setView(sx - wx * zoom, sy - wy * zoom, zoom);
+  zoomAround(sx, sy, factor); // toward the cursor
 }
 
 iCanvas.addEventListener('pointermove', onPointerMove);
