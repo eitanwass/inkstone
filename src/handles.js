@@ -12,6 +12,10 @@ export const HANDLE_HIT_PX = 9;
 export const ROTATE_OFFSET_PX = 24;
 export const ROTATE_SNAP_STEP = Math.PI / 12; // 15 degrees
 
+export function hasHandles(el) {
+  return !!el && (el.type === 'rect' || el.type === 'wall' || el.type === 'token');
+}
+
 export function getHandles(el) {
   const offset = ROTATE_OFFSET_PX / state.zoom;
   if (el.type === 'rect') {

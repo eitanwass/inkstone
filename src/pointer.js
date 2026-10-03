@@ -9,7 +9,7 @@ import { state, GRID } from './state.js';
 import { iCanvas } from './canvas.js';
 import { screenToWorld, snapToGrid, cellOf, dist } from './geometry.js';
 import { hitTest } from './elements.js';
-import { hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles.js';
+import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles.js';
 import { drawGrid, drawMain } from './render.js';
 import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection.js';
 import { updateEraseHover, eraseAtCell } from './erase.js';
@@ -115,7 +115,7 @@ export function updateHoverCursor(world) {
 
   if (state.tool === 'select' && state.selected.length === 1) {
     const el = state.elements[state.selected[0]];
-    if (el && (el.type === 'rect' || el.type === 'wall' || el.type === 'token')) {
+    if (hasHandles(el)) {
       const h = hitHandle(el, world);
       if (h) { iCanvas.style.cursor = handleCursor(h); return; }
     }
@@ -269,7 +269,7 @@ function onPointerDown(e) {
     case 'select': {
       if (state.selected.length === 1) {
         const target = state.elements[state.selected[0]];
-        if (target && (target.type === 'rect' || target.type === 'wall' || target.type === 'token')) {
+        if (hasHandles(target)) {
           const handle = hitHandle(target, world);
           if (handle) {
             startHandleDrag(state.selected[0], handle, world);

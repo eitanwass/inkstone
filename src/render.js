@@ -6,7 +6,7 @@ import { state, GRID } from './state.js';
 import { gridCanvas, mainCanvas, gCtx, mCtx } from './canvas.js';
 import { rotatePoint, elementCenter } from './geometry.js';
 import { getElementBounds } from './elements.js';
-import { getHandles, HANDLE_RADIUS_PX } from './handles.js';
+import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles.js';
 
 export function drawGrid() {
   const W = gridCanvas.width, H = gridCanvas.height;
@@ -46,8 +46,7 @@ export function drawMain() {
     state.tool === 'select' && state.selected.length === 1
       ? state.elements[state.selected[0]]
       : null;
-  const showsHandles = singleHandleTarget &&
-    (singleHandleTarget.type === 'rect' || singleHandleTarget.type === 'wall' || singleHandleTarget.type === 'token');
+  const showsHandles = hasHandles(singleHandleTarget);
 
   // Selection highlight: semi-transparent blue box around each selected
   // element, except the single rect/wall/token that's showing resize/rotate
