@@ -19,8 +19,8 @@ Each item is meant to ship on its own.
   - ~~Escape deselects.~~
 - ~~**Shortcut cheat sheet.**~~
   - ~~`?` opens a small list of every shortcut.~~
-- **Zoom controls.** On-screen `+` / `-` and "fit map to screen". Right now zooming
-  is wheel or pinch only, and Reset View goes to a fixed spot rather than to the map.
+- ~~**Zoom controls on-screen.**~~
+  - ~~`+` / `-` and "fit map to screen".~~
 - **Undo for Clear All** (check it already records a step; if not, make it) and a
   toast with an "Undo" button after destructive actions instead of only a confirm.
 - **Saved-state feedback.** A quiet "Saved" mark so people trust that the map

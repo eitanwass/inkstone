@@ -522,6 +522,14 @@ canvas {
   gap: 8px;
 }
 
+/* ── Zoom controls (bottom-left, level with the tool dock) ──────── */
+#zoom-controls {
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px)); /* same line and height as #tool-dock */
+}
+
+#zoom-controls .icon-btn { width: 42px; height: 42px; }
+
 /* ── Keyboard shortcuts: button (bottom-right) and its list ─────── */
 #btn-shortcuts {
   right: calc(24px + env(safe-area-inset-right, 0px));
@@ -949,6 +957,7 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   #brand-mark { display: none; }
   #hud-meta { display: none; }
   #btn-shortcuts, #shortcuts-popover { display: none; } /* no keyboard on a phone */
+  #zoom-controls { display: none; } /* pinch zooms; the dock needs the width */
 
   #map-title {
     top: calc(74px + env(safe-area-inset-top, 0px));

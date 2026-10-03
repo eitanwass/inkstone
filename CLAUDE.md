@@ -251,7 +251,7 @@ chain, so there are no circular imports to reason about.
 | `dialogs.ts` | Token-name and text-label placement dialogs. |
 | `toolbar.ts` | Tool switching + the contextual style panel. |
 | `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
-| `controls.ts` | The commands a user gives the map outside any one tool: zoom, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
+| `controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
 | `view-actions.ts` | Reset View button, Clear All, Export PNG. |
 | `shortcuts.ts` | Global keyboard shortcuts (bindings only; the commands they run are in `controls.ts` and `selection.ts`). |
 | `toast.ts` | Toast notifications. |
