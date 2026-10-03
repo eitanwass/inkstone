@@ -40,16 +40,15 @@ export function personalize(html: string, name: string, origin: string, pageUrl:
   return out;
 }
 
-type FetchPage = (url: URL) => Promise<string>;
-
-const fetchPage: FetchPage = async (url) => {
+async function loadPage(url: URL): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`GET ${url.pathname} answered ${response.status}`);
   return response.text();
-};
+}
 
-// `loadPage` exists so tests can supply the page instead of fetching it.
-export async function GET(request: Request, loadPage: FetchPage = fetchPage): Promise<Response> {
+// Takes only the request: Vercel passes its own second argument to a handler, so an
+// optional parameter here would be filled with that (it once was, and crashed).
+export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const name = normalizeMapName(url.searchParams.get('map'));
 

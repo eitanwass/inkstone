@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GET, personalize } from '../../api/share';
 
 // The page as built: index.html with the %SITE_URL% placeholder filled in.
@@ -66,14 +66,18 @@ describe('personalize', () => {
 });
 
 describe('GET /?map=...', () => {
-  const served =
-    (html = PAGE) =>
-    async () =>
-      html;
+  // The function fetches the static page itself, so the test answers that fetch.
+  const serve = (answer: (url: URL) => string | Response = () => PAGE) =>
+    vi.stubGlobal('fetch', async (url: URL) => {
+      const result = answer(url);
+      return typeof result === 'string' ? new Response(result) : result;
+    });
+  afterEach(() => vi.unstubAllGlobals());
   const request = (query: string) => new Request(`${ORIGIN}/${query}`);
 
   it('serves the page with the named preview tags', async () => {
-    const response = await GET(request('?session=abc&map=The%20Sunken%20Crypt'), served());
+    serve();
+    const response = await GET(request('?session=abc&map=The%20Sunken%20Crypt'));
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toMatch(/text\/html/);
     const html = await response.text();
@@ -84,16 +88,18 @@ describe('GET /?map=...', () => {
 
   it('fetches the static page from the same site', async () => {
     const asked: string[] = [];
-    await GET(request('?map=x'), async (url) => {
+    serve((url) => {
       asked.push(url.href);
       return PAGE;
     });
+    await GET(request('?map=x'));
     expect(asked).toEqual([`${ORIGIN}/index.html`]);
   });
 
   it('treats the name like every other map name: tidied and cut to 60 characters', async () => {
     const query = `?map=${encodeURIComponent(`  A   B ${'x'.repeat(100)}`)}`;
-    const html = await (await GET(request(query), served())).text();
+    serve();
+    const html = await (await GET(request(query))).text();
     const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '';
     expect(title.endsWith(' – Inkstone')).toBe(true);
     expect(title.replace(' – Inkstone', '').length).toBeLessThanOrEqual(60);
@@ -101,23 +107,36 @@ describe('GET /?map=...', () => {
   });
 
   it('serves the page unchanged when the name is empty or only whitespace', async () => {
+    serve();
     for (const query of ['?map=', '?map=%20%20', '?map=%00%01']) {
-      const response = await GET(request(`${query}&session=abc`), served());
+      const response = await GET(request(`${query}&session=abc`));
       expect(response.status).toBe(200);
       expect(await response.text()).toBe(PAGE);
     }
   });
 
   it('redirects to the same link without ?map= if the page can not be loaded, so the app still opens', async () => {
-    const response = await GET(request('?session=abc&map=The%20Sunken%20Crypt'), async () => {
+    serve(() => {
       throw new Error('offline');
     });
+    const response = await GET(request('?session=abc&map=The%20Sunken%20Crypt'));
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe(`${ORIGIN}/?session=abc`);
   });
 
   it('lets browsers and the CDN cache it briefly', async () => {
-    const response = await GET(request('?map=x'), served());
+    serve();
+    const response = await GET(request('?map=x'));
     expect(response.headers.get('cache-control')).toMatch(/s-maxage=\d+/);
+  });
+
+  it('ignores a second argument: Vercel passes its own, which must not be mistaken for anything', async () => {
+    serve();
+    const response = await (GET as (r: Request, extra: unknown) => Promise<Response>)(
+      request('?session=abc&map=The%20Sunken%20Crypt'),
+      { waitUntil() {} },
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('<title>The Sunken Crypt – Inkstone</title>');
   });
 });

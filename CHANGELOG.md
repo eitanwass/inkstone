@@ -8,6 +8,7 @@ enforces it), and the app shows this file in its "What's new" panel.
 ## 0.6.3 - 2026-10-03
 
 - Fixed the text on shared-map preview cards, which showed as empty boxes.
+- Fixed map names not showing in shared-link previews.
 
 ## 0.6.2 - 2026-10-03
 
