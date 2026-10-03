@@ -1,12 +1,12 @@
-// ── Token & text-label placement dialogs ─────────────────────
-// Both tools open a single-input modal before committing a new element.
+// ── Text-label placement dialog ──────────────────────────────
+// The text tool opens a single-input modal before committing a new label. (A token is placed
+// with no dialog, and named in its card: see token-card.ts.)
 
 import { byId } from './dom';
 import { restoreFocus, trapFocus } from './focus';
 import { pushHistory } from './history';
 import { drawMain } from './render';
 import { state } from './state';
-import { showToast } from './toast';
 import type { Point } from './types';
 
 // Wires up the modal whose elements are `<prefix>-overlay`, `-input`,
@@ -52,41 +52,6 @@ function setupInputDialog(
   };
 }
 
-// ── Token ──────────────────────────────────────────────────────
-const TOKEN_COLORS = ['#e05c5c', '#5c8ae0', '#5cba6a', '#e0a85c', '#9a5ce0', '#5ce0d4', '#e05caa', '#c8e05c'];
-let tokenColorIdx = 0;
-
-let pendingToken: (Point & { radius: number }) | null = null;
-
-const showTokenDialog = setupInputDialog(
-  'token-name',
-  (text) => {
-    if (!pendingToken) return;
-    const name = text || '?';
-    state.elements.push({
-      type: 'token',
-      x: pendingToken.x,
-      y: pendingToken.y,
-      radius: pendingToken.radius,
-      name,
-      color: TOKEN_COLORS[tokenColorIdx % TOKEN_COLORS.length],
-    });
-    tokenColorIdx++;
-    pendingToken = null;
-    drawMain();
-    pushHistory();
-    showToast(`Token "${name}" placed`);
-  },
-  () => {
-    pendingToken = null;
-  },
-);
-
-export function openTokenDialog(wx: number, wy: number, radius: number): void {
-  pendingToken = { x: wx, y: wy, radius };
-  showTokenDialog();
-}
-
 // ── Text label ─────────────────────────────────────────────────
 let pendingTextPos: Point | null = null;
 
@@ -115,30 +80,4 @@ const showTextDialog = setupInputDialog(
 export function openTextDialog(wx: number, wy: number): void {
   pendingTextPos = { x: wx, y: wy };
   showTextDialog();
-}
-
-// ── Token rename ───────────────────────────────────────────────
-let renamingTokenIdx: number | null = null;
-
-const showRenameDialog = setupInputDialog(
-  'token-rename',
-  (text) => {
-    const el = renamingTokenIdx === null ? undefined : state.elements[renamingTokenIdx];
-    renamingTokenIdx = null;
-    // An empty name keeps the current one, and unchanged names aren't an edit.
-    if (el?.type !== 'token' || !text || text === el.name) return;
-    el.name = text;
-    drawMain();
-    pushHistory();
-  },
-  () => {
-    renamingTokenIdx = null;
-  },
-);
-
-export function openTokenRenameDialog(idx: number): void {
-  const el = state.elements[idx];
-  if (el?.type !== 'token') return;
-  renamingTokenIdx = idx;
-  showRenameDialog(el.name ?? '');
 }

@@ -558,6 +558,75 @@ canvas {
   gap: 8px;
 }
 
+/* ── The token card: details of the selected token, floating above it ── */
+#token-card {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+#token-name-field {
+  box-sizing: border-box;
+  width: 100%; /* as wide as the row of colors under it */
+  padding: 6px 9px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+#token-name-field:focus { border-color: var(--accent-dim); }
+#token-name-field::placeholder { color: var(--text-muted); }
+
+/* The card is a column: the name, then a row of colours. */
+#token-card { flex-direction: column; align-items: stretch; gap: 8px; }
+
+#token-colors { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px; }
+
+.token-swatch {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.token-swatch:hover { transform: scale(1.12); }
+.token-swatch[aria-pressed='true'] { box-shadow: 0 0 0 2px #1e1b17, 0 0 0 4px var(--accent); }
+.token-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* "Any colour": a ring of colours that opens the browser's own picker. */
+.token-swatch-custom {
+  background: conic-gradient(#e05c5c, #e0a85c, #c8e05c, #5cba6a, #5ce0d4, #5c8ae0, #9a5ce0, #e05caa, #e05c5c);
+}
+
+.token-swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.token-swatch-custom:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+.token-swatch-custom.selected { box-shadow: 0 0 0 2px #1e1b17, 0 0 0 4px var(--accent); }
+
 /* Text for assistive tech that is not drawn. */
 .visually-hidden {
   position: absolute;

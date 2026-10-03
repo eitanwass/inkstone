@@ -37,9 +37,15 @@ Each item is meant to ship on its own.
   - ~~A gear button opens it; the Board panel sets the unit (feet, meters, squares) and how much one square is worth.~~
   - ~~A "D&D diagonal rules" toggle: the first diagonal counts as 1 square, the next as 2, and so on.~~
   - ~~More panels can be added later (see `src/settings.ts`).~~
-- **Token polish**: colour per token, initials or an emoji/icon, a condition
-  marker (dead, prone, ...) and a "duplicate and increment" for packs of enemies
-  ("Goblin 1, 2, 3"). (M)
+- **Token polish** (M)
+  - ~~Place tokens without a name dialog: a plain disc straight away.~~
+  - ~~A card above the selected token, with a name field (`src/token-card.ts`).~~
+  - Image on the token. Store each image once, downscaled, and let tokens point at it,
+    so whole-map sync and saving don't carry copies; offer images already used.
+  - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
+  - ~~Color per token, in the card: the palette as swatches, and any color.~~
+  - A condition marker (dead, prone, ...).
+  - "Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").
 - **Text and label styling**: bold/size presets and a background plate so labels
   read over busy maps. (S)
 - **Layer controls**: lock an element, send to back, hide/show a group, so a
@@ -70,7 +76,7 @@ Each item is meant to ship on its own.
   things by accident. A light version of GM-versus-player roles. (M)
 - **Ping**: click-and-hold to flash a spot for everyone ("look here"). (S)
 
-## Later: bigger bets (L, decide with real use first)
+## Later: bigger bets (L)
 
 - **Fog of war / hidden areas**: the main thing GMs ask a battle map for. Needs roles first (the GM sees everything, players
   don't), so it follows read-only links.
@@ -78,17 +84,3 @@ Each item is meant to ship on its own.
   have dice; do it only if it keeps people on the page.
 - **Accounts and cloud-saved maps**: only if people ask for it. It brings storage
   and cost, and it ends the "nothing to sign up for" advantage.
-
-## Not now
-
-- Dynamic lighting, scripting and automation: that is a different product
-  (Foundry and Roll20 territory), and the thing a minimal tool is chosen to avoid.
-- Per-map link previews: tried in 0.6.1 to 0.6.3 and removed (see CLAUDE.md).
-
-## How to choose
-
-Start from the top and stop when it stops feeling quick. "Now" is about a
-week of work for the whole section and changes how the app feels in the first
-minute, which is where a new visitor decides. Pick one item from "Next" and one
-from "Sessions" per release after that, and revisit the order whenever someone
-actually uses it at a table.

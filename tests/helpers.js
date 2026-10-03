@@ -46,6 +46,9 @@ export async function placeWall(page, toScreen, x1, y1, x2, y2) {
   await page.mouse.up();
 }
 
+// Places a token with the token tool (dragging out to dragTo makes it bigger). A token is placed
+// with no name; pass one to give it a name afterwards, the way a person would: click it and type in
+// the card that appears above it. The token tool is back in use afterwards.
 export async function placeToken(page, toScreen, x, y, name, dragTo) {
   await page.click('#tool-token');
   let p = toScreen(x, y);
@@ -56,9 +59,15 @@ export async function placeToken(page, toScreen, x, y, name, dragTo) {
     await page.mouse.move(p.x, p.y, { steps: 8 });
   }
   await page.mouse.up();
-  await page.waitForSelector('#token-name-overlay:not(.hidden)');
-  await page.fill('#token-name-input', name);
-  await page.click('#token-name-confirm');
+  if (!name) return;
+
+  // A token's centre is the clicked cell's origin plus half a cell.
+  const centre = toScreen(Math.round(x / 40) * 40 + 20, Math.round(y / 40) * 40 + 20);
+  await page.click('#tool-select');
+  await page.mouse.click(centre.x, centre.y);
+  await page.fill('#token-name-field', name);
+  await page.keyboard.press('Enter');
+  await page.click('#tool-token');
 }
 
 export async function placeLabel(page, toScreen, x, y, text) {

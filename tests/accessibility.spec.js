@@ -46,6 +46,18 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with a token selected and its card showing', async ({ page }) => {
+    await page.click('#tool-token');
+    const box = await page.locator('#interaction-canvas').boundingBox();
+    await page.mouse.click(box.x + box.width * 0.1 + 200, box.y + box.height * 0.1 + 200);
+    await page.click('#tool-select');
+    await page.mouse.click(box.x + box.width * 0.1 + 220, box.y + box.height * 0.1 + 220);
+    await expect(page.locator('#token-card')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+    await page.fill('#token-name-field', 'Aragorn');
+    expect(await violations(page)).toEqual([]); // with a name typed in, too
+  });
+
   test('with the settings open', async ({ page }) => {
     await page.click('#btn-settings');
     await expect(page.locator('#settings-modal')).toBeVisible();

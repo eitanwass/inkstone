@@ -25,6 +25,14 @@ export function setView(panX: number, panY: number, zoom: number = state.zoom): 
   drawMain();
 }
 
+// Something that needs to follow the map around (the token card) asks to be told after every
+// redraw. Registered here rather than imported, because it sits above history.ts, which sits
+// above this file.
+let afterDraw: (() => void) | null = null;
+export function onMainDrawn(fn: () => void): void {
+  afterDraw = fn;
+}
+
 export function drawMain() {
   mCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
@@ -58,6 +66,7 @@ export function drawMain() {
 
   mCtx.restore();
   updateFirstVisitHint();
+  afterDraw?.();
 }
 
 // ── Highlight boxes ────────────────────────────────────────────

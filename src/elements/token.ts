@@ -10,6 +10,25 @@ import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID } from '../state';
 import type { ElementBehavior, TokenElement } from '../types';
 
 const DEFAULT_COLOR = '#e05c5c';
+
+// The colours a token comes in. New tokens take them in turn, so a handful placed one after
+// another can be told apart, and the token card offers them as swatches.
+export const PALETTE = [
+  { hex: '#e05c5c', name: 'Red' },
+  { hex: '#5c8ae0', name: 'Blue' },
+  { hex: '#5cba6a', name: 'Green' },
+  { hex: '#e0a85c', name: 'Orange' },
+  { hex: '#9a5ce0', name: 'Purple' },
+  { hex: '#5ce0d4', name: 'Teal' },
+  { hex: '#e05caa', name: 'Pink' },
+  { hex: '#c8e05c', name: 'Lime' },
+] as const;
+let placedCount = 0;
+
+export function nextTokenColor(): string {
+  return PALETTE[placedCount++ % PALETTE.length].hex;
+}
+
 const radiusOf = (el: TokenElement) => el.radius || DEFAULT_TOKEN_RADIUS;
 const nameFontSize = (r: number) => Math.floor(r * 0.52);
 
@@ -57,16 +76,16 @@ export const token: ElementBehavior<TokenElement> = {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Initials
-    const initials = el.name ? el.name.slice(0, 2).toUpperCase() : '?';
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.floor(r * 0.85)}px ${FONT_FAMILY}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(initials, el.x, el.y + 1);
-
-    // Name below — outlined so it reads on the light canvas background
+    // A token with no name is a plain disc: no initials, no label.
     if (el.name) {
+      // Initials
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(r * 0.85)}px ${FONT_FAMILY}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(el.name.slice(0, 2).toUpperCase(), el.x, el.y + 1);
+
+      // Name below — outlined so it reads on the light canvas background
       ctx.font = `${nameFontSize(r)}px ${FONT_FAMILY}`;
       ctx.strokeStyle = 'rgba(0,0,0,0.75)';
       ctx.lineWidth = 3;

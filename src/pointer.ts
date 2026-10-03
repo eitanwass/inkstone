@@ -6,10 +6,11 @@
 
 import { clientToCanvas, clientToWorld, iCanvas } from './canvas';
 import { hideContextMenus } from './context-menu';
-import { zoomAround } from './controls';
-import { openTextDialog, openTokenDialog } from './dialogs';
+import { editTokenName, zoomAround } from './controls';
+import { openTextDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
+import { nextTokenColor } from './elements/token';
 import { eraseAtCell, updateEraseHover } from './erase';
 import { cellOf, dist, snapToGrid, snapToHalfGrid } from './geometry';
 import { applyHandleDrag, handleCursor, hasHandles, hitHandle, startHandleDrag } from './handles';
@@ -300,6 +301,7 @@ function onPointerUp(e: PointerEvent): void {
     state.elementDrag = null;
     iCanvas.style.cursor = 'move';
     if (moved) pushHistory();
+    drawMain(); // so anything that waited for the drag to end (the token card) comes back
     return;
   }
 
@@ -316,11 +318,18 @@ function onPointerUp(e: PointerEvent): void {
   const p = state.preview;
 
   if (p.type === 'token') {
-    // Name still needs to be entered before this becomes a real element —
-    // openTokenDialog stashes the dragged radius until that dialog confirms.
-    openTokenDialog(p.x, p.y, p.radius ?? DEFAULT_TOKEN_RADIUS);
+    // Placed as it is: a plain disc in the next colour, with no name. A name (and later more)
+    // is added afterwards, from the token itself.
+    state.elements.push({
+      type: 'token',
+      x: p.x,
+      y: p.y,
+      radius: p.radius ?? DEFAULT_TOKEN_RADIUS,
+      color: nextTokenColor(),
+    });
     state.preview = null;
     drawMain();
+    pushHistory();
     return;
   }
 
@@ -367,6 +376,18 @@ function onWheel(e: WheelEvent): void {
 }
 
 iCanvas.addEventListener('pointermove', onPointerMove);
+// Double-clicking a token puts the cursor in its name (its card is already showing: the first
+// click selected it).
+iCanvas.addEventListener('dblclick', (e) => {
+  if (state.tool !== 'select') return;
+  const world = clientToWorld(e.clientX, e.clientY);
+  const idx = hitTest(world.x, world.y);
+  if (idx === null || state.elements[idx].type !== 'token') return;
+  state.selected = [idx];
+  drawMain();
+  editTokenName();
+});
+
 iCanvas.addEventListener('pointerdown', onPointerDown);
 iCanvas.addEventListener('pointerup', onPointerUp);
 iCanvas.addEventListener('pointercancel', onPointerCancel);

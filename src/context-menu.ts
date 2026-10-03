@@ -4,7 +4,6 @@
 // menu (Paste only, shown when the clipboard has something in it).
 
 import { clientToWorld, iCanvas } from './canvas';
-import { openTokenRenameDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
 import { pushHistory, showUndoToast } from './history';
@@ -20,6 +19,7 @@ import {
   sendSelectedToBack,
 } from './selection';
 import { state } from './state';
+import { chooseTokenColor, nameToken } from './token-card';
 import type { Point, TokenElement } from './types';
 
 // What the open menu acts on: the right-clicked token, or the spot to paste at.
@@ -93,6 +93,8 @@ function showElementContextMenu(cx: number, cy: number): void {
 
 function showTokenContextMenu(cx: number, cy: number, idx: number): void {
   const menu = byId('token-context-menu');
+  // A token with no name is offered one; a named token a new name.
+  byId('ctx-token-rename').textContent = tokenAt(idx)?.name ? '✏ Rename' : '✏ Add name';
   placeMenu(menu, cx, cy);
   tokenMenuTarget = idx;
 }
@@ -141,8 +143,7 @@ byId('ctx-token-delete').addEventListener('click', () => {
   const token = tokenAt(idx);
   if (idx === null || !token) return;
 
-  const name = token.name || 'this token';
-  showConfirm(`Remove token "${name}"?`, () => {
+  showConfirm(token.name ? `Remove token "${token.name}"?` : 'Remove this token?', () => {
     state.elements.splice(idx, 1);
     state.selected = [];
     drawMain();
@@ -151,23 +152,12 @@ byId('ctx-token-delete').addEventListener('click', () => {
   });
 });
 
+// Names the token in its card, over the map, rather than in a dialog.
 byId('ctx-token-rename').addEventListener('click', () => {
-  if (tokenMenuTarget !== null) openTokenRenameDialog(tokenMenuTarget);
+  if (tokenMenuTarget !== null) nameToken(tokenMenuTarget);
 });
 
+// The colours are in the token's card, so this selects the token and moves to them.
 byId('ctx-token-color').addEventListener('click', () => {
-  const idx = tokenMenuTarget;
-  const token = tokenAt(idx);
-  if (!token) return;
-  const picker = document.createElement('input');
-  picker.type = 'color';
-  picker.value = token.color || '#e05c5c';
-  picker.click();
-  picker.addEventListener('change', () => {
-    const current = tokenAt(idx);
-    if (!current) return;
-    current.color = picker.value;
-    drawMain();
-    pushHistory();
-  });
+  if (tokenMenuTarget !== null) chooseTokenColor(tokenMenuTarget);
 });

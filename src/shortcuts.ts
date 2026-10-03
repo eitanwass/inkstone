@@ -6,6 +6,7 @@
 
 import {
   closeShortcutsHelp,
+  editTokenName,
   fitMapToScreen,
   nudgeSelected,
   resetView,
@@ -46,10 +47,13 @@ function confirmAndDeleteSelected(): void {
     return;
   }
   const only = state.elements[state.selected[0]];
+  const name = only.type === 'token' ? only.name : '';
   const msg =
     state.selected.length > 1
       ? `Remove ${state.selected.length} selected elements?`
-      : `Remove token "${only.type === 'token' ? only.name : ''}"?`;
+      : name
+        ? `Remove token "${name}"?`
+        : 'Remove this token?';
   showConfirm(msg, deleteSelected);
 }
 
@@ -70,6 +74,13 @@ document.addEventListener('keydown', (e) => {
   if (!mod && TOOL_KEYS[key]) setTool(TOOL_KEYS[key]);
 
   if (!mod && key === 'f') fitMapToScreen();
+
+  // Enter types a name into the selected token. Only from the map itself: on a focused button, Enter
+  // must still press it.
+  if (!mod && key === 'enter' && ['BODY', 'CANVAS'].includes((e.target as HTMLElement).tagName)) {
+    editTokenName();
+    if (document.activeElement?.id === 'token-name-field') e.preventDefault(); // not typed into the field as it opens
+  }
   if (key === '?') toggleShortcutsHelp();
   if (key === 'escape') closeShortcutsHelp();
 

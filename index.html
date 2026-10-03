@@ -191,6 +191,18 @@
     </div>
   </section>
 
+  <!-- The token card: details of the selected token, above it (see src/token-card.ts). Only the name
+       so far; image, HP and AC are meant to go here too. -->
+  <div id="token-card" class="hidden" role="group" aria-label="Token details">
+    <input id="token-name-field" type="text" maxlength="20" placeholder="Name" aria-label="Token name" autocomplete="off" spellcheck="false" enterkeyhint="done" />
+    <!-- Color: the token palette as swatches (built in src/token-card.ts), then any color -->
+    <div id="token-colors" role="group" aria-label="Token color">
+      <label class="token-swatch token-swatch-custom" title="Custom color">
+        <input type="color" id="token-color-custom" aria-label="Custom color" />
+      </label>
+    </div>
+  </div>
+
   <!-- The measurement on screen (ruler distance, or the size of the shape being drawn), as text:
        the canvas draws it, this lets screen readers and the tests read it. -->
   <p id="measure-readout" class="visually-hidden"></p>
@@ -231,6 +243,7 @@
         <dt><kbd>Esc</kbd></dt><dd>Deselect</dd>
         <dt><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></dt><dd>Move one cell</dd>
         <dt><kbd>Ctrl</kbd> <kbd>C</kbd> / <kbd>V</kbd> / <kbd>D</kbd></dt><dd>Copy / paste / duplicate</dd>
+        <dt><kbd>Enter</kbd></dt><dd>Name the selected token</dd>
         <dt><kbd>Del</kbd></dt><dd>Delete</dd>
         <dt><kbd>Shift</kbd> click</dt><dd>Add to selection</dd>
       </dl>
@@ -307,30 +320,6 @@
       <div class="modal-actions">
         <button id="modal-cancel" class="btn-secondary">Cancel</button>
         <button id="modal-confirm" class="btn-danger">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Token name dialog -->
-  <div id="token-name-overlay" class="input-overlay hidden">
-    <div id="token-name-modal" class="input-modal" role="dialog" aria-modal="true" aria-labelledby="token-name-title">
-      <p id="token-name-title">Name this token</p>
-      <input type="text" id="token-name-input" placeholder="e.g. Aragorn" maxlength="20" />
-      <div class="modal-actions">
-        <button id="token-name-cancel" class="btn-secondary">Cancel</button>
-        <button id="token-name-confirm" class="btn-primary">Place Token</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Token rename dialog -->
-  <div id="token-rename-overlay" class="input-overlay hidden">
-    <div id="token-rename-modal" class="input-modal" role="dialog" aria-modal="true" aria-labelledby="token-rename-title">
-      <p id="token-rename-title">Rename token</p>
-      <input type="text" id="token-rename-input" maxlength="20" />
-      <div class="modal-actions">
-        <button id="token-rename-cancel" class="btn-secondary">Cancel</button>
-        <button id="token-rename-confirm" class="btn-primary">Rename</button>
       </div>
     </div>
   </div>

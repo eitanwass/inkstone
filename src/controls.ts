@@ -12,6 +12,7 @@ import { pushHistory } from './history';
 import { closePopover } from './popover';
 import { drawMain, setView } from './render';
 import { GRID, state } from './state';
+import { focusTokenName } from './token-card';
 import type { Bounds } from './types';
 
 // ── View ───────────────────────────────────────────────────────
@@ -95,6 +96,12 @@ shortcutsBtn.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
   if (!shortcutsPopover.contains(e.target as Node)) closeShortcutsHelp();
 });
+
+// ── Token ──────────────────────────────────────────────────────
+// Puts the cursor in the name field of the selected token's card (Enter, or a double-click).
+export function editTokenName(): void {
+  focusTokenName();
+}
 
 // ── Selection ──────────────────────────────────────────────────
 // Moves the selection by whole cells (the arrow keys). One undo step per call.

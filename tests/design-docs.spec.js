@@ -36,8 +36,8 @@ test('the style guide shows every colour token', () => {
 test('the drawing palettes and token colours in the app are documented', () => {
   const swatches = [...read('index.html').matchAll(/data-color="(#[0-9a-f]{6})"/gi)].map((m) => m[1]);
   const tokenColors = [
-    ...read('src/dialogs.ts')
-      .match(/TOKEN_COLORS = \[([^\]]*)\]/)[1]
+    ...read('src/elements/token.ts')
+      .match(/PALETTE = \[([^\]]*)\]/)[1]
       .matchAll(/#[0-9a-f]{6}/gi),
   ].map((m) => m[0]);
   expect(swatches.length).toBeGreaterThanOrEqual(11);

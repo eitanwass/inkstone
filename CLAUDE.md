@@ -250,7 +250,8 @@ chain, so there are no circular imports to reason about.
 | `focus.ts` | `trapFocus` / `restoreFocus` for modals. |
 | `modal.ts` | The generic confirm dialog. |
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
-| `dialogs.ts` | Token-name and text-label placement dialogs. |
+| `dialogs.ts` | The text-label placement dialog. |
+| `token-card.ts` | The card above a selected token (its name and color for now; image, HP and AC to come): placement, editing, the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `toolbar.ts` | Tool switching + the contextual style panel. |
 | `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
 | `controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
@@ -301,6 +302,24 @@ using `snapToGrid` there was a real bug that only showed up near a cell
 boundary (e.g. clicking near a large token's edge could round to the
 *next* cell over and miss it). Each type's `occupiesCell`
 math must stay on the same convention as whatever its caller passes in.
+
+**Tokens are placed with no name**: releasing the mouse with the token tool commits a plain
+disc straight away (no dialog), in the next colour of `PALETTE` in `elements/token.ts`. An
+unnamed token draws no initials and no label. Details are added afterwards in **the token
+card** (`token-card.ts`, markup `#token-card`): click a token (select tool, exactly one
+selected) and a card appears above it, below it when the top of the screen is in the way,
+following it as the map is panned or zoomed and gone while it is dragged. It holds a name
+field and the token's color (the eight `PALETTE` swatches from `elements/token.ts`, plus a
+ring that opens the browser's own picker for any color; a choice applies at once as one
+undo step, and the token's right-click "Change Color" just selects it and moves to these
+swatches). Image, HP and AC are meant to join it (as plain numbers everyone sees;
+hiding them from players needs roles). The card never takes focus by itself, so Delete and
+the arrows still act on the token; click its field, double-click the token, press Enter, or
+choose "Add name" (or "Rename") from the token's right-click menu to type. Enter or
+clicking away keeps the name (one undo step; unchanged is none; trimmed; empty removes
+it); Escape restores the old one and keeps the token selected. The card is positioned from
+`render.ts`'s `onMainDrawn` hook, which is registered rather than imported to keep the
+module chain one-way.
 
 **Tokens have a variable `radius`**, set either by dragging while placing
 one or, after the fact, via resize handles on an already-selected token
