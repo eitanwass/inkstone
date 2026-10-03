@@ -64,6 +64,7 @@ chain, so there are no circular imports to reason about.
 | `selection.js` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `erase.js` | Erase tool targeting + hover preview. |
 | `pointer.js` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
+| `touch.js` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.js` offers it each event first. |
 | `modal.js` | The generic confirm dialog. |
 | `context-menu.js` | Right-click menus (element, token, empty-canvas paste). |
 | `dialogs.js` | Token-name and text-label placement dialogs. |

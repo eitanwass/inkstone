@@ -51,3 +51,18 @@ export const state = {
   // Element under the eraser cursor, shown as a deletion preview
   eraseHover: null,
 };
+
+// Aborts whatever single-pointer tool action is mid-flight (a draw preview,
+// a box-select, an element/handle drag, an erase stroke) without touching
+// the current selection. Used when a 2nd finger turns a gesture into a
+// pinch, on a touch long-press, and by Escape (which additionally clears the
+// selection itself).
+export function cancelInProgressDrag() {
+  state.preview = null;
+  state.isDragging = false;
+  state.isBoxSelecting = false;
+  state.selectBox = null;
+  state.elementDrag = null;
+  state.handleDrag = null;
+  state.isErasing = false;
+}
