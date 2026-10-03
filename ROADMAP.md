@@ -21,8 +21,8 @@ Each item is meant to ship on its own.
   - ~~`?` opens a small list of every shortcut.~~
 - ~~**Zoom controls on-screen.**~~
   - ~~`+` / `-` and "fit map to screen".~~
-- **Undo for Clear All** (check it already records a step; if not, make it) and a
-  toast with an "Undo" button after destructive actions instead of only a confirm.
+- ~~**Undo for Clear All and other destructive actions.**~~
+  - ~~A toast with an "Undo" button after Clear All and after deleting elements or a token.~~
 - **Saved-state feedback.** A quiet "Saved" mark so people trust that the map
   survives a reload.
 - **First-visit hint.** A one-line, dismissible tip on an empty map ("Press R and

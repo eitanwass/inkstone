@@ -5,7 +5,7 @@
 
 import { getElementBounds, snapshotCoords, translateElement } from './elements';
 import { normalizeRect, rectsOverlap, snapToGrid } from './geometry';
-import { pushHistory } from './history';
+import { pushHistory, showUndoToast } from './history';
 import { drawMain } from './render';
 import { GRID, state } from './state';
 import { showToast } from './toast';
@@ -22,6 +22,7 @@ export function deleteSelected() {
   state.selected = [];
   drawMain();
   pushHistory();
+  showUndoToast(idxs.length > 1 ? `${idxs.length} elements deleted` : 'Element deleted');
 }
 
 // Selected indices in ascending (z-order) order.

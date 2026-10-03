@@ -46,6 +46,13 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with an Undo toast showing', async ({ page }) => {
+    await page.click('#btn-clear');
+    await page.click('#modal-confirm');
+    await expect(page.locator('#toast .toast-action')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with a map name set, and while it is being edited', async ({ page }) => {
     await page.click('#map-name');
     await page.keyboard.type('The Sunken Crypt of Vael');

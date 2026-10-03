@@ -7,7 +7,7 @@ import { clientToWorld, iCanvas } from './canvas';
 import { openTokenRenameDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
-import { pushHistory } from './history';
+import { pushHistory, showUndoToast } from './history';
 import { showConfirm } from './modal';
 import { drawMain } from './render';
 import {
@@ -20,7 +20,6 @@ import {
   sendSelectedToBack,
 } from './selection';
 import { state } from './state';
-import { showToast } from './toast';
 import type { Point, TokenElement } from './types';
 
 // What the open menu acts on: the right-clicked token, or the spot to paste at.
@@ -121,10 +120,7 @@ byId('ctx-paste').addEventListener('click', () => {
 });
 
 byId('ctx-delete').addEventListener('click', () => {
-  const n = state.selected.length;
-  if (!n) return;
-  deleteSelected();
-  showToast(n > 1 ? `${n} elements deleted` : 'Element deleted');
+  if (state.selected.length) deleteSelected();
 });
 
 byId('ctx-bring-front').addEventListener('click', () => {
@@ -151,7 +147,7 @@ byId('ctx-token-delete').addEventListener('click', () => {
     state.selected = [];
     drawMain();
     pushHistory();
-    showToast('Token removed');
+    showUndoToast('Token removed');
   });
 });
 

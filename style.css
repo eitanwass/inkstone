@@ -911,6 +911,26 @@ canvas {
 
 #toast.visible { opacity: 1; }
 
+/* A toast with a button (Undo) must be clickable, and gets the button on its right. */
+#toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.toast-action {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toast-action:hover { text-decoration: underline; }
+
 .hidden { display: none !important; }
 
 /* ── Cursor overrides per tool ─────────────────────────────── */

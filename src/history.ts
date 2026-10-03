@@ -103,6 +103,11 @@ export function undo() {
   if (history.index > 0) restoreSnapshot(history.index - 1, 'Undo');
 }
 
+// A toast for something destructive that has just been done, with a button that takes it back.
+export function showUndoToast(message: string): void {
+  showToast(message, { label: 'Undo', run: undo });
+}
+
 export function redo() {
   if (history.index < history.stack.length - 1) restoreSnapshot(history.index + 1, 'Redo');
 }

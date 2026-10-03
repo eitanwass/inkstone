@@ -5,7 +5,7 @@ import { mainCanvas } from './canvas';
 import { resetView } from './controls';
 import { byId } from './dom';
 import { drawGridDots } from './grid';
-import { pushHistory } from './history';
+import { pushHistory, showUndoToast } from './history';
 import { mapFileName } from './map-name';
 import { showConfirm } from './modal';
 import { drawElement, drawMain } from './render';
@@ -20,7 +20,7 @@ byId('btn-clear').addEventListener('click', () => {
     state.selected = [];
     drawMain();
     pushHistory();
-    showToast('Map cleared');
+    showUndoToast('Map cleared');
   });
 });
 
