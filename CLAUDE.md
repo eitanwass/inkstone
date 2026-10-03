@@ -103,6 +103,56 @@ sources, if an icon isn't served, or if a home-screen icon has transparency.
 `index.html` links the icons and `public/site.webmanifest` (name, colors,
 home-screen icons).
 
+## The map's name
+
+`state.mapName` (`''` = unnamed, shown as the "Untitled map" placeholder) is
+edited in place at the top of the page (`map-name.ts`, markup `#map-title`): the
+title is a real `<input>` styled as text, with a hidden mirror `<span>` in the
+same grid cell giving it the width of its text. **Enter or clicking away
+commits; Escape puts the old name back.** Rules for the text live in
+`map-name-text.ts` (`normalizeMapName`: trimmed, whitespace collapsed, control
+characters removed, at most 60 characters; `mapFileSlug` for the export's file
+name). Where it appears: the field, `document.title` ("Name – Inkstone"), and the
+exported PNG's name (`the-sunken-crypt.png`, default `inkstone-map.png`).
+
+Deliberate design points:
+
+- **Not part of the undo history.** Snapshots (`history.stack`) hold only
+  elements; renaming never creates an undo step and undo/redo never changes the
+  name. The name has its own persistence (`persistMapName`, key
+  `inkstone-map-name`) and is saved once per commit.
+- **Synced once, when editing finishes** (the commit), never per keystroke.
+  Because the relay remembers only the *latest* message to catch up whoever joins
+  next, a rename sends the whole snapshot via `broadcastDocument()` (history.ts)
+  without recording a history step, not a name-only message.
+- **Wire format.** `collab.ts` sends `{ name, elements }`. `parseSnapshot`
+  (validate.ts) also accepts the older bare array of elements (no name: the local
+  name is left alone), and ignores a name that isn't text while still applying the
+  elements. The relay itself is unchanged: it passes strings through.
+- **A peer's rename never overwrites what you're typing**: `refreshMapName()`
+  leaves the field alone while it has focus, and it shows the shared name when you
+  finish (or press Escape). Offline renames follow the same rule as offline edits:
+  the shared map wins on reconnect.
+- **Layout.** Wide screens (over 1000px): centred in the top row. At 1000px and
+  under there's no room beside both the brand mark and the right rail, so it moves
+  to a row below them, left-aligned, leaving room for the "Live" pill (`body.is-sharing`
+  is set while the pill shows). The toast sits below the name for the same reason.
+  Focus uses an ink-coloured outline, not the gold one, which is 1.8:1 on parchment.
+
+**Known limitation (deliberate for now).** Because a rename sends the renamer's
+whole snapshot (see above), it can overwrite other people's work in two cases:
+(1) a joiner who renames *before the room's map has reached them* sends their own
+older board (confirmed with a probe: the message carried the joiner's stale
+elements); (2) a rename sent while someone else is mid-edit carries a copy that
+lacks that edit (the same lost-update every whole-snapshot edit has under
+last-write-wins, but a rename makes it happen without touching the map). The fix
+is to send the name as its own message that never carries the map, with the relay
+remembering the map and the name separately for catch-up. That needs a relay
+change, and the relay must be redeployed *before* the client: an old relay would
+remember a name-only message as the whole room. The new relay should keep accepting
+today's formats. A client-only guard (hold a joiner's rename until they have
+caught up) fixes just case 1.
+
 ## Design system and share preview
 
 [design/DESIGN.md](design/DESIGN.md) is the design guide (brand, logo, colour,
@@ -193,6 +243,8 @@ chain, so there are no circular imports to reason about.
 | `changelog.ts` | The "What's new" modal (about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
 | `changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
 | `storage.ts` | Never-throwing `localStorage` wrappers. All reads and writes go through here. |
+| `map-name.ts` | The editable map name at the top of the page (see "The map's name"). |
+| `map-name-text.ts` | Pure rules for map names: `normalizeMapName`, `mapFileSlug`. |
 | `focus.ts` | `trapFocus` / `restoreFocus` for modals. |
 | `modal.ts` | The generic confirm dialog. |
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |

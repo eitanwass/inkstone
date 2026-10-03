@@ -108,6 +108,82 @@ canvas {
   color: #4a3f2e;
 }
 
+/* ── Map name (top-centre, click to rename) ───────────────────── */
+#map-title {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: inline-grid;
+  /* Stay clear of the brand mark (left) and the right rail: about 400px each side. */
+  max-width: max(140px, min(520px, calc(100vw - 800px)));
+}
+
+/* A hidden copy of the text and the input share one grid cell, so the box is as wide as the text. */
+#map-title-mirror,
+#map-name {
+  grid-area: 1 / 1;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+#map-title-mirror {
+  visibility: hidden;
+  white-space: pre;
+  overflow: hidden;
+}
+
+#map-name {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  text-overflow: ellipsis;
+  color: #4a3f2e;
+  background: transparent;
+  cursor: text;
+}
+
+#map-name::placeholder {
+  color: #6b5f50; /* 4.9:1 on the parchment */
+  opacity: 1;
+}
+
+#map-title:hover #map-name { border-color: rgba(74, 63, 46, 0.3); }
+
+#map-name:focus {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: transparent;
+}
+
+/* The gold focus ring is for the dark chrome; on the parchment it would be 1.8:1. */
+#map-name:focus-visible {
+  outline: 2px solid #4a3f2e;
+  outline-offset: 0;
+}
+
+/* A pencil that appears on hover or focus, outside the box so the name stays centred. */
+.map-title-edit {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 6px;
+  transform: translateY(-50%);
+  color: #4a3f2e;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+#map-title:hover .map-title-edit,
+#map-title:focus-within .map-title-edit { opacity: 0.6; }
+
 /* ── Ambient HUD readout (bottom-right, faded, non-interactive) */
 #hud-meta {
   position: fixed;
@@ -743,7 +819,7 @@ canvas {
 /* ── Toast (top-center, clear of the floating chrome) ────────── */
 #toast {
   position: fixed;
-  top: 20px;
+  top: 76px; /* below the map name */
   left: 50%;
   transform: translateX(-50%);
   background: #2a2520;
@@ -783,6 +859,21 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   .ctx-item { padding: 10px 16px; }
 }
 
+/* ── Medium and narrow screens: there's no room for the map name beside both
+   the brand mark and the right rail, so it moves to its own row beneath them,
+   left-aligned, and leaves room on the right for the "Live" pill when sharing. */
+@media (max-width: 1000px) {
+  #map-title {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    left: calc(24px + env(safe-area-inset-left, 0px));
+    transform: none;
+    max-width: calc(100vw - 48px);
+  }
+  body.is-sharing #map-title { max-width: calc(100vw - 48px - 130px); }
+  #map-name { text-align: left; }
+  #toast { top: calc(124px + env(safe-area-inset-top, 0px)); }
+}
+
 /* ── Narrow viewports (phones): the bottom-center dock + style panel are
    wide enough together to overflow a portrait phone screen, so they trade
    some breathing room for fitting — overflow-x on both (set above) is the
@@ -791,6 +882,13 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
 @media (max-width: 640px) {
   #brand-mark { display: none; }
   #hud-meta { display: none; }
+
+  #map-title {
+    top: calc(74px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    max-width: calc(100vw - 28px);
+  }
+  body.is-sharing #map-title { max-width: calc(100vw - 28px - 130px); }
 
   .floating-panel { padding: 5px; gap: 2px; }
   #style-panel { gap: 8px; }
@@ -803,7 +901,7 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   /* The action cluster's bigger touch targets (pointer: coarse, below) make
      it wide enough to sit under the centered welcome/action toast — drop
      the toast below that row instead of letting them overlap. */
-  #toast { top: calc(66px + env(safe-area-inset-top, 0px)); }
+  #toast { top: calc(120px + env(safe-area-inset-top, 0px)); }
 
   /* Popovers/modals size to their anchor button or to viewport center, so
      their min-width (set for desktop) is what risks overflow here. */
@@ -817,4 +915,10 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   #right-rail { top: calc(8px + env(safe-area-inset-top, 0px)); }
   #tool-dock { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
   #style-panel { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Landscape phones: the right rail sits higher, so the name does too. */
+@media (max-height: 420px) and (max-width: 1000px) {
+  #map-title { top: calc(68px + env(safe-area-inset-top, 0px)); }
+  #toast { top: calc(116px + env(safe-area-inset-top, 0px)); }
 }

@@ -45,6 +45,9 @@ interface AppState {
   preview: BoardElement | null;
   // Elements (shapes, tokens, labels)
   elements: BoardElement[];
+  // The map's name; '' means unnamed (shown as "Untitled map"). Kept out of
+  // the undo history on purpose.
+  mapName: string;
   // Moving the current selection
   elementDrag: ElementDrag | null;
   // Resizing/rotating a single selected element via its handles
@@ -76,6 +79,7 @@ export const state: AppState = {
   selectionBoxAdditive: false,
   preview: null,
   elements: [],
+  mapName: '',
   elementDrag: null,
   handleDrag: null,
   isErasing: false,

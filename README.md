@@ -10,6 +10,7 @@ browser as you work.
 - Draw rooms and walls on a snapping grid, with resize and rotate handles.
 - Tokens in whole-cell sizes (Medium, Large, Huge…) with names, plus text labels.
 - An eraser that clips walls cell by cell instead of deleting the whole wall.
+- Name your map (click the title at the top); the name shows in the tab, names the exported PNG, and is shared with everyone in a live session.
 - Select, move, copy, paste, duplicate and reorder; undo and redo.
 - Export the map as a PNG.
 - Live co-editing: share a link and everyone edits the same map.

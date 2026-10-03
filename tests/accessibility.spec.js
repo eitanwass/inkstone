@@ -40,6 +40,17 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with a map name set, and while it is being edited', async ({ page }) => {
+    await page.click('#map-name');
+    await page.keyboard.type('The Sunken Crypt of Vael');
+    await expect(page.locator('#map-name')).toBeFocused();
+    expect(await violations(page)).toEqual([]); // focused, with the editing background
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#map-name')).not.toBeFocused();
+    expect(await violations(page)).toEqual([]); // at rest, with a name
+  });
+
   test('with a dialog open', async ({ page }) => {
     await page.click('#btn-clear');
     await expect(page.locator('#modal-overlay')).toBeVisible();

@@ -22,11 +22,12 @@
 import PartySocket from 'partysocket';
 import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
+import { refreshMapName } from './map-name';
 import { closePopover, positionPopover } from './popover';
 import { resolveRelayHost } from './relay-host';
 import { state } from './state';
 import { showToast } from './toast';
-import { parseElements } from './validate';
+import { parseSnapshot } from './validate';
 
 // Null in a production build that wasn't given a relay (see relay-host.ts):
 // sharing is then unavailable, rather than quietly aimed at localhost.
@@ -57,7 +58,7 @@ function broadcastState() {
     unsentEdits = true;
     return;
   }
-  socket.send(JSON.stringify(state.elements));
+  socket.send(JSON.stringify({ name: state.mapName, elements: state.elements }));
 }
 
 setHistoryListener(broadcastState);
@@ -75,6 +76,7 @@ const STATUS_TEXT = { connecting: 'Connecting…', live: 'Live', reconnecting: '
 function setStatus(status: keyof typeof STATUS_TEXT | null): void {
   const el = byId('collab-status');
   el.classList.toggle('hidden', status === null);
+  document.body.classList.toggle('is-sharing', status !== null);
   if (!status) return;
   el.dataset.state = status;
   byId('collab-status-text').textContent = STATUS_TEXT[status];
@@ -119,8 +121,10 @@ function connect(sessionId: string, { seed = false } = {}): void {
     unsentEdits = false;
   });
   current.addEventListener('message', (evt) => {
-    const elements = parseElements(parseJson(evt.data));
-    if (elements) applyRemoteSnapshot(elements);
+    const snapshot = parseSnapshot(parseJson(evt.data));
+    if (!snapshot) return;
+    applyRemoteSnapshot(snapshot);
+    refreshMapName();
   });
   current.addEventListener('close', () => {
     if (socket !== current || !everOpened) return; // replaced by another session, or never connected

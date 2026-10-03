@@ -6,11 +6,12 @@
 // per action type.
 
 import { byId } from './dom';
+import { normalizeMapName } from './map-name-text';
 import { drawMain } from './render';
 import { state } from './state';
-import { storageGet, storageSet } from './storage';
+import { storageGet, storageRemove, storageSet } from './storage';
 import { showToast } from './toast';
-import type { BoardElement } from './types';
+import type { BoardElement, BoardSnapshot } from './types';
 import { parseElements } from './validate';
 
 const history: { stack: BoardElement[][]; index: number } = { stack: [], index: -1 };
@@ -31,6 +32,7 @@ export function setHistoryListener(fn: () => void): void {
 // the board content persists across a reload — the undo/redo stack itself
 // does not, so a fresh load always starts with a single history baseline.
 const STORAGE_KEY = 'inkstone-board';
+const NAME_STORAGE_KEY = 'inkstone-map-name';
 
 // Saving is a convenience, not a requirement, so a failed write never breaks
 // the app — but the first failure per page load tells the user, since their
@@ -53,6 +55,26 @@ export function loadPersistedBoard(): BoardElement[] | null {
   } catch {
     return null;
   }
+}
+
+// The map's name is saved separately from the elements: it isn't part of the
+// undo history (renaming and undoing don't interact), so it has its own
+// chokepoint, called when a rename is committed or one arrives from a peer.
+export function persistMapName(): void {
+  if (state.mapName) storageSet(NAME_STORAGE_KEY, state.mapName);
+  else storageRemove(NAME_STORAGE_KEY);
+}
+
+export function loadPersistedMapName(): string {
+  return normalizeMapName(storageGet(NAME_STORAGE_KEY));
+}
+
+// Sends the current document to collaborators without recording an undo step.
+// Used when only the name changed: the relay remembers just the latest message
+// to catch up whoever joins next, so a rename sends the whole snapshot (name
+// plus the unchanged elements) and not a name-only message.
+export function broadcastDocument(): void {
+  if (historyListener) historyListener();
 }
 
 export function pushHistory() {
@@ -88,10 +110,15 @@ export function redo() {
 // Applied when a snapshot arrives from another connected client (collab.js).
 // Deliberately bypasses history.stack — undo/redo stays about *your own*
 // edits, not a peer's, so undoing right after a remote change doesn't
-// silently revert something you didn't do.
-export function applyRemoteSnapshot(elements: BoardElement[]): void {
-  state.elements = elements;
+// silently revert something you didn't do. A snapshot with no name (an older
+// client's) leaves the map's name alone.
+export function applyRemoteSnapshot(snapshot: BoardSnapshot): void {
+  state.elements = snapshot.elements;
   state.selected = [];
+  if (snapshot.name !== undefined) {
+    state.mapName = snapshot.name;
+    persistMapName();
+  }
   drawMain();
   persistBoard();
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseElements } from '../../src/validate';
+import { parseElements, parseSnapshot } from '../../src/validate';
 
 describe('parseElements', () => {
   it('returns null for anything that is not a list', () => {
@@ -73,5 +73,47 @@ describe('parseElements', () => {
 
   it('returns an empty list for an empty list', () => {
     expect(parseElements([])).toEqual([]);
+  });
+});
+
+describe('parseSnapshot', () => {
+  const room = { type: 'rect', x: 0, y: 0, w: 80, h: 40 };
+
+  it('reads the current format: the elements and the map name', () => {
+    expect(parseSnapshot({ name: 'The Sunken Crypt', elements: [room] })).toEqual({
+      name: 'The Sunken Crypt',
+      elements: [room],
+    });
+  });
+
+  it("reads an older client's message, a bare list of elements, with no name", () => {
+    expect(parseSnapshot([room])).toEqual({ elements: [room] });
+  });
+
+  it('keeps an empty name, which means the map is unnamed', () => {
+    expect(parseSnapshot({ name: '', elements: [] })).toEqual({ name: '', elements: [] });
+  });
+
+  it('tidies the name the same way the editor does', () => {
+    expect(parseSnapshot({ name: '  A   B  ', elements: [] })).toEqual({ name: 'A B', elements: [] });
+    expect(parseSnapshot({ name: 'x'.repeat(100), elements: [] })?.name).toHaveLength(60);
+  });
+
+  it('ignores a name that is not text but still applies the elements', () => {
+    for (const name of [42, null, {}, [], true]) {
+      expect(parseSnapshot({ name, elements: [room] })).toEqual({ elements: [room] });
+    }
+  });
+
+  it('drops invalid elements inside either format', () => {
+    const bad = { type: 'hologram', x: 0, y: 0 };
+    expect(parseSnapshot({ name: 'A', elements: [room, bad] })).toEqual({ name: 'A', elements: [room] });
+    expect(parseSnapshot([room, bad])).toEqual({ elements: [room] });
+  });
+
+  it('is null when there is no usable list of elements', () => {
+    for (const data of [null, undefined, 42, 'text', {}, { name: 'A' }, { name: 'A', elements: 'no' }]) {
+      expect(parseSnapshot(data)).toBeNull();
+    }
   });
 });

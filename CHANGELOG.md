@@ -5,6 +5,11 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.6.0 - 2026-10-03
+
+- Name your map: click the title at the top of the page. The name shows in the
+  browser tab, names exported images, and is shared with everyone on a live map.
+
 ## 0.5.0 - 2026-10-03
 
 - New logo and favicon, and new type: Inter throughout, with the name set in

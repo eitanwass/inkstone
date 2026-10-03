@@ -67,6 +67,10 @@
     .modal p { font-size: 14px; line-height: 1.5; color: var(--text-muted); margin-bottom: 16px; }
     .modal .acts { display: flex; justify-content: flex-end; gap: 8px; }
     .radius { width: 74px; height: 52px; background: #1a1714; color: #a89885; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .map-name-sample { font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 22px; letter-spacing: .01em; color: #4a3f2e; padding: 5px 14px; border-radius: 6px; border: 1px solid transparent; display: inline-block; }
+    .map-name-sample.empty { color: #6b5f50; }
+    .map-name-sample.hover { border-color: rgba(74,63,46,.3); }
+    .map-name-sample.focus { background: rgba(255,255,255,.55); outline: 2px solid #4a3f2e; }
     .hud { font-family: monospace; font-size: 11px; color: #4a3f2e; opacity: .6; }
   </style>
 </head>
@@ -117,6 +121,9 @@
     <path d="M12.5 2.5V6H16M7.5 10h6M7.5 13h6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol><symbol id="icon-close" viewBox="0 0 20 20">
     <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </symbol><symbol id="icon-edit" viewBox="0 0 20 20">
+    <path d="M4 16l.9-3.600 8.800-8.800a1.900 1.900 0 0 1 2.700 2.700l-8.800 8.800z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>
+    <path d="M12.300 5.400l2.700 2.700" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
   </symbol></svg>
 <div class="wrap">
   <h1>Inkstone style guide</h1>
@@ -192,7 +199,7 @@
 
   <h2>Icons</h2>
   <p class="lead">20×20 grid, 1.4 stroke, round caps, <code>currentColor</code>. Muted on dark, primary on hover, gold when active.</p>
-  <div class="row" style="gap:10px"><figure><span class="ico"><svg width="20" height="20"><use href="#icon-undo"></use></svg></span><figcaption>undo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-redo"></use></svg></span><figcaption>redo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-reset-view"></use></svg></span><figcaption>reset-view</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-clear"></use></svg></span><figcaption>clear</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-export"></use></svg></span><figcaption>export</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-select"></use></svg></span><figcaption>select</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-room"></use></svg></span><figcaption>room</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-wall"></use></svg></span><figcaption>wall</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-token"></use></svg></span><figcaption>token</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-label"></use></svg></span><figcaption>label</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-erase"></use></svg></span><figcaption>erase</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-plus"></use></svg></span><figcaption>plus</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-share"></use></svg></span><figcaption>share</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-join"></use></svg></span><figcaption>join</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-changelog"></use></svg></span><figcaption>changelog</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-close"></use></svg></span><figcaption>close</figcaption></figure></div>
+  <div class="row" style="gap:10px"><figure><span class="ico"><svg width="20" height="20"><use href="#icon-undo"></use></svg></span><figcaption>undo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-redo"></use></svg></span><figcaption>redo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-reset-view"></use></svg></span><figcaption>reset-view</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-clear"></use></svg></span><figcaption>clear</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-export"></use></svg></span><figcaption>export</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-select"></use></svg></span><figcaption>select</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-room"></use></svg></span><figcaption>room</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-wall"></use></svg></span><figcaption>wall</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-token"></use></svg></span><figcaption>token</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-label"></use></svg></span><figcaption>label</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-erase"></use></svg></span><figcaption>erase</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-plus"></use></svg></span><figcaption>plus</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-share"></use></svg></span><figcaption>share</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-join"></use></svg></span><figcaption>join</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-changelog"></use></svg></span><figcaption>changelog</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-close"></use></svg></span><figcaption>close</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-edit"></use></svg></span><figcaption>edit</figcaption></figure></div>
 
   <h2>Components</h2>
   <div class="parchment">
@@ -200,6 +207,13 @@
       <span class="btn">Cancel</span><span class="btn primary">Rename</span><span class="btn danger">Delete</span>
       <span class="pill"><i></i>Live</span><span class="pill reconnecting"><i></i>Reconnecting…</span>
       <span class="toast">Copied element</span>
+    </div>
+    <div class="row" style="margin-top:22px;align-items:center">
+      <span class="map-name-sample empty">Untitled map</span>
+      <span class="map-name-sample">The Sunken Crypt</span>
+      <span class="map-name-sample hover">The Sunken Crypt</span>
+      <span class="map-name-sample focus">The Sunken Crypt</span>
+      <span class="cap" style="margin:0;max-width:340px">The map name: unnamed, named, hover, and focused (ink outline, since gold fails on parchment). Garamond 500, 22px.</span>
     </div>
     <div class="row" style="margin-top:22px">
       <div class="modal"><h4>Remove token "Aragorn"?</h4><p>This can be undone with Ctrl+Z.</p><div class="acts"><span class="btn">Cancel</span><span class="btn danger">Remove</span></div></div>

@@ -19,6 +19,7 @@ import { resetView } from './view-actions';
 
 import './color-swatches';
 import './shortcuts';
+import './map-name';
 import './collab';
 import './changelog';
 

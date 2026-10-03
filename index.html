@@ -35,6 +35,13 @@
     <span>Inkstone</span>
   </div>
 
+  <!-- The map's name: top-centre, click to rename (see src/map-name.ts) -->
+  <div id="map-title">
+    <span id="map-title-mirror" aria-hidden="true"></span>
+    <input id="map-name" type="text" maxlength="60" placeholder="Untitled map" aria-label="Map name" title="Rename map" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" />
+    <svg class="map-title-edit" width="16" height="16" aria-hidden="true"><use href="/icons.svg#icon-edit"></use></svg>
+  </div>
+
   <!-- Right rail, top-right: the action cluster, then (when the map is shared) the live
        indicator. A list of connected people is meant to go below the indicator. -->
   <div id="right-rail">

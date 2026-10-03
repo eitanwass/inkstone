@@ -5,6 +5,7 @@ import { iCanvas, mainCanvas } from './canvas';
 import { byId } from './dom';
 import { drawGridDots } from './grid';
 import { pushHistory } from './history';
+import { mapFileName } from './map-name';
 import { showConfirm } from './modal';
 import { drawElement, drawMain, setView } from './render';
 import { state } from './state';
@@ -55,7 +56,7 @@ byId('btn-export').addEventListener('click', () => {
     if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'dnd-map.png';
+    a.download = mapFileName();
     a.click();
   });
   showToast('Map exported!');

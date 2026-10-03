@@ -69,6 +69,13 @@ export interface WallCoords {
 }
 export type Coords = Point | WallCoords;
 
+// What a collaborator sends and receives: the whole board, plus the map's name.
+// Older clients send just the elements, so the name is optional here.
+export interface BoardSnapshot {
+  elements: BoardElement[];
+  name?: string;
+}
+
 export type Tool = 'select' | 'rect' | 'wall' | 'token' | 'text' | 'erase';
 
 export type Corner = 'nw' | 'ne' | 'sw' | 'se';

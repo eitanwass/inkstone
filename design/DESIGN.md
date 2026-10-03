@@ -123,7 +123,7 @@ faded (decorative, not required to read), so they are exempt.
 
 | Role | Family | Notes |
 |---|---|---|
-| **Wordmark** and display titles | **EB Garamond**, weight 500, upright | Never italic. 25px in the lockup. |
+| **Wordmark** and display titles | **EB Garamond**, weight 500, upright | Never italic. 25px in the lockup; 22px for the map name. |
 | **UI and map text** | **Inter** (variable) | Everything else, including text drawn on the canvas. |
 | **HUD numbers** | System monospace | The cursor position and zoom; fixed-width digits don't jitter. |
 
@@ -145,6 +145,7 @@ text does, so `main.ts` loads the font explicitly and repaints when it arrives.
 | 12.5px | 400 to 500 | Buttons, popover text |
 | 13 to 14px | 400 | Dialog and release-note body |
 | 15 to 16px | 600 | The What's new title (15px) and release headings (16px) |
+| 22px | 500 (Garamond) | The map name |
 | 25px | 500 (Garamond) | Wordmark |
 
 Conventions: sentence case everywhere except the small uppercase labels; line
@@ -191,11 +192,16 @@ nothing and play once).
 ## 8. Layout
 
 The canvas is full-bleed; **all chrome floats over it** as fixed panels: the
-brand mark top-left, the action cluster and "Live" pill in a right-hand rail
-top-right, the tool dock bottom-centre with the contextual style panel above it,
+brand mark top-left, **the map's name top-centre** (click to rename), the action
+cluster and "Live" pill in a right-hand rail top-right, the tool dock bottom-centre with the contextual style panel above it,
 and a faded readout bottom-right. Bottom panels are `width: max-content`, capped
 at the viewport.
 
+- **The map name** is plain text that becomes a field on hover and focus (a
+  faint border and a small pencil appear; focus is a 2px ink outline, because gold
+  fails on parchment). Unnamed, it reads "Untitled map" in a softer ink (4.9:1).
+  Above 1000px it is centred in the top row; at 1000px and under it moves to its
+  own row beneath the brand mark and rail, left-aligned, and the toast moves below it.
 - **Breakpoints:** under 640px wide the brand mark and HUD are hidden, panels
   tighten, and the style panel scrolls sideways; under 420px tall the panels move
   in from the edges.
