@@ -45,7 +45,7 @@ Each item is meant to ship on its own.
   - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
   - A condition marker (dead, prone, ...).
-  - "Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").
+  - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~ (Ctrl+D, or Duplicate in the token's menu.)
 - **Text and label styling**: bold/size presets and a background plate so labels
   read over busy maps. (S)
 - **Layer controls**: lock an element, send to back, hide/show a group, so a

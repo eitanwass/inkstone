@@ -9,6 +9,7 @@ import { pushHistory, showUndoToast } from './history';
 import { drawMain } from './render';
 import { GRID, state } from './state';
 import { showToast } from './toast';
+import { nextTokenName } from './token-names';
 import type { BoardElement, Point } from './types';
 
 export function adjustSelectionForSplice(removeIdx: number, insertedCount: number): void {
@@ -50,10 +51,17 @@ function takeSelected() {
   return taken;
 }
 
+// A copy one square down and to the right. A token whose name ends in a number ("Goblin 1") gets
+// the next one ("Goblin 2"), counting the copies made in the same go as taken.
 export function duplicateSelected() {
+  const taken = state.elements.flatMap((el) => (el.type === 'token' && el.name ? [el.name] : []));
   const clones = selectedIndices().map((i) => {
     const el = structuredClone(state.elements[i]);
     translateElement(el, GRID, GRID);
+    if (el.type === 'token' && el.name) {
+      el.name = nextTokenName(el.name, taken);
+      taken.push(el.name);
+    }
     return el;
   });
   addAndSelect(clones);

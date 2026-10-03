@@ -251,6 +251,7 @@ chain, so there are no circular imports to reason about.
 | `modal.ts` | The generic confirm dialog. |
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
 | `dialogs.ts` | The text-label placement dialog. |
+| `token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
 | `token-card.ts` | The card above a selected token (its name and color for now; image, HP and AC to come): placement, editing, the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `toolbar.ts` | Tool switching + the contextual style panel. |
 | `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |

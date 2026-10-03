@@ -161,3 +161,10 @@ byId('ctx-token-rename').addEventListener('click', () => {
 byId('ctx-token-color').addEventListener('click', () => {
   if (tokenMenuTarget !== null) chooseTokenColor(tokenMenuTarget);
 });
+
+// A copy of just this token (numbered on if its name ends in a number), whatever else is selected.
+byId('ctx-token-duplicate').addEventListener('click', () => {
+  if (tokenMenuTarget === null || !tokenAt(tokenMenuTarget)) return;
+  state.selected = [tokenMenuTarget];
+  duplicateSelected();
+});
