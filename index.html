@@ -41,6 +41,10 @@
     <button class="icon-btn" id="btn-join" title="Connect to another session">
       <svg width="18" height="18"><use href="/icons.svg#icon-join"></use></svg>
     </button>
+    <div class="panel-divider"></div>
+    <button class="icon-btn" id="btn-changelog" title="What's new">
+      <svg width="18" height="18"><use href="/icons.svg#icon-changelog"></use></svg>
+    </button>
   </div>
 
   <!-- Style controls: contextual, appears above the tool dock for tools that use stroke/fill -->
@@ -220,6 +224,12 @@
       <input type="text" id="join-code-input" class="collab-code-input" placeholder="Paste code or link" />
       <button class="btn-primary" id="join-connect-btn">Connect</button>
     </div>
+  </div>
+
+  <!-- What's new (opened from the changelog button; filled from CHANGELOG.md) -->
+  <div id="changelog-popover" class="collab-popover changelog-popover hidden">
+    <div class="collab-popover-label">What's new</div>
+    <div id="changelog-list"></div>
   </div>
 
   <div id="toast"></div>

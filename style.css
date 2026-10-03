@@ -390,6 +390,58 @@ canvas {
   gap: 8px;
 }
 
+/* ── Changelog popover ("What's new") ────────────────────────── */
+.changelog-popover {
+  width: 340px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+}
+
+.changelog-entry + .changelog-entry {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.changelog-entry h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.changelog-entry time {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.changelog-entry ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.changelog-entry li + li { margin-top: 3px; }
+
+/* Dot on the changelog button until the current version has been opened. */
+#btn-changelog { position: relative; }
+
+#btn-changelog.has-update::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .collab-code-input {
   flex: 1;
   min-width: 0;

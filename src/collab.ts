@@ -22,6 +22,7 @@
 import PartySocket from 'partysocket';
 import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
+import { positionPopover } from './popover';
 import { state } from './state';
 import { showToast } from './toast';
 import { parseElements } from './validate';
@@ -76,15 +77,6 @@ function setUrlSessionId(sessionId: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set('session', sessionId);
   window.history.replaceState(null, '', url);
-}
-
-function positionPopover(popover: HTMLElement, anchorBtn: HTMLElement): void {
-  popover.classList.remove('hidden');
-  const r = anchorBtn.getBoundingClientRect();
-  const pw = popover.offsetWidth;
-  const left = Math.max(8, Math.min(r.right - pw, window.innerWidth - pw - 8));
-  popover.style.left = `${left}px`;
-  popover.style.top = `${r.bottom + 8}px`;
 }
 
 // ── Share popover ──────────────────────────────────────────────

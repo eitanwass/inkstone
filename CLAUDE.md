@@ -50,6 +50,23 @@ automatically); no custom domain is needed, it deploys to a free
 `*.workers.dev` subdomain. `VITE_RELAY_HOST` then needs to point at that
 deployed host before running `npm run build`.
 
+## Releasing
+
+The site only redeploys when the version changes. To release: bump the version
+(`npm version patch|minor --no-git-tag-version`), add a matching
+`## <version> - <date>` section at the top of [CHANGELOG.md](CHANGELOG.md)
+(written for people using the editor, not for developers), and push. CI runs
+`npm run check:changelog`, which fails if the top entry doesn't match
+package.json. The app's "What's new" panel renders that same file.
+
+On Vercel (Git integration), [vercel.json](vercel.json) sets
+[scripts/should-deploy.mjs](scripts/should-deploy.mjs) as the Ignored Build
+Step. For production it compares package.json's version against the last
+successful deployment's commit (`VERCEL_GIT_PREVIOUS_SHA`, else `HEAD~1`) and
+skips the build if it's unchanged. Preview builds always run, and if the
+comparison can't be made it builds rather than skips. So a push to master that
+doesn't bump the version does not deploy.
+
 ## Module layout
 
 No framework, no virtual DOM, no state-management library — every module
@@ -76,6 +93,9 @@ chain, so there are no circular imports to reason about.
 | `erase.ts` | Erase tool targeting + hover preview. |
 | `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
+| `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join, changelog). |
+| `changelog.ts` | The "What's new" popover: renders CHANGELOG.md, dots the button until the current version is opened. |
+| `changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
 | `modal.ts` | The generic confirm dialog. |
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
 | `dialogs.ts` | Token-name and text-label placement dialogs. |

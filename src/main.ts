@@ -18,6 +18,7 @@ import { resetView } from './view-actions';
 import './color-swatches';
 import './shortcuts';
 import './collab';
+import './changelog';
 
 byId('version-label').textContent = `v${version}`;
 
