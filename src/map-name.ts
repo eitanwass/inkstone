@@ -37,6 +37,13 @@ export function mapFileName(): string {
   return `${mapFileSlug(state.mapName)}.png`;
 }
 
+// Who wants to know when the user commits a new name (collab keeps the invite
+// link's ?map= in step with it). Only real changes are announced.
+const committedListeners: Array<() => void> = [];
+export function onMapNameCommitted(listener: () => void): void {
+  committedListeners.push(listener);
+}
+
 function commit(): void {
   const name = normalizeMapName(input.value);
   input.value = name; // show it as it was kept (trimmed, tidied)
@@ -44,6 +51,7 @@ function commit(): void {
     state.mapName = name;
     persistMapName();
     broadcastDocument();
+    for (const listener of committedListeners) listener();
   }
   renderMirror();
   renderPageTitle();

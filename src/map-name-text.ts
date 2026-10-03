@@ -4,14 +4,14 @@
 
 export const MAP_NAME_MAX = 60;
 
-// What a map's name is allowed to be: control characters become spaces, runs of
+// What a map's name is allowed to be: control characters (Unicode category Cc) become spaces, runs of
 // whitespace collapse to one space, the ends are trimmed, and it is cut at
 // MAP_NAME_MAX characters. Anything that isn't text is no name at all (""),
 // which the app shows as "Untitled map".
 export function normalizeMapName(value: unknown): string {
   if (typeof value !== 'string') return '';
   return value
-    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\p{Cc}/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAP_NAME_MAX)

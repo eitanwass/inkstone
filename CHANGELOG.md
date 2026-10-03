@@ -5,6 +5,10 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.6.1 - 2026-10-03
+
+- Shared map links now show the map's name in chat previews.
+
 ## 0.6.0 - 2026-10-03
 
 - Name your map: click the title at the top of the page. The name shows in the

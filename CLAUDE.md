@@ -178,16 +178,51 @@ protocol), else nothing (relative, fine for local dev). Either may be written
 with or without `https://` or a trailing slash; the result always has a protocol
 and no trailing slash.
 
-*Showing a map's name in its invite-link preview* is not built, but the template
-already renders a named card (`?name=...`). Crawlers don't run JavaScript, and
-the app is a static page, so doing it needs a server step: (1) carry the name in
-the invite link (`?map=Name`, the simplest) or have the relay store it; (2) a
-Vercel function that returns the page's HTML with that name in the title and
-`og:image` tags for `/?session=...` requests; (3) an image endpoint (for
-example `@vercel/og`, which renders HTML/CSS to a PNG and takes the fonts as
-buffers) that reuses this layout. Treat the name as untrusted text everywhere
-(length limit, escaping, a default card when it's missing), and note that putting
-a map's name in a link exposes it to whatever chat the link is pasted into.
+**A map's name in its invite-link preview.** Chat apps read a link's preview tags
+without running JavaScript, and the name only exists inside the running app, so:
+
+1. **The name travels in the link.** While a page is part of a session, `collab.ts`
+   keeps the address's `?map=` equal to the map's name (`syncUrlMapName`: when
+   sharing starts, on every committed rename, and when the room reports its name).
+   "Copy Link" copies `location.href`, so it includes it. A link copied earlier
+   keeps the name it had then.
+2. **`vercel.json` rewrites `/` with a `map` query to `api/share.ts`**, which fetches
+   the static `/index.html` and rewrites the title and `og:`/`twitter:` tags for that
+   name, pointing `og:image` at `/api/og?name=...`. Everyone who opens such a link
+   gets this page (the app is unchanged), so on *any* error the function redirects to
+   the same link without `?map=`, which the static page serves.
+3. **`api/og.ts` draws the card** (`api/_card.ts`: Satori lays out plain objects,
+   resvg-wasm rasterizes, so it needs no browser and runs the same locally and on
+   Vercel). The layout mirrors `design/share-preview/template.html`; change them
+   together. Fonts must be **WOFF** (Satori can't read WOFF2 or variable fonts), so
+   the function uses the static `@fontsource/inter` and `@fontsource/eb-garamond`
+   files; `RUNTIME_FILES` lists everything it reads and `vercel.json`'s
+   `includeFiles` must cover them (a test checks both).
+
+The name in the URL is untrusted text. Both functions run it through
+`normalizeMapName` (so at most 60 characters), `share.ts` HTML-escapes it and
+URL-encodes it into the image address, and the card only draws what the bundled
+fonts cover (Basic Latin, Latin-1, Latin Extended, typographic punctuation, the euro
+sign: `isDrawable`). A name outside that (another script, emoji) and any rendering
+failure redirect to the plain site card, so a preview always has an image.
+Cyrillic, Greek, Hebrew etc. would need more font files bundled to be supported.
+Responses are cached (`s-maxage`), and the same name always gives the same image.
+Tests: `tests/unit/{share-function,og-function,preview-chain,vercel-config}.test.ts`
+(the chain test serves the static page and mounts both functions in a local
+server, then plays a chat app) and `tests/invite-link.spec.js`. What they can't
+cover is Vercel's own runtime (bundling, the rewrite, `includeFiles`), so after a
+deploy, check `/api/og?name=Test` and view-source on `/?session=x&map=Test`.
+
+`package.json` has an `overrides` entry pinning `fflate` to `^0.8.2`: Satori's font
+reader depends on `fflate` 0.7.x, which `npm audit` flags (its ZIP-reading function
+can loop forever on a malformed archive; Satori only uses the inflate half, so it
+wasn't exploitable, but the audit should stay clean). Remove the override once
+Satori depends on a patched `fflate` itself.
+
+Things to know: anyone can craft `/?map=anything` and get a card with that text on
+the site's domain; the name also shows up in whatever chat the link is pasted into;
+and the endpoint renders on demand (cached per name), so very high traffic is a
+cost, not a correctness, concern.
 
 ## Accessibility and storage conventions
 

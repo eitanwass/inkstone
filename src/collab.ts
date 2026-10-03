@@ -22,7 +22,7 @@
 import PartySocket from 'partysocket';
 import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
-import { refreshMapName } from './map-name';
+import { onMapNameCommitted, refreshMapName } from './map-name';
 import { closePopover, positionPopover } from './popover';
 import { resolveRelayHost } from './relay-host';
 import { state } from './state';
@@ -125,6 +125,7 @@ function connect(sessionId: string, { seed = false } = {}): void {
     if (!snapshot) return;
     applyRemoteSnapshot(snapshot);
     refreshMapName();
+    syncUrlMapName();
   });
   current.addEventListener('close', () => {
     if (socket !== current || !everOpened) return; // replaced by another session, or never connected
@@ -143,7 +144,23 @@ function setUrlSessionId(sessionId: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set('session', sessionId);
   window.history.replaceState(null, '', url);
+  syncUrlMapName();
 }
+
+// Keeps the link's ?map= equal to the map's name, so that pasting the link into a
+// chat can show the name in the preview. Chat apps read previews without running
+// JavaScript, so the name has to be in the link itself (see api/share.ts). Only
+// done once the page is part of a session; a link that is no longer shared has no
+// use for it. Links copied earlier keep the name they had at the time.
+function syncUrlMapName(): void {
+  if (!currentUrlSessionId()) return;
+  const url = new URL(window.location.href);
+  if (state.mapName) url.searchParams.set('map', state.mapName);
+  else url.searchParams.delete('map');
+  window.history.replaceState(null, '', url);
+}
+
+onMapNameCommitted(syncUrlMapName);
 
 // ── Share popover ──────────────────────────────────────────────
 const shareBtn = byId('btn-share');

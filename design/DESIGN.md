@@ -246,9 +246,10 @@ Names are user text: the template sets them as text (never HTML), keeps them to
 60 characters, shrinks them from 112px to a 44px floor, and then trims with an
 ellipsis until they fit their box.
 
-*Not built yet:* showing a map's own name in the preview of its invite link.
-Chat apps read the page's tags without running JavaScript, so the server would
-have to render the tags and the image for that link; see CLAUDE.md for the plan.
+**A shared map's link shows its own name.** The invite link carries the name
+(`?map=...`); a server function fills the page's preview tags with it and a second
+one draws the named card on demand (same layout as the template, Latin-script
+names only; anything else gets the site card). The details are in CLAUDE.md.
 
 ## 12. Known gaps
 

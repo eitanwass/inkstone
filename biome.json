@@ -6,6 +6,7 @@
       "tests/**",
       "party/**",
       "scripts/**",
+      "api/**",
       "*.js",
       "*.ts",
       "*.json",

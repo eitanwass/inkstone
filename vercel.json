@@ -1,4 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "node scripts/should-deploy.mjs"
+  "ignoreCommand": "node scripts/should-deploy.mjs",
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "map"
+        }
+      ],
+      "destination": "/api/share"
+    }
+  ],
+  "functions": {
+    "api/og.ts": {
+      "includeFiles": "{node_modules/@fontsource/inter/files/inter-latin*-{400,600,700}-normal.woff,node_modules/@fontsource/eb-garamond/files/eb-garamond-latin*-500-normal.woff,node_modules/@resvg/resvg-wasm/index_bg.wasm,public/logo.svg}",
+      "maxDuration": 10
+    }
+  }
 }
