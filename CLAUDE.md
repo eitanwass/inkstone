@@ -46,7 +46,7 @@ deployed host before running `npm run build`.
 
 No framework, no virtual DOM, no state-management library — every module
 imports the same `state` object from `state.js` and mutates its properties
-directly, then calls `drawMain()`/`drawGrid()` (from `render.js`) to
+directly, then calls `drawMain()` (`render.js`) or `drawGrid()` (`grid.js`) to
 re-render. Dependencies flow one direction (geometry → elements → render →
 selection/erase → pointer → UI wiring); nothing here imports back down that
 chain, so there are no circular imports to reason about.
@@ -58,7 +58,8 @@ chain, so there are no circular imports to reason about.
 | `geometry.js` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
 | `elements.js` | Per-type bounds, hit-testing, grid-cell occupancy. |
 | `handles.js` | Resize/rotate handle geometry and drag math. |
-| `render.js` | Everything that draws to the canvases. |
+| `grid.js` | The dot grid (live background and PNG export). |
+| `render.js` | Everything that draws to the main canvas. |
 | `history.js` | Undo/redo stack + localStorage persistence. |
 | `selection.js` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `erase.js` | Erase tool targeting + hover preview. |

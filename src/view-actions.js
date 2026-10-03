@@ -1,9 +1,10 @@
 // ── View & document-level actions ─────────────────────────────
 // Reset View, Clear All, Export PNG.
 
-import { state, GRID } from './state.js';
+import { state } from './state.js';
 import { iCanvas, mainCanvas } from './canvas.js';
 import { drawMain, drawElement, setView } from './render.js';
+import { drawGridDots } from './grid.js';
 import { pushHistory } from './history.js';
 import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
@@ -40,15 +41,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
   // Grid
   ctx.save();
   ctx.scale(2, 2);
-  const cellPx = GRID * state.zoom;
-  const offsetX = ((state.panX % cellPx) + cellPx) % cellPx;
-  const offsetY = ((state.panY % cellPx) + cellPx) % cellPx;
-  ctx.fillStyle = 'rgba(180,170,155,0.45)';
-  const r = Math.max(1, cellPx * 0.04);
-  for (let x = offsetX; x < W + cellPx; x += cellPx)
-    for (let y = offsetY; y < H + cellPx; y += cellPx) {
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-    }
+  drawGridDots(ctx, W, H, 'rgba(180,170,155,0.45)');
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
   state.elements.forEach(el => drawElement(ctx, el, false));

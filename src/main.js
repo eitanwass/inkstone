@@ -6,7 +6,8 @@
 
 import { state } from './state.js';
 import { gridCanvas, mainCanvas, iCanvas } from './canvas.js';
-import { drawGrid, drawMain } from './render.js';
+import { drawMain } from './render.js';
+import { drawGrid } from './grid.js';
 import { setTool } from './toolbar.js';
 import { resetView } from './view-actions.js';
 import { loadPersistedBoard, pushHistory } from './history.js';

@@ -1,34 +1,14 @@
 // ── Canvas rendering ──────────────────────────────────────────
-// Everything that draws to the grid/main canvases. drawMain() is the one
-// function nearly every interaction handler calls after mutating state.
+// Everything that draws to the main canvas (the grid lives in grid.js).
+// drawMain() is the one function nearly every interaction handler calls after
+// mutating state.
 
-import { state, GRID, DEFAULT_TOKEN_RADIUS, DEFAULT_FONT_SIZE, FONT_FAMILY } from './state.js';
-import { gridCanvas, mainCanvas, gCtx, mCtx } from './canvas.js';
+import { state, DEFAULT_TOKEN_RADIUS, DEFAULT_FONT_SIZE, FONT_FAMILY } from './state.js';
+import { mainCanvas, mCtx } from './canvas.js';
+import { drawGrid } from './grid.js';
 import { rotatePoint, elementCenter } from './geometry.js';
 import { getElementBounds } from './elements.js';
 import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles.js';
-
-export function drawGrid() {
-  const W = gridCanvas.width, H = gridCanvas.height;
-  gCtx.clearRect(0, 0, W, H);
-
-  const cellPx = GRID * state.zoom;
-  const offsetX = ((state.panX % cellPx) + cellPx) % cellPx;
-  const offsetY = ((state.panY % cellPx) + cellPx) % cellPx;
-
-  gCtx.fillStyle = getComputedStyle(document.documentElement)
-    .getPropertyValue('--dot-color').trim() || 'rgba(180,170,155,0.55)';
-
-  const r = Math.max(1, cellPx * 0.04);
-
-  for (let x = offsetX; x < W + cellPx; x += cellPx) {
-    for (let y = offsetY; y < H + cellPx; y += cellPx) {
-      gCtx.beginPath();
-      gCtx.arc(x, y, r, 0, Math.PI * 2);
-      gCtx.fill();
-    }
-  }
-}
 
 // Sets the viewport transform and redraws. The one place that keeps the zoom
 // readout in sync with state.zoom.
