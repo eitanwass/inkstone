@@ -6,10 +6,11 @@
 // per action type.
 
 import { byId } from './dom';
-import { state } from './state';
 import { drawMain } from './render';
+import { state } from './state';
 import { showToast } from './toast';
 import type { BoardElement } from './types';
+import { parseElements } from './validate';
 
 const history: { stack: BoardElement[][]; index: number } = { stack: [], index: -1 };
 const HISTORY_LIMIT = 100;
@@ -20,7 +21,9 @@ const HISTORY_LIMIT = 100;
 // collab.js registers itself here and gets called after every change that
 // should propagate to peers.
 let historyListener: (() => void) | null = null;
-export function setHistoryListener(fn: () => void): void { historyListener = fn; }
+export function setHistoryListener(fn: () => void): void {
+  historyListener = fn;
+}
 
 // Persistence piggybacks on the same chokepoint: pushHistory()/undo()/redo()
 // all call persistBoard(), which writes state.elements to localStorage. Only
@@ -37,10 +40,10 @@ export function persistBoard() {
   }
 }
 
-export function loadPersistedBoard() {
+export function loadPersistedBoard(): BoardElement[] | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : null;
+    return saved ? parseElements(JSON.parse(saved)) : null;
   } catch {
     return null;
   }

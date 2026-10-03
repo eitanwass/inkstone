@@ -19,12 +19,12 @@
 // a PartyKit-hosted room to a self-deployed Cloudflare Worker + Durable
 // Object without any change in this file beyond the default port below.
 
-import { byId } from './dom';
 import PartySocket from 'partysocket';
-import { state } from './state';
+import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
+import { state } from './state';
 import { showToast } from './toast';
-import type { BoardElement } from './types';
+import { parseElements } from './validate';
 
 const RELAY_HOST = import.meta.env.VITE_RELAY_HOST || 'localhost:8787';
 
@@ -36,6 +36,14 @@ function broadcastState() {
 }
 
 setHistoryListener(broadcastState);
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
 
 function setStatus(connected: boolean): void {
   byId('collab-status').classList.toggle('hidden', !connected);
@@ -54,7 +62,8 @@ function connect(sessionId: string, { seed = false } = {}): void {
     if (seed) broadcastState();
   });
   socket.addEventListener('message', (evt) => {
-    applyRemoteSnapshot(JSON.parse(evt.data) as BoardElement[]);
+    const elements = parseElements(parseJson(evt.data));
+    if (elements) applyRemoteSnapshot(elements);
   });
   socket.addEventListener('close', () => setStatus(false));
 }
@@ -99,7 +108,7 @@ function openSharePopover() {
   positionPopover(sharePopover, shareBtn);
 }
 
-shareBtn.addEventListener('click', e => {
+shareBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   if (sharePopover.classList.contains('hidden')) openSharePopover();
   else hideSharePopover();
@@ -108,7 +117,8 @@ shareBtn.addEventListener('click', e => {
 shareCodeInput.addEventListener('click', () => shareCodeInput.select());
 
 byId('share-copy-link').addEventListener('click', () => {
-  navigator.clipboard.writeText(window.location.href)
+  navigator.clipboard
+    .writeText(window.location.href)
     .then(() => showToast('Invite link copied to clipboard'))
     .catch(() => showToast('Could not copy link — copy it from the address bar'));
 });
@@ -129,7 +139,7 @@ function openJoinPopover() {
   setTimeout(() => joinCodeInput.focus(), 50);
 }
 
-joinBtn.addEventListener('click', e => {
+joinBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   if (joinPopover.classList.contains('hidden')) openJoinPopover();
   else hideJoinPopover();
@@ -160,12 +170,12 @@ function joinSession() {
 
 byId('join-connect-btn').addEventListener('click', joinSession);
 
-joinCodeInput.addEventListener('keydown', e => {
+joinCodeInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') joinSession();
   if (e.key === 'Escape') hideJoinPopover();
 });
 
-document.addEventListener('click', e => {
+document.addEventListener('click', (e) => {
   if (!sharePopover.contains(e.target as Node) && e.target !== shareBtn) hideSharePopover();
   if (!joinPopover.contains(e.target as Node) && e.target !== joinBtn) hideJoinPopover();
 });
