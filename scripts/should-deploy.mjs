@@ -31,6 +31,9 @@ function decide() {
   // The last successful deployment's commit, or failing that the parent commit.
   // (HEAD~1, not HEAD^: a bare ^ is an escape character in Windows shells.)
   const previous = VERCEL_GIT_PREVIOUS_SHA || 'HEAD~1';
+  const comparedWith = VERCEL_GIT_PREVIOUS_SHA
+    ? `last deployment ${previous.slice(0, 7)}`
+    : 'parent commit (no previous deployment SHA)';
   let before;
   let after;
   try {
@@ -42,10 +45,10 @@ function decide() {
   }
 
   if (before === after) {
-    console.log(`Version is still ${after}: skipping deploy.`);
+    console.log(`Version is still ${after} (compared with ${comparedWith}): skipping deploy.`);
     return SKIP;
   }
-  console.log(`Version changed ${before} -> ${after}: deploying.`);
+  console.log(`Version changed ${before} -> ${after} (compared with ${comparedWith}): deploying.`);
   return BUILD;
 }
 
