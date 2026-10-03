@@ -1,11 +1,12 @@
 // ── Resize / rotate handles (rect, wall, token) ─────────────────
-// Handle geometry, hit-testing, and the drag math for dragging one. Drawing
+// Handle hit-testing and the drag math for dragging one (where the handles
+// are is up to each element type). Drawing
 // the handles themselves lives in render.js (it needs canvas access this
 // module doesn't otherwise care about).
 
 import { state, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state.js';
-import { rotatePoint, rotateVector, elementCenter, rectCornerLocal, dist, snapToGrid } from './geometry.js';
-import { snapshotCoords } from './elements.js';
+import { rotatePoint, rotateVector, rectCornerLocal, dist, snapToGrid } from './geometry.js';
+import { elementCenter, snapshotCoords, elementHandles, rotateElement } from './elements/index.js';
 
 export const HANDLE_RADIUS_PX = 5;
 export const HANDLE_HIT_PX = 9;
@@ -13,43 +14,11 @@ export const ROTATE_OFFSET_PX = 24;
 export const ROTATE_SNAP_STEP = Math.PI / 12; // 15 degrees
 
 export function hasHandles(el) {
-  return !!el && (el.type === 'rect' || el.type === 'wall' || el.type === 'token');
+  return !!el && getHandles(el).length > 0;
 }
 
 export function getHandles(el) {
-  const offset = ROTATE_OFFSET_PX / state.zoom;
-  if (el.type === 'rect') {
-    const rotation = el.rotation || 0;
-    const center = elementCenter(el);
-    const corners = ['nw', 'ne', 'sw', 'se'].map(id => {
-      const p = rotatePoint(rectCornerLocal(el, id), center, rotation);
-      return { id, kind: 'resize', x: p.x, y: p.y };
-    });
-    const rotateHandle = rotatePoint({ x: center.x, y: el.y - offset }, center, rotation);
-    return [...corners, { id: 'rotate', kind: 'rotate', x: rotateHandle.x, y: rotateHandle.y }];
-  }
-  if (el.type === 'wall') {
-    const center = elementCenter(el);
-    const dx = el.x2 - el.x1, dy = el.y2 - el.y1;
-    const len = Math.hypot(dx, dy) || 1;
-    const px = -dy / len, py = dx / len; // unit perpendicular
-    return [
-      { id: 'p1', kind: 'endpoint', x: el.x1, y: el.y1 },
-      { id: 'p2', kind: 'endpoint', x: el.x2, y: el.y2 },
-      { id: 'rotate', kind: 'rotate', x: center.x + px * offset, y: center.y + py * offset },
-    ];
-  }
-  if (el.type === 'token') {
-    // No rotate handle — rotating a circle is a no-op. Radius is the only
-    // degree of freedom, so a single handle (SE, matching the rect corner
-    // convention) is enough — not one per cardinal direction.
-    const r = el.radius || DEFAULT_TOKEN_RADIUS;
-    const a = Math.PI / 4;
-    return [
-      { id: 'se', kind: 'resize-radius', x: el.x + r * Math.cos(a), y: el.y + r * Math.sin(a) },
-    ];
-  }
-  return [];
+  return elementHandles(el, ROTATE_OFFSET_PX / state.zoom);
 }
 
 export function hitHandle(el, world) {
@@ -105,13 +74,7 @@ export function applyHandleDrag(world, precise) {
     if (!precise) rotation = Math.round(rotation / ROTATE_SNAP_STEP) * ROTATE_SNAP_STEP;
     const delta = rotation - startRotation;
     state.handleDrag.displayDeg = Math.round(rotation * 180 / Math.PI);
-    if (el.type === 'rect') {
-      el.rotation = rotation;
-    } else if (el.type === 'wall') {
-      const p1 = rotatePoint({ x: startCoords.x1, y: startCoords.y1 }, center, delta);
-      const p2 = rotatePoint({ x: startCoords.x2, y: startCoords.y2 }, center, delta);
-      el.x1 = p1.x; el.y1 = p1.y; el.x2 = p2.x; el.y2 = p2.y;
-    }
+    rotateElement(el, rotation, delta, center, startCoords);
     return;
   }
 

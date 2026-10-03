@@ -56,7 +56,7 @@ chain, so there are no circular imports to reason about.
 | `state.js` | The shared `state` object and the `GRID` constant. |
 | `canvas.js` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
 | `geometry.js` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
-| `elements.js` | Per-type bounds, hit-testing, grid-cell occupancy. |
+| `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.js`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |
 | `handles.js` | Resize/rotate handle geometry and drag math. |
 | `grid.js` | The dot grid (live background and PNG export). |
 | `render.js` | Everything that draws to the main canvas. |
@@ -75,9 +75,8 @@ chain, so there are no circular imports to reason about.
 | `collab.js` | Live multi-user sync over a Durable Object room (see Collaboration below). |
 | `main.js` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
-When extending an element type, the three functions that must change together
-(`drawElement` in `render.js`, `getElementBounds` and `hitElement` in
-`elements.js`) now live in two different files — check both.
+To add an element type, add a file in `elements/` and register it in
+`elements/index.js` (see the method list at the top of that file).
 
 ## Architecture
 
@@ -95,15 +94,17 @@ see Module layout above for where it's defined and how the rest of the
 codebase is organized around it.
 
 **Elements** (`state.elements`) are plain objects with a `type` discriminator:
-`rect`, `wall`, `token`, `label`. Three functions switch on `el.type` and must
-be extended together when adding a new element type:
-- `drawElement` — rendering
-- `getElementBounds` — selection-box bounds, also used for rubber-band hit testing
-- `hitElement` — click hit-testing
+`rect`, `wall`, `token`, `label`. Elements are pure data (they're persisted,
+cloned for undo, and synced to peers, so they can't carry methods). Each type's
+behavior lives in its own `elements/<type>.js` object, and `elements/index.js`
+maps `el.type` to it. Code elsewhere calls dispatchers like
+`getElementBounds(el)` or `hitElement(el, x, y)` instead of switching on
+`el.type`. A type provides `draw`, `bounds`, and `hit`, plus optional
+`occupiesCell`, `erase`, `handles`, `rotate`, `translate`, etc.
 
-`elementOccupiesCell` (used by the erase tool) only needs cases for types that
-are erased as a whole discrete prop — `wall` is handled separately via
-`clipSegmentToCell` since walls erase per-segment, not per-element.
+Erase uses `occupiesCell` for types removed as a whole discrete prop. A type
+that erases piecemeal (`wall`, via `clipSegmentToCell`) provides `erase`
+instead, returning the pieces left behind and the part to highlight.
 
 **`cellOf` vs `snapToGrid`** (both in `geometry.js`) are not interchangeable
 despite looking similar: `snapToGrid` *rounds* to the nearest grid line
@@ -112,7 +113,7 @@ intersection), while `cellOf` *floors* to the cell's origin (correct for
 "which cell does this point belong to"). Erase targeting needs `cellOf` —
 using `snapToGrid` there was a real bug that only showed up near a cell
 boundary (e.g. clicking near a large token's edge could round to the
-*next* cell over and miss it). `elementOccupiesCell`'s own per-type cell
+*next* cell over and miss it). Each type's `occupiesCell`
 math must stay on the same convention as whatever its caller passes in.
 
 **Tokens have a variable `radius`**, set either by dragging while placing
@@ -129,7 +130,7 @@ size. Every place that reads a token's size falls back to that same
 default via `el.radius || GRID * 0.42`, so boards persisted before this
 feature existed keep rendering at their original size with no migration
 needed. Bounds/hit/erase-occupancy all scale with the radius —
-`elementOccupiesCell`'s token case in particular is an AABB-overlap check
+The token's `occupiesCell` in particular is an AABB-overlap check
 (like rect), not "is this the center cell", so erasing a large token works
 from any cell it visually covers.
 

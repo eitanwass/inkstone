@@ -5,7 +5,7 @@
 
 import { state, GRID } from './state.js';
 import { snapToGrid, rectsOverlap, normalizeRect } from './geometry.js';
-import { getElementBounds, snapshotCoords } from './elements.js';
+import { getElementBounds, snapshotCoords, translateElement } from './elements/index.js';
 import { drawMain } from './render.js';
 import { pushHistory } from './history.js';
 import { showToast } from './toast.js';
@@ -23,12 +23,6 @@ export function deleteSelected() {
   state.selected = [];
   drawMain();
   pushHistory();
-}
-
-// Shared by duplicate/paste: offset an element's own coordinates in place.
-export function translateElementBy(el, dx, dy) {
-  if ('x1' in el) { el.x1 += dx; el.y1 += dy; el.x2 += dx; el.y2 += dy; }
-  else { el.x += dx; el.y += dy; }
 }
 
 // Selected indices in ascending (z-order) order.
@@ -59,7 +53,7 @@ function takeSelected() {
 export function duplicateSelected() {
   const clones = selectedIndices().map(i => {
     const el = structuredClone(state.elements[i]);
-    translateElementBy(el, GRID, GRID);
+    translateElement(el, GRID, GRID);
     return el;
   });
   addAndSelect(clones);
@@ -96,7 +90,7 @@ export function pasteClipboard(anchorWorld) {
   const dx = snapToGrid(anchorWorld.x - cx), dy = snapToGrid(anchorWorld.y - cy);
   const clones = clipboard.map(el => {
     const clone = structuredClone(el);
-    translateElementBy(clone, dx, dy);
+    translateElement(clone, dx, dy);
     return clone;
   });
   addAndSelect(clones);
@@ -128,12 +122,7 @@ export function applyElementDrag(world) {
   snapshot.forEach(({ i, coords }) => {
     const el = state.elements[i];
     if (!el) return;
-    if ('x1' in coords) {
-      el.x1 = coords.x1 + dx; el.y1 = coords.y1 + dy;
-      el.x2 = coords.x2 + dx; el.y2 = coords.y2 + dy;
-    } else {
-      el.x = coords.x + dx; el.y = coords.y + dy;
-    }
+    translateElement(el, dx, dy, coords);
   });
 }
 

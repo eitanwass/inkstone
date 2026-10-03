@@ -8,7 +8,7 @@
 import { state, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state.js';
 import { iCanvas, clientToCanvas, clientToWorld } from './canvas.js';
 import { snapToGrid, cellOf, dist, clampZoom } from './geometry.js';
-import { hitTest } from './elements.js';
+import { hitTest } from './elements/index.js';
 import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles.js';
 import { drawMain, setView } from './render.js';
 import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection.js';

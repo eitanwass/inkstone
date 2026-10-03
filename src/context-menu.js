@@ -5,7 +5,7 @@
 
 import { state } from './state.js';
 import { iCanvas, clientToWorld } from './canvas.js';
-import { hitTest } from './elements.js';
+import { hitTest } from './elements/index.js';
 import { drawMain } from './render.js';
 import {
   copySelection, pasteClipboard, deleteSelected, duplicateSelected,

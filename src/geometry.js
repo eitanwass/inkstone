@@ -48,12 +48,6 @@ export function rotateVector(x, y, angle) {
   return { x: x * cos - y * sin, y: x * sin + y * cos };
 }
 
-export function elementCenter(el) {
-  if (el.type === 'rect') return { x: el.x + el.w / 2, y: el.y + el.h / 2 };
-  if (el.type === 'wall') return { x: (el.x1 + el.x2) / 2, y: (el.y1 + el.y2) / 2 };
-  return { x: el.x, y: el.y };
-}
-
 export function rectCornerLocal(el, id) {
   const map = {
     nw: { x: el.x,         y: el.y },
