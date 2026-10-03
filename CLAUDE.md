@@ -39,7 +39,11 @@ by the e2e suite instead. The **Playwright e2e suite**
 auto-starts the dev server and ignores `tests/unit/`) drives the real UI (clicking toolbar buttons, dragging on
 the canvas) rather than calling module internals, since there's no exposed
 JS API and DOM/canvas interaction is what actually exercises the code worth
-regression-testing. Touch gestures are tested by dispatching touch-type
+regression-testing. Collab connection behavior (`tests/connection.spec.js`) uses
+`page.routeWebSocket` as a stand-in relay, which must be registered *before*
+the page loads, plus a fake clock stepped a second at a time (one big jump
+would expire the socket's own connection timeout before the real, async
+open arrives). Touch gestures are tested by dispatching touch-type
 `PointerEvent`s via the `touch()` helper (Playwright's touchscreen API only
 does taps). [tests/helpers.js](tests/helpers.js) has the shared
 setup (`resetBoard`, world→screen conversion matching `resetView()`'s pan
@@ -78,6 +82,29 @@ skips the build if it's unchanged. Preview builds always run, and if the
 comparison can't be made it builds rather than skips. So a push to master that
 doesn't bump the version does not deploy.
 
+## Accessibility and storage conventions
+
+- Icon-only buttons need an `aria-label` (the `title` stays as the tooltip with
+  the shortcut). Toggle-like buttons carry state in the DOM: tool buttons and
+  swatches use `aria-pressed`, popover buttons use `aria-expanded` (kept in
+  sync by `positionPopover` / `closePopover` in `popover.ts`) — update them in
+  the same place the visual `active` class changes.
+- Modals (`showConfirm`, `setupInputDialog` in `dialogs.ts`) trap focus, move
+  focus in, and give it back on close. Popovers move focus to themselves and
+  Escape returns it to their button.
+- UI chrome sits inside `header` / `nav` / `footer` landmarks; they wrap
+  `position: fixed` panels, so they don't affect layout.
+- Text must stay at least 4.5:1 against its background: `--text-muted` and
+  `--text-label` are set for that on the dark panels (don't darken them), and
+  `.btn-primary` uses a light label on the gold fill.
+- `tests/accessibility.spec.js` runs axe on the main screen and with popovers
+  and dialogs open, and must stay clean. It runs with reduced motion on, so
+  axe doesn't sample the popovers mid fade-in.
+- Never call `localStorage` directly; use `storage.ts`, because it throws when
+  storage is blocked or full. Persisting the board warns the user once per page
+  load when it fails (`persistBoard`). Saved custom colors live under
+  `inkstone-custom-*`; the old `tavernmap-custom-*` keys are migrated on load.
+
 ## Module layout
 
 No framework, no virtual DOM, no state-management library — every module
@@ -107,6 +134,8 @@ chain, so there are no circular imports to reason about.
 | `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join, changelog). |
 | `changelog.ts` | The "What's new" popover: renders CHANGELOG.md, dots the button until the current version is opened. |
 | `changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
+| `storage.ts` | Never-throwing `localStorage` wrappers. All reads and writes go through here. |
+| `focus.ts` | `trapFocus` / `restoreFocus` for modals. |
 | `modal.ts` | The generic confirm dialog. |
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
 | `dialogs.ts` | Token-name and text-label placement dialogs. |
@@ -324,10 +353,24 @@ function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
 
 Only the session **creator** seeds the room with their current board (on
-the `open` event, gated by a `seed` flag passed to `connect()`); a client
-*joining* an existing session never does. Without that asymmetry, a joiner's
-own (likely stale or empty) local board could race the server's reply and
-stomp the room's actual state before the real snapshot arrives.
+the **first** `open` event only, gated by a `seed` flag passed to
+`connect()`); a client *joining* an existing session never does. Without that
+asymmetry, a joiner's own (likely stale or empty) local board could race the
+server's reply and stomp the room's actual state before the real snapshot
+arrives. The same reasoning is why a *re*connect never re-seeds.
+
+**Connection loss.** `partysocket` reconnects on its own; `collab.ts` surfaces
+it. The status pill (`#collab-status`, in the top-right rail under the action cluster, red dot
+for live) goes `Connecting…` → `Live`, and on a
+drop to `Reconnecting…` (with a toast, announced once, not on every retry
+attempt). If the relay can't be reached for 8 seconds on the first connect, a
+toast says so. The policy for edits made while offline is **the shared map
+wins**: the relay sends its copy on reconnect and `applyRemoteSnapshot` makes
+it the local map, so offline edits are replaced. `broadcastState` notes
+`unsentEdits` when it can't send, and the reconnect toast says so when that
+happened. (Making the local map win instead would overwrite peers' work, and
+needs care around the relay's catch-up message.) Messages from the relay go
+through `parseElements` first (see `validate.ts`).
 
 Running this locally needs the `wrangler dev` relay alongside Vite —
 `npm run party:dev` (defaults to `localhost:8787`, matching `collab.ts`'s

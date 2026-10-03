@@ -4,6 +4,7 @@
 // menu (Paste only, shown when the clipboard has something in it).
 
 import { clientToWorld, iCanvas } from './canvas';
+import { openTokenRenameDialog } from './dialogs';
 import { byId } from './dom';
 import { hitTest } from './elements';
 import { pushHistory } from './history';
@@ -155,14 +156,7 @@ byId('ctx-token-delete').addEventListener('click', () => {
 });
 
 byId('ctx-token-rename').addEventListener('click', () => {
-  const token = tokenAt(tokenMenuTarget);
-  if (!token) return;
-  const newName = prompt('Rename token:', token.name || '');
-  if (newName !== null) {
-    token.name = newName.trim().slice(0, 20) || token.name;
-    drawMain();
-    pushHistory();
-  }
+  if (tokenMenuTarget !== null) openTokenRenameDialog(tokenMenuTarget);
 });
 
 byId('ctx-token-color').addEventListener('click', () => {

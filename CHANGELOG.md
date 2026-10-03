@@ -5,6 +5,19 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.4.0 - 2026-10-03
+
+- A red "Live" indicator appears in the top-right while your map is shared. It
+  switches to "Reconnecting…" if the connection drops.
+- When a shared session reconnects you're told, including when changes you made
+  while offline were replaced by the shared map.
+- Rename tokens in an in-app dialog instead of the browser's pop-up.
+- You're warned if your browser can't save the map.
+- Accessibility: every control is labelled, dialogs handle keyboard focus,
+  text is easier to read, and you can zoom the page.
+- Custom colors you saved before carry over.
+- Under the hood: security updates to the development tools, plus a README.
+
 ## 0.3.0 - 2026-10-03
 
 - New "What's new" button in the top-right panel lists what changed in each

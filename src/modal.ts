@@ -3,15 +3,25 @@
 // context menu (remove token), and the Clear All action.
 
 let confirmCallback: (() => void) | null = null;
+let opener: Element | null = null;
+
+trapFocus(byId('modal'));
+
+function closeModal(): void {
+  byId('modal-overlay').classList.add('hidden');
+  restoreFocus(opener);
+}
 
 export function showConfirm(msg: string, onConfirm: () => void): void {
+  opener = document.activeElement;
   byId('modal-message').textContent = msg;
   byId('modal-overlay').classList.remove('hidden');
   confirmCallback = onConfirm;
+  byId('modal-cancel').focus(); // the safe choice for a destructive confirm
 }
 
 byId('modal-confirm').addEventListener('click', () => {
-  byId('modal-overlay').classList.add('hidden');
+  closeModal();
   if (confirmCallback) {
     confirmCallback();
     confirmCallback = null;
@@ -19,8 +29,9 @@ byId('modal-confirm').addEventListener('click', () => {
 });
 
 byId('modal-cancel').addEventListener('click', () => {
-  byId('modal-overlay').classList.add('hidden');
+  closeModal();
   confirmCallback = null;
 });
 
 import { byId } from './dom';
+import { restoreFocus, trapFocus } from './focus';

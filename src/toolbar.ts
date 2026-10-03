@@ -20,6 +20,7 @@ export function setTool(name: Tool): void {
   state.eraseHover = null;
   document.querySelectorAll<HTMLElement>('.tool-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.tool === name);
+    b.setAttribute('aria-pressed', String(b.dataset.tool === name));
   });
   document.body.className = `tool-${name}`;
   iCanvas.style.cursor = '';

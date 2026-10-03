@@ -8,6 +8,7 @@
 import { byId } from './dom';
 import { drawMain } from './render';
 import { state } from './state';
+import { storageGet, storageSet } from './storage';
 import { showToast } from './toast';
 import type { BoardElement } from './types';
 import { parseElements } from './validate';
@@ -31,19 +32,24 @@ export function setHistoryListener(fn: () => void): void {
 // does not, so a fresh load always starts with a single history baseline.
 const STORAGE_KEY = 'inkstone-board';
 
-export function persistBoard() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.elements));
-  } catch {
-    // Storage full or unavailable (e.g. private browsing) — persistence is a
-    // convenience, not a requirement, so just skip it rather than break the app.
-  }
+// Saving is a convenience, not a requirement, so a failed write never breaks
+// the app — but the first failure per page load tells the user, since their
+// work won't survive a reload.
+let warnedSaveFailed = false;
+
+export function persistBoard(): void {
+  if (storageSet(STORAGE_KEY, JSON.stringify(state.elements)) || warnedSaveFailed) return;
+  warnedSaveFailed = true;
+  showToast(
+    "Your map can't be saved in this browser (storage is full or blocked), so it won't survive a reload.",
+  );
 }
 
 export function loadPersistedBoard(): BoardElement[] | null {
+  const saved = storageGet(STORAGE_KEY);
+  if (!saved) return null;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? parseElements(JSON.parse(saved)) : null;
+    return parseElements(JSON.parse(saved));
   } catch {
     return null;
   }

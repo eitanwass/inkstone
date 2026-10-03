@@ -7,7 +7,8 @@ import changelogText from '../CHANGELOG.md?raw';
 import { version } from '../package.json';
 import { parseChangelog } from './changelog-parse';
 import { byId } from './dom';
-import { positionPopover } from './popover';
+import { closePopover, positionPopover } from './popover';
+import { storageGet, storageSet } from './storage';
 
 const SEEN_KEY = 'inkstone-changelog-seen';
 
@@ -41,24 +42,16 @@ function renderEntries(): void {
 }
 
 function lastSeenVersion(): string | null {
-  try {
-    return localStorage.getItem(SEEN_KEY);
-  } catch {
-    return null;
-  }
+  return storageGet(SEEN_KEY);
 }
 
 function markSeen(): void {
   button.classList.remove('has-update');
-  try {
-    localStorage.setItem(SEEN_KEY, version);
-  } catch {
-    // Storage unavailable: the dot just comes back next visit.
-  }
+  storageSet(SEEN_KEY, version); // if storage is unavailable, the dot just comes back next visit
 }
 
 function hidePopover(): void {
-  popover.classList.add('hidden');
+  closePopover(popover, button);
 }
 
 renderEntries();
@@ -68,6 +61,7 @@ button.addEventListener('click', (e) => {
   e.stopPropagation();
   if (popover.classList.contains('hidden')) {
     positionPopover(popover, button);
+    popover.focus();
     markSeen();
   } else {
     hidePopover();
@@ -79,5 +73,8 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hidePopover();
+  if (e.key === 'Escape' && !popover.classList.contains('hidden')) {
+    hidePopover();
+    button.focus();
+  }
 });

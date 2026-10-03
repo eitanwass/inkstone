@@ -22,7 +22,7 @@
 import PartySocket from 'partysocket';
 import { byId } from './dom';
 import { applyRemoteSnapshot, setHistoryListener } from './history';
-import { positionPopover } from './popover';
+import { closePopover, positionPopover } from './popover';
 import { state } from './state';
 import { showToast } from './toast';
 import { parseElements } from './validate';
@@ -31,8 +31,17 @@ const RELAY_HOST = import.meta.env.VITE_RELAY_HOST || 'localhost:8787';
 
 let socket: PartySocket | null = null;
 
+// True when an edit was made while the connection was down, so it never
+// reached the room. (PartySocket reconnects by itself; the relay then sends
+// its copy of the map and applyRemoteSnapshot makes that the local map.)
+let unsentEdits = false;
+
 function broadcastState() {
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!socket) return;
+  if (socket.readyState !== WebSocket.OPEN) {
+    unsentEdits = true;
+    return;
+  }
   socket.send(JSON.stringify(state.elements));
 }
 
@@ -46,27 +55,64 @@ function parseJson(text: string): unknown {
   }
 }
 
-function setStatus(connected: boolean): void {
-  byId('collab-status').classList.toggle('hidden', !connected);
+const STATUS_TEXT = { connecting: 'Connecting…', live: 'Live', reconnecting: 'Reconnecting…' };
+
+function setStatus(status: keyof typeof STATUS_TEXT | null): void {
+  const el = byId('collab-status');
+  el.classList.toggle('hidden', status === null);
+  if (!status) return;
+  el.dataset.state = status;
+  byId('collab-status-text').textContent = STATUS_TEXT[status];
 }
 
+const UNREACHABLE_AFTER_MS = 8000;
+
 // `seed` is only true when *creating* a brand-new session: that client's
-// current board becomes the room's starting state. Joining an existing
-// session must NOT seed — it would race the server's reply with the room's
-// actual current state and could stomp it with a stale/empty local board.
+// current board becomes the room's starting state, on the first connection
+// only. Joining an existing session must NOT seed — it would race the
+// server's reply with the room's actual current state and could stomp it with
+// a stale/empty local board. The same goes for reconnecting: once a client
+// has been away, the room's copy is the truth.
 function connect(sessionId: string, { seed = false } = {}): void {
   if (socket) socket.close();
-  socket = new PartySocket({ host: RELAY_HOST, room: sessionId });
-  socket.addEventListener('open', () => {
-    setStatus(true);
-    showToast('Connected — this map is now shared live');
-    if (seed) broadcastState();
+  const current = new PartySocket({ host: RELAY_HOST, room: sessionId });
+  socket = current;
+  unsentEdits = false;
+  let everOpened = false;
+  let live = false;
+  setStatus('connecting');
+
+  setTimeout(() => {
+    if (socket === current && !everOpened) {
+      showToast("Can't reach the sharing server yet — still trying…");
+    }
+  }, UNREACHABLE_AFTER_MS);
+
+  current.addEventListener('open', () => {
+    live = true;
+    setStatus('live');
+    if (!everOpened) {
+      showToast('Connected — this map is now shared live');
+      if (seed) broadcastState();
+    } else if (unsentEdits) {
+      showToast('Reconnected — changes you made while offline were replaced by the shared map');
+    } else {
+      showToast('Reconnected');
+    }
+    everOpened = true;
+    unsentEdits = false;
   });
-  socket.addEventListener('message', (evt) => {
+  current.addEventListener('message', (evt) => {
     const elements = parseElements(parseJson(evt.data));
     if (elements) applyRemoteSnapshot(elements);
   });
-  socket.addEventListener('close', () => setStatus(false));
+  current.addEventListener('close', () => {
+    if (socket !== current || !everOpened) return; // replaced by another session, or never connected
+    setStatus('reconnecting');
+    // Each failed retry also fires 'close'; only announce the drop once.
+    if (live) showToast('Connection lost — reconnecting…');
+    live = false;
+  });
 }
 
 function currentUrlSessionId() {
@@ -85,7 +131,7 @@ const sharePopover = byId('share-popover');
 const shareCodeInput = byId<HTMLInputElement>('share-code-input');
 
 function hideSharePopover() {
-  sharePopover.classList.add('hidden');
+  closePopover(sharePopover, shareBtn);
 }
 
 function openSharePopover() {
@@ -98,6 +144,7 @@ function openSharePopover() {
   shareCodeInput.value = sessionId;
   hideJoinPopover();
   positionPopover(sharePopover, shareBtn);
+  shareCodeInput.focus();
 }
 
 shareBtn.addEventListener('click', (e) => {
@@ -121,7 +168,7 @@ const joinPopover = byId('join-popover');
 const joinCodeInput = byId<HTMLInputElement>('join-code-input');
 
 function hideJoinPopover() {
-  joinPopover.classList.add('hidden');
+  closePopover(joinPopover, joinBtn);
 }
 
 function openJoinPopover() {

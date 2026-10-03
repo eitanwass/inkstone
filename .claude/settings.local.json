@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Skill(run)",
-      "Skill(run:*)",
-      "Bash(npm install *)"
-    ]
-  }
-}

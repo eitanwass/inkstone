@@ -9,8 +9,8 @@
   --accent: #c9a84c;
   --accent-dim: #7a6230;
   --text-primary: #e8dcc8;
-  --text-muted: #8a7a66;
-  --text-label: #5a4f42;
+  --text-muted: #a89885;
+  --text-label: #8f8370;
   --danger: #a04040;
   --canvas-bg: #e9e4da;
   --dot-color: rgba(180, 170, 155, 0.55);
@@ -28,13 +28,23 @@ html, body {
 
 button { font-family: inherit; touch-action: manipulation; }
 
+/* The browser's default placeholder gray is too faint on the dark inputs. */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation-duration: 0.01ms !important; }
+  * {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /* ── Layout: canvas is full-bleed, chrome floats above it ───── */
@@ -124,9 +134,6 @@ canvas {
   color: #4a3f2e;
 }
 
-#collab-status {
-  color: #4a7c59;
-}
 
 /* ── Floating panels (signature shape: chamfered brass plate) ─ */
 .floating-panel {
@@ -172,10 +179,54 @@ canvas {
    what makes the scrollbar (rather than a squashed layout) the fallback. */
 .floating-panel > * { flex-shrink: 0; }
 
-/* ── Action cluster (top-right) ──────────────────────────────── */
-#action-cluster {
+/* ── Right rail (top-right): action cluster, then the live indicator ── */
+#right-rail {
+  position: fixed;
   top: calc(20px + env(safe-area-inset-top, 0px));
   right: calc(24px + env(safe-area-inset-right, 0px));
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* .floating-panel is position: fixed; inside the rail it flows with it. */
+#action-cluster { position: relative; }
+
+/* Shown while a map is shared. Red = live, like a broadcast badge. */
+#collab-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px 4px 10px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5484d;
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+#collab-status[data-state='reconnecting'] .live-dot { background: #d9a441; animation: none; }
+#collab-status[data-state='connecting'] .live-dot { background: var(--text-muted); animation: none; }
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(229, 72, 77, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0); }
 }
 
 /* ── Tool dock (bottom-center) ───────────────────────────────── */
@@ -539,8 +590,7 @@ canvas {
 
 /* ── Modals ────────────────────────────────────────────────── */
 #modal-overlay,
-#token-name-overlay,
-#text-label-overlay {
+.input-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.55);
@@ -551,8 +601,7 @@ canvas {
 }
 
 #modal,
-#token-name-modal,
-#text-label-modal {
+.input-modal {
   background: #1e1b17;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -562,15 +611,13 @@ canvas {
 }
 
 #modal p,
-#token-name-modal p,
-#text-label-modal p {
+.input-modal p {
   color: var(--text-primary);
   font-size: 14px;
   margin-bottom: 16px;
 }
 
-#token-name-input,
-#text-label-input {
+.input-modal input {
   width: 100%;
   padding: 8px 10px;
   background: #25211d;
@@ -582,8 +629,7 @@ canvas {
   outline: none;
 }
 
-#token-name-input:focus,
-#text-label-input:focus {
+.input-modal input:focus {
   border-color: var(--accent-dim);
 }
 
@@ -610,7 +656,7 @@ canvas {
   background: var(--accent-dim);
   border: 1px solid var(--accent);
   border-radius: 4px;
-  color: var(--accent);
+  color: #f5ecd0; /* the gold accent alone is too faint on this fill (2.5:1) */
   font-size: 12.5px;
   cursor: pointer;
   transition: background 0.1s;
@@ -686,7 +732,7 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   .style-group { gap: 6px; padding: 0 2px; }
   .panel-divider { margin: 0 1px; }
 
-  #action-cluster { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); }
+  #right-rail { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); }
   #tool-dock { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
   #style-panel { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
   /* The action cluster's bigger touch targets (pointer: coarse, below) make
@@ -697,13 +743,13 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   /* Popovers/modals size to their anchor button or to viewport center, so
      their min-width (set for desktop) is what risks overflow here. */
   .collab-popover, .color-popover { min-width: 0; max-width: calc(100vw - 32px); }
-  #modal, #token-name-modal, #text-label-modal { min-width: 0; width: calc(100vw - 48px); max-width: 360px; }
+  #modal, .input-modal { min-width: 0; width: calc(100vw - 48px); max-width: 360px; }
 }
 
 /* ── Short/landscape phones: less vertical room, so pull the floating
    panels in from the edges a bit too. ───────────────────────────────── */
 @media (max-height: 420px) {
-  #action-cluster { top: calc(8px + env(safe-area-inset-top, 0px)); }
+  #right-rail { top: calc(8px + env(safe-area-inset-top, 0px)); }
   #tool-dock { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
   #style-panel { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
 }
