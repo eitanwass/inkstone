@@ -14,7 +14,6 @@ import { drawGrid } from './grid';
 import { loadPersistedBoard, pushHistory } from './history';
 import { drawMain } from './render';
 import { FONT_FAMILY, state } from './state';
-import { showToast } from './toast';
 import { setTool } from './toolbar';
 
 import './color-swatches';
@@ -45,9 +44,6 @@ window.addEventListener('load', () => {
   const saved = loadPersistedBoard();
   if (saved) state.elements = saved;
 
-  // The welcome goes first: pushHistory() saves the board, and if saving fails
-  // its warning must be the toast that's left on screen.
-  showToast(saved ? 'Welcome back! Your map was restored.' : 'Welcome! Right-click elements for options.');
   pushHistory();
   drawMain();
 

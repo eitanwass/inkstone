@@ -28,13 +28,12 @@ test('a saved board keeps its valid elements and drops malformed ones', async ({
 
   const elements = await boardElements(page);
   expect(elements.map((e) => e.type)).toEqual(['rect', 'token']);
-  await expect(page.locator('#toast')).toContainText('restored');
 });
 
 test('a saved board that is not a list is ignored, not crashed on', async ({ page }) => {
   for (const raw of ['{"type":"rect"}', 'not json at all', '42']) {
     await loadWithSavedBoard(page, raw);
     expect(await boardElements(page)).toEqual([]);
-    await expect(page.locator('#toast')).toContainText('Welcome!');
+    await expect(page.locator('#first-visit-hint')).toBeVisible(); // an empty map, so the welcome shows
   }
 });

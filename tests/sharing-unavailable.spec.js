@@ -61,3 +61,10 @@ test('the dev server still connects (the localhost fallback is for development o
   await expect.poll(() => sockets.length).toBe(1); // the pill shows as soon as it starts connecting
   expect(sockets[0].url()).toContain('localhost:8787');
 });
+
+test('the first-visit hint does not invite people to share what is not set up', async ({ page }) => {
+  await loadAsProductionWithoutRelay(page);
+  await expect(page.locator('#first-visit-hint')).toBeVisible();
+  await expect(page.locator('.hint-share')).toBeHidden();
+  await expect(page.locator('.hint-help')).toBeVisible(); // the rest of the hint is unaffected
+});

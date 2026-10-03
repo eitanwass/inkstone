@@ -33,7 +33,6 @@ test('the board persists across a reload', async ({ page }) => {
   await page.waitForTimeout(300);
 
   expect(await boardElements(page)).toHaveLength(1);
-  await expect(page.locator('#toast')).toContainText('restored');
   // A fresh reload starts a new history baseline — nothing to undo to yet.
   await expect(page.locator('#btn-undo')).toBeDisabled();
 });

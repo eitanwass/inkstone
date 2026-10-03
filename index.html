@@ -161,6 +161,30 @@
   </nav>
 
   <footer>
+  <!-- First-visit hint, shown on an empty map until something is drawn (see src/hint.ts).
+       Never takes clicks, so the map underneath is always drawable. -->
+  <section id="first-visit-hint" class="hidden" aria-label="Getting started">
+    <div class="hint-welcome">
+      <h2>Start your map</h2>
+      <p>Pick a tool below and drag on the map.</p>
+      <p class="hint-keys">
+        <span><kbd>R</kbd> room</span>
+        <span><kbd>W</kbd> wall</span>
+        <span><kbd>T</kbd> token</span>
+        <span><kbd>L</kbd> label</span>
+      </p>
+      <p class="hint-note">Your map is saved in this browser as you draw.</p>
+    </div>
+    <div class="hint-share" aria-hidden="true">
+      <svg width="46" height="52" viewBox="0 0 46 52" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 49C30 44 12 34 12 8"/><path d="M4 16l8-10 8 9"/></svg>
+      <span>Share live with your friends</span>
+    </div>
+    <div class="hint-help" aria-hidden="true">
+      <span>Shortcuts and help</span>
+      <svg width="46" height="52" viewBox="0 0 46 52" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3C22 6 40 14 38 44"/><path d="M30 37l8 9 6-10"/></svg>
+    </div>
+  </section>
+
   <!-- Zoom controls: bottom-left (see zoomIn / zoomOut / fitMapToScreen in src/controls.ts) -->
   <div id="zoom-controls" class="floating-panel" role="toolbar" aria-label="Zoom">
     <button class="icon-btn" id="btn-zoom-out" aria-label="Zoom out" aria-keyshortcuts="-" title="Zoom out (-)">

@@ -25,8 +25,8 @@ Each item is meant to ship on its own.
   - ~~A toast with an "Undo" button after Clear All and after deleting elements or a token.~~
 - ~~**Saved-state feedback.**~~
   - ~~A quiet "Saved" mark so people trust that the map survives a reload.~~
-- **First-visit hint.** A one-line, dismissible tip on an empty map ("Press R and
-  drag to draw a room"). New visitors currently land on a blank canvas.
+- ~~**First-visit hint.**~~
+  - ~~A welcome on an empty map, with an arrow to the shortcut list.~~
 
 ## Next: drawing speed and polish (S to M)
 

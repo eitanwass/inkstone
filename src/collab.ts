@@ -36,6 +36,10 @@ const RELAY_HOST = resolveRelayHost({
   DEV: import.meta.env.DEV,
 });
 
+// Lets the page's styles hide anything that promises sharing (the first-visit hint's arrow).
+// On <html>, not <body>: setTool() assigns body's whole className.
+document.documentElement.classList.toggle('sharing-unavailable', !RELAY_HOST);
+
 const SHARING_UNAVAILABLE = "Sharing isn't set up on this site yet.";
 
 // Whether sharing can be used; if not, tells the user why.

@@ -9,6 +9,7 @@ import { drawElementShape, getElementBounds } from './elements';
 import { normalizeRect } from './geometry';
 import { drawGrid } from './grid';
 import { getHandles, HANDLE_RADIUS_PX, hasHandles } from './handles';
+import { updateFirstVisitHint } from './hint';
 import { state } from './state';
 import type { BoardElement, Bounds } from './types';
 
@@ -48,6 +49,7 @@ export function drawMain() {
   if (state.preview) drawElement(mCtx, state.preview, false, true);
 
   mCtx.restore();
+  updateFirstVisitHint();
 }
 
 // ── Highlight boxes ────────────────────────────────────────────

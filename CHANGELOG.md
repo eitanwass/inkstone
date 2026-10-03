@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.5 - 2026-10-03
+
+- Keyboard shortcuts: arrow keys move the selection one cell, Ctrl+A selects
+  everything, + and - zoom, and F fits the whole map on screen. Press ? (or use
+  the ? button, bottom-right) to see them all.
+- Zoom buttons, bottom-left: zoom in, zoom out, and fit the map to the screen.
+- After clearing the map or deleting something, an Undo button appears.
+- A small indicator next to the Live badge shows when your map is saving,
+  saved, or could not be saved.
+- A new map now greets you with a short hint on how to start. The welcome
+  messages at the top are gone.
+
 ## 0.6.4 - 2026-10-03
 
 - Name your map: click the title at the top of the page. The name shows in the

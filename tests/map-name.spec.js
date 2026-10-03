@@ -298,7 +298,7 @@ test.describe('the map name never collides with the other controls', () => {
   test('a toast does not cover the map name', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await resetBoard(page);
-    await page.click('#btn-share'); // raises a toast
+    await page.click('#btn-export'); // raises a toast ("Map exported!")
     await expect(page.locator('#toast.visible')).toBeVisible();
     const title = await page.locator('#map-title').boundingBox();
     const toast = await page.locator('#toast').boundingBox();
