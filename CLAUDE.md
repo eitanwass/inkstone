@@ -122,8 +122,11 @@ The link preview (`og:` and `twitter:` tags in `index.html`, image
 `public/og-image.png`) is rendered by `npm run build:og` from
 `design/share-preview/template.html`; don't edit the PNG by hand. Chat apps need
 an **absolute** image URL, so `index.html` uses a `%SITE_URL%` placeholder that
-`vite.config.ts` fills in at build time from `SITE_URL`, else Vercel's
-`VERCEL_PROJECT_PRODUCTION_URL`, else nothing (relative, fine for local dev).
+`vite.config.ts` fills in at build time using `resolveSiteUrl` (`scripts/site-url.ts`):
+`SITE_URL`, else Vercel's `VERCEL_PROJECT_PRODUCTION_URL` (a bare domain, no
+protocol), else nothing (relative, fine for local dev). Either may be written
+with or without `https://` or a trailing slash; the result always has a protocol
+and no trailing slash.
 
 *Showing a map's name in its invite-link preview* is not built, but the template
 already renders a named card (`?name=...`). Crawlers don't run JavaScript, and
