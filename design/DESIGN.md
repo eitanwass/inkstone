@@ -246,10 +246,8 @@ Names are user text: the template sets them as text (never HTML), keeps them to
 60 characters, shrinks them from 112px to a 44px floor, and then trims with an
 ellipsis until they fit their box.
 
-**A shared map's link shows its own name.** The invite link (`/join?session=...&map=...`)
-carries the name; a server function fills the page's preview tags with it and a second
-one draws the named card on demand (same layout as the template, Latin-script
-names only; anything else gets the site card). The details are in CLAUDE.md.
+A map's own name is deliberately not shown in the preview of its invite link:
+every link gets this same card. (We built it and removed it; see CLAUDE.md.)
 
 ## 12. Known gaps
 

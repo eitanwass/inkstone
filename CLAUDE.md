@@ -178,61 +178,16 @@ protocol), else nothing (relative, fine for local dev). Either may be written
 with or without `https://` or a trailing slash; the result always has a protocol
 and no trailing slash.
 
-**A map's name in its invite-link preview.** Chat apps read a link's preview tags
-without running JavaScript, and the name only exists inside the running app, so:
-
-1. **The name travels in the link, and the link lives at `/join`.** While a page is
-   part of a session, `collab.ts` makes the address the invite link (path `/join`,
-   with `?session=`) and keeps its `?map=` equal to the map's name (`syncUrlMapName`: when
-   sharing starts, on every committed rename, and when the room reports its name).
-   "Copy Link" copies `location.href`, so it includes it. A link copied earlier
-   keeps the name it had then.
-2. **`vercel.json` rewrites `/join` to `api/share.ts`**, which fetches the static
-   `/index.html` and rewrites the title and `og:`/`twitter:` tags for that name,
-   pointing `og:image` at `/api/og?name=...`. Everyone who opens a `/join` link gets
-   this page (the app is unchanged). It must be `/join` and not `/`: **Vercel serves a
-   static file before it consults rewrites**, so a rewrite on `/` (where `index.html`
-   lives) never fires. This is how the first version failed in production, and a
-   test now rejects any rewrite whose path has a static file. On *any* error the
-   function redirects to `/` with the same session (the plain app) and says why in an
-   `x-share-fallback` header.
-3. **`api/og.ts` draws the card** (`api/_card.ts`: Satori lays out plain objects,
-   resvg-wasm rasterizes, so it needs no browser and runs the same locally and on
-   Vercel). The layout mirrors `design/share-preview/template.html`; change them
-   together. Fonts must be **WOFF** (Satori can't read WOFF2 or variable fonts), so
-   the function uses the static `@fontsource/inter` and `@fontsource/eb-garamond`
-   files; `RUNTIME_FILES` lists everything it reads and `vercel.json`'s
-   `includeFiles` must cover them (a test checks both). `og.ts` loads `_card.js` with
-   a dynamic import *inside* its try/catch, so even a renderer that can't load on the
-   server becomes a redirect to the site card (with an `x-og-fallback` header giving
-   the reason) rather than a 500.
-
-The name in the URL is untrusted text. Both functions run it through
-`normalizeMapName` (so at most 60 characters), `share.ts` HTML-escapes it and
-URL-encodes it into the image address, and the card only draws what the bundled
-fonts cover (Basic Latin, Latin-1, Latin Extended, typographic punctuation, the euro
-sign: `isDrawable`). A name outside that (another script, emoji) and any rendering
-failure redirect to the plain site card, so a preview always has an image.
-Cyrillic, Greek, Hebrew etc. would need more font files bundled to be supported.
-Responses are cached (`s-maxage`), and the same name always gives the same image.
-Tests: `tests/unit/{share-function,og-function,preview-chain,vercel-config}.test.ts`
-(the chain test serves the static page and mounts both functions in a local
-server, then plays a chat app) and `tests/invite-link.spec.js`. What they can't
-cover is Vercel's own runtime (bundling, the rewrite, `includeFiles`), so after a
-deploy, check `curl -i "https://<site>/api/og?name=Test"` (a PNG, or a 302 whose
-`x-og-fallback` header says why not) and `curl -i "https://<site>/join?session=x&map=Test"`
-(a 200 page with the name in its title, or a 302 whose `x-share-fallback` says why not).
-
-`package.json` has an `overrides` entry pinning `fflate` to `^0.8.2`: Satori's font
-reader depends on `fflate` 0.7.x, which `npm audit` flags (its ZIP-reading function
-can loop forever on a malformed archive; Satori only uses the inflate half, so it
-wasn't exploitable, but the audit should stay clean). Remove the override once
-Satori depends on a patched `fflate` itself.
-
-Things to know: anyone can craft `/?map=anything` and get a card with that text on
-the site's domain; the name also shows up in whatever chat the link is pasted into;
-and the endpoint renders on demand (cached per name), so very high traffic is a
-cost, not a correctness, concern.
+**The link preview is the same for every map, deliberately.** We built a per-map
+card (the map's name drawn into the preview image, via `?map=` in the invite link, a
+Vercel function that rewrote the preview tags and another that drew the image with
+Satori) and removed it again: it was a lot of moving parts (server functions, bundled
+fonts and wasm, a special invite path) for a small gain, and it kept failing in
+Vercel's runtime in ways local tests couldn't see. If it's ever wanted again, it's
+in git history (0.6.1 to 0.6.3). Lessons if so: a static file is served before any
+rewrite (so a rewrite on `/` never fires); Satori's WOFF reader returns empty glyphs
+(unpack to TTF first); Vercel passes a second argument to handlers; every file a
+function reads, including those of its dependencies, must be in `includeFiles`.
 
 ## Accessibility and storage conventions
 
