@@ -69,3 +69,27 @@ export async function placeLabel(page, toScreen, x, y, text) {
   await page.fill('#text-label-input', text);
   await page.click('#text-label-confirm');
 }
+
+// Playwright's touchscreen API only does taps, so multi-touch gestures are
+// driven by dispatching touch-type PointerEvents on the canvas directly (which
+// is what the app's own handlers listen for).
+export function touch(page, type, pointerId, x, y) {
+  return page.evaluate(
+    ([type, pointerId, x, y]) => {
+      document.getElementById('interaction-canvas').dispatchEvent(
+        new PointerEvent(type, {
+          pointerId,
+          pointerType: 'touch',
+          isPrimary: pointerId === 1,
+          button: 0,
+          buttons: type === 'pointerup' ? 0 : 1,
+          clientX: x,
+          clientY: y,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    },
+    [type, pointerId, x, y],
+  );
+}

@@ -25,12 +25,23 @@ missing element so callers get non-null typed elements. Biome handles
 linting, formatting and import order: `npm run lint` checks (CI runs it),
 `npm run format` fixes. Style is 2-space indent, single quotes, semicolons,
 110 columns; [.editorconfig](.editorconfig) and [.gitattributes](.gitattributes)
-pin LF line endings. There is a Playwright Test
-suite in [tests/](tests/) — `npm test` runs it (the config auto-starts the
-dev server). It drives the real UI (clicking toolbar buttons, dragging on
+pin LF line endings.
+
+There are two test suites, and `npm test` runs both (unit first). **Unit
+tests** (Vitest, `npm run test:unit`) live in `tests/unit/` (mirroring
+`src/`, as `*.test.ts`) and cover pure logic with no DOM: geometry, the rect and
+wall element types, `validate.ts`, the changelog parser. They run in
+milliseconds, so prefer them for math and parsing. A module that imports
+`canvas.ts` (or anything else that touches the DOM at load, like the token and
+label types) can't load under Vitest's Node environment, so those are covered
+by the e2e suite instead. The **Playwright e2e suite**
+(the `*.spec.js` files in [tests/](tests/), `npm run test:e2e`; the config
+auto-starts the dev server and ignores `tests/unit/`) drives the real UI (clicking toolbar buttons, dragging on
 the canvas) rather than calling module internals, since there's no exposed
 JS API and DOM/canvas interaction is what actually exercises the code worth
-regression-testing. [tests/helpers.js](tests/helpers.js) has the shared
+regression-testing. Touch gestures are tested by dispatching touch-type
+`PointerEvent`s via the `touch()` helper (Playwright's touchscreen API only
+does taps). [tests/helpers.js](tests/helpers.js) has the shared
 setup (`resetBoard`, world→screen conversion matching `resetView()`'s pan
 formula, element-placement helpers). When adding a feature, prefer deriving
 test coordinates from the actual persisted element data

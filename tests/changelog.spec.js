@@ -42,17 +42,3 @@ test('the changelog button shows a dot until the current version has been opened
   await page.waitForSelector('#tool-rect');
   await expect(page.locator('#btn-changelog')).toHaveClass(/has-update/);
 });
-
-// parseChangelog is pure, so call it directly through the dev server.
-test('parseChangelog reads versions, dates and bullets and ignores the rest', async ({ page }) => {
-  const entries = await page.evaluate(async () => {
-    const { parseChangelog } = await import('/src/changelog-parse.ts');
-    return parseChangelog(
-      '# Changelog\nintro text\n\n## 1.2.0 - 2026-01-02\n- Added a thing\n* Fixed a\n  wrapped thing\n\n## 1.1.0\n- Older\nstray line\n',
-    );
-  });
-  expect(entries).toEqual([
-    { version: '1.2.0', date: '2026-01-02', changes: ['Added a thing', 'Fixed a wrapped thing'] },
-    { version: '1.1.0', date: null, changes: ['Older'] },
-  ]);
-});

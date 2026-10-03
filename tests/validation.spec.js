@@ -38,24 +38,3 @@ test('a saved board that is not a list is ignored, not crashed on', async ({ pag
     await expect(page.locator('#toast')).toContainText('Welcome!');
   }
 });
-
-// parseElements is a pure function, so this calls it directly through the dev
-// server's module graph instead of driving the UI (collab snapshots go
-// through the same function but need a running relay to exercise).
-test('parseElements rejects non-finite numbers and non-lists', async ({ page }) => {
-  const results = await page.evaluate(async () => {
-    const { parseElements } = await import('/src/validate.ts');
-    return {
-      notList: parseElements({ type: 'rect' }),
-      nullInput: parseElements(null),
-      infinite: parseElements([{ type: 'rect', x: 0, y: 0, w: Number.POSITIVE_INFINITY, h: 1 }]),
-      prototypeKey: parseElements([{ type: 'constructor', x: 0, y: 0 }]),
-      ok: parseElements([{ type: 'label', x: 0, y: 0, text: 'hi', strokeColor: '#fff' }]),
-    };
-  });
-  expect(results.notList).toBeNull();
-  expect(results.nullInput).toBeNull();
-  expect(results.infinite).toEqual([]);
-  expect(results.prototypeKey).toEqual([]);
-  expect(results.ok).toHaveLength(1);
-});

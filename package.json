@@ -11,7 +11,9 @@
     "format": "biome check --write .",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "playwright test",
+    "test": "vitest run && playwright test",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
     "party:dev": "wrangler dev",
     "party:deploy": "wrangler deploy"
   },
@@ -23,6 +25,7 @@
     "@playwright/test": "^1.61.1",
     "typescript": "^7.0.2",
     "vite": "^6.0.0",
+    "vitest": "^5.0.3",
     "wrangler": "^3.114.17"
   }
 }
