@@ -2,12 +2,13 @@
 // Stored as x/y/w/h plus an optional rotation in radians, rotating around its
 // own center. See index.js for what each method is for.
 
-import { GRID } from '../state.js';
-import { rotatePoint, rectCornerLocal } from '../geometry.js';
+import { GRID } from '../state';
+import { rotatePoint, rectCornerLocal } from '../geometry';
+import type { ElementBehavior, Corner, Point, RectElement } from '../types';
 
-const center = el => ({ x: el.x + el.w / 2, y: el.y + el.h / 2 });
+const center = (el: RectElement): Point => ({ x: el.x + el.w / 2, y: el.y + el.h / 2 });
 
-export const rect = {
+export const rect: ElementBehavior<RectElement> = {
   center,
 
   draw(ctx, el) {
@@ -30,7 +31,7 @@ export const rect = {
     const rotation = el.rotation || 0;
     if (!rotation) return { x: el.x, y: el.y, w: el.w, h: el.h };
     const c = center(el);
-    const corners = ['nw', 'ne', 'sw', 'se']
+    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[])
       .map(id => rotatePoint(rectCornerLocal(el, id), c, rotation));
     const xs = corners.map(p => p.x), ys = corners.map(p => p.y);
     const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -62,9 +63,9 @@ export const rect = {
   handles(el, rotateOffset) {
     const rotation = el.rotation || 0;
     const c = center(el);
-    const corners = ['nw', 'ne', 'sw', 'se'].map(id => {
+    const corners = (['nw', 'ne', 'sw', 'se'] as Corner[]).map(id => {
       const p = rotatePoint(rectCornerLocal(el, id), c, rotation);
-      return { id, kind: 'resize', x: p.x, y: p.y };
+      return { id, kind: 'resize' as const, x: p.x, y: p.y };
     });
     const rotateHandle = rotatePoint({ x: c.x, y: el.y - rotateOffset }, c, rotation);
     const topMid = rotatePoint({ x: c.x, y: el.y }, c, rotation);

@@ -3,6 +3,10 @@
 // this same reference and mutates its properties directly, then calls
 // drawMain()/drawGrid() to re-render. No framework, no virtual DOM.
 
+import type {
+  BoardElement, EraseHover, ElementDrag, HandleDrag, Point, SelectBox, Tool,
+} from './types';
+
 export const GRID = 40; // px per grid cell (logical)
 
 // Tokens saved before variable sizing existed have no radius, so every reader
@@ -15,40 +19,67 @@ export const MAX_ZOOM = 8;
 export const DEFAULT_FONT_SIZE = 14;
 export const FONT_FAMILY = "'Segoe UI', sans-serif";
 
-export const state = {
+interface AppState {
+  tool: Tool;
+  strokeColor: string;
+  fillColor: string;
+  strokeWidth: number;
+  fontSize: number;
+  // Viewport transform
+  panX: number;
+  panY: number;
+  zoom: number;
+  // Interaction
+  isPanning: boolean;
+  panStart: Point | null;
+  altHeld: boolean;
+  isDragging: boolean;
+  dragStart: Point | null;
+  // Selection: array of indices into elements[]
+  selected: number[];
+  hoveredToken: number | null; // index
+  // Rubber-band select
+  isBoxSelecting: boolean;
+  selectBox: SelectBox | null;
+  selectionBoxAdditive: boolean;
+  // For in-progress draw
+  preview: BoardElement | null;
+  // Elements (shapes, tokens, labels)
+  elements: BoardElement[];
+  // Moving the current selection
+  elementDrag: ElementDrag | null;
+  // Resizing/rotating a single selected element via its handles
+  handleDrag: HandleDrag | null;
+  // Erase drag
+  isErasing: boolean;
+  // Element under the eraser cursor, shown as a deletion preview
+  eraseHover: EraseHover | null;
+}
+
+export const state: AppState = {
   tool: 'select',
   strokeColor: '#e8dcc8',
   fillColor: '#463b29',
   strokeWidth: 4,
   fontSize: DEFAULT_FONT_SIZE,
-  // Viewport transform
   panX: 0,
   panY: 0,
   zoom: 1,
-  // Interaction
   isPanning: false,
   panStart: null,
   altHeld: false,
   isDragging: false,
   dragStart: null,
-  // Selection: array of indices into elements[]
   selected: [],
-  hoveredToken: null, // index
-  // Rubber-band select
+  hoveredToken: null,
   isBoxSelecting: false,
   selectBox: null,
   selectionBoxAdditive: false,
-  // For in-progress draw
   preview: null,
-  // Elements (shapes, tokens, labels)
   elements: [],
-  // Moving the current selection
   elementDrag: null,
-  // Resizing/rotating a single selected rect or wall via its handles
   handleDrag: null,
-  // Erase drag
   isErasing: false,
-  // Element under the eraser cursor, shown as a deletion preview
   eraseHover: null,
 };
 

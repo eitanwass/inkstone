@@ -3,14 +3,15 @@
 // state.elements here must route index shifts through
 // adjustSelectionForSplice to keep state.selected valid.
 
-import { state, GRID } from './state.js';
-import { snapToGrid, rectsOverlap, normalizeRect } from './geometry.js';
-import { getElementBounds, snapshotCoords, translateElement } from './elements/index.js';
-import { drawMain } from './render.js';
-import { pushHistory } from './history.js';
-import { showToast } from './toast.js';
+import { state, GRID } from './state';
+import { snapToGrid, rectsOverlap, normalizeRect } from './geometry';
+import { getElementBounds, snapshotCoords, translateElement } from './elements';
+import { drawMain } from './render';
+import { pushHistory } from './history';
+import { showToast } from './toast';
+import type { BoardElement, Point } from './types';
 
-export function adjustSelectionForSplice(removeIdx, insertedCount) {
+export function adjustSelectionForSplice(removeIdx: number, insertedCount: number): void {
   const shift = insertedCount - 1;
   state.selected = state.selected
     .filter(s => s !== removeIdx)
@@ -32,7 +33,7 @@ function selectedIndices() {
 
 // Adds elements to the front (or back) of the z-order, selects exactly them,
 // then redraws and records history. Shared by duplicate/paste/reorder.
-function addAndSelect(els, { atBack = false } = {}) {
+function addAndSelect(els: BoardElement[], { atBack = false } = {}): void {
   if (atBack) state.elements.unshift(...els);
   else state.elements.push(...els);
   const start = atBack ? 0 : state.elements.length - els.length;
@@ -62,7 +63,7 @@ export function duplicateSelected() {
 // ── Copy / paste ────────────────────────────────────────────────
 // In-memory clipboard (not the OS clipboard) — simpler and just as useful
 // for an app where copy/paste never needs to leave the canvas.
-export let clipboard = [];
+export let clipboard: BoardElement[] = [];
 
 export function copySelection() {
   if (!state.selected.length) return;
@@ -83,7 +84,7 @@ function clipboardBounds() {
 
 // Pastes the clipboard so its bounding-box center lands at anchorWorld,
 // preserving the relative layout of a multi-element copy.
-export function pasteClipboard(anchorWorld) {
+export function pasteClipboard(anchorWorld: Point): void {
   if (!clipboard.length) return;
   const bounds = clipboardBounds();
   const cx = bounds.x + bounds.w / 2, cy = bounds.y + bounds.h / 2;
@@ -106,7 +107,7 @@ export function sendSelectedToBack() {
 }
 
 // ── Moving the selection ──────────────────────────────────────
-export function startElementDrag(world) {
+export function startElementDrag(world: Point): void {
   state.elementDrag = {
     moved: false,
     origin: { x: world.x, y: world.y },
@@ -114,9 +115,11 @@ export function startElementDrag(world) {
   };
 }
 
-export function applyElementDrag(world) {
-  state.elementDrag.moved = true;
-  const { origin, snapshot } = state.elementDrag;
+export function applyElementDrag(world: Point): void {
+  const drag = state.elementDrag;
+  if (!drag) return;
+  drag.moved = true;
+  const { origin, snapshot } = drag;
   const dx = snapToGrid(world.x - origin.x);
   const dy = snapToGrid(world.y - origin.y);
   snapshot.forEach(({ i, coords }) => {
@@ -127,11 +130,12 @@ export function applyElementDrag(world) {
 }
 
 // ── Rubber-band box select ────────────────────────────────────
-export function finishBoxSelect() {
+export function finishBoxSelect(): void {
+  if (!state.selectBox) return;
   const { x1, y1, x2, y2 } = state.selectBox;
   const box = normalizeRect(x1, y1, x2, y2);
 
-  const hits = [];
+  const hits: number[] = [];
   state.elements.forEach((el, i) => {
     const b = getElementBounds(el);
     if (b && rectsOverlap(box.x, box.y, box.w, box.h, b.x, b.y, b.w, b.h)) hits.push(i);

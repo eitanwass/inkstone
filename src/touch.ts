@@ -5,45 +5,54 @@
 // second button). Each on* function returns true when it consumed the event,
 // so pointer.js knows to skip its normal tool handling.
 
-import { state, cancelInProgressDrag } from './state.js';
-import { iCanvas } from './canvas.js';
-import { dist, clampZoom } from './geometry.js';
-import { drawMain, setView } from './render.js';
-import { openContextMenuAt, suppressNativeContextMenu } from './context-menu.js';
+import { state, cancelInProgressDrag } from './state';
+import { iCanvas } from './canvas';
+import { dist, clampZoom } from './geometry';
+import { drawMain, setView } from './render';
+import { openContextMenuAt, suppressNativeContextMenu } from './context-menu';
+import type { Point } from './types';
 
 // pointerId -> last known {x, y} in screen (client) coordinates.
-const activePointers = new Map();
+const activePointers = new Map<number, Point>();
 // Set once a 2nd touch lands; holds the pinch/pan gesture's starting frame
 // so each move can be computed as a delta from gesture start rather than
 // drifting frame-to-frame.
-let gesture = null;
+interface Gesture {
+  startDist: number;
+  startMid: Point;
+  startZoom: number;
+  startPanX: number;
+  startPanY: number;
+}
+let gesture: Gesture | null = null;
 
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOLERANCE = 10; // screen px before a hold becomes a drag instead
-let longPressTimer = null;
-let longPressPointerId = null;
-let longPressStartScreen = null;
+let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+let longPressPointerId: number | null = null;
+let longPressStartScreen: Point | null = null;
 // The pointerId a long-press already fired for, so its eventual pointerup
 // doesn't also commit whatever tool action was in flight underneath it.
-let longPressFiredFor = null;
+let longPressFiredFor: number | null = null;
 
 function cancelLongPress() {
-  clearTimeout(longPressTimer);
+  if (longPressTimer) clearTimeout(longPressTimer);
   longPressTimer = null;
   longPressPointerId = null;
 }
 
 // Call when a touch press starts a tool action; opens the context menu if
 // the finger stays put.
-export function armLongPress(e) {
+export function armLongPress(e: PointerEvent): void {
   if (e.pointerType !== 'touch') return;
   // The text tool opens its placement dialog synchronously on pointerdown —
   // a long-press menu popping up over that modal 500ms later would be more
   // confusing than useful, so it's the one tool that opts out.
   if (state.tool === 'text') return;
   longPressPointerId = e.pointerId;
-  longPressStartScreen = { x: e.clientX, y: e.clientY };
-  clearTimeout(longPressTimer);
+  const pressStart = { x: e.clientX, y: e.clientY };
+  longPressStartScreen = pressStart;
+  if (longPressTimer) clearTimeout(longPressTimer);
   longPressTimer = setTimeout(() => {
     if (gesture || activePointers.size >= 2) return; // a 2nd finger arrived; that's a pinch, not a hold
     longPressFiredFor = longPressPointerId;
@@ -51,7 +60,7 @@ export function armLongPress(e) {
     cancelInProgressDrag();
     drawMain();
     suppressNativeContextMenu();
-    openContextMenuAt(longPressStartScreen.x, longPressStartScreen.y);
+    openContextMenuAt(pressStart.x, pressStart.y);
   }, LONG_PRESS_MS);
 }
 
@@ -67,7 +76,7 @@ function startGesture() {
   iCanvas.style.cursor = '';
 }
 
-function updateGesture() {
+function updateGesture(gesture: Gesture): void {
   const [p0, p1] = [...activePointers.values()];
   const newDist = dist(p0.x, p0.y, p1.x, p1.y);
   const newMid = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
@@ -84,7 +93,7 @@ function updateGesture() {
   setView(newMid.x - wx * newZoom, newMid.y - wy * newZoom, newZoom);
 }
 
-export function onTouchDown(e) {
+export function onTouchDown(e: PointerEvent): boolean {
   if (e.pointerType === 'touch') {
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -102,23 +111,23 @@ export function onTouchDown(e) {
   return gesture !== null; // stray event mid-gesture
 }
 
-export function onTouchMove(e) {
+export function onTouchMove(e: PointerEvent): boolean {
   if (e.pointerType !== 'touch' || !activePointers.has(e.pointerId)) return false;
   activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
   if (gesture) {
-    if (activePointers.size >= 2) updateGesture();
+    if (activePointers.size >= 2) updateGesture(gesture);
     return true;
   }
 
-  if (longPressPointerId === e.pointerId) {
+  if (longPressPointerId === e.pointerId && longPressStartScreen) {
     const moved = dist(e.clientX, e.clientY, longPressStartScreen.x, longPressStartScreen.y);
     if (moved > LONG_PRESS_MOVE_TOLERANCE) cancelLongPress();
   }
   return false;
 }
 
-export function onTouchUp(e) {
+export function onTouchUp(e: PointerEvent): boolean {
   if (e.pointerType !== 'touch') return false;
   activePointers.delete(e.pointerId);
   if (longPressPointerId === e.pointerId) cancelLongPress();
@@ -135,7 +144,7 @@ export function onTouchUp(e) {
   return false;
 }
 
-export function onTouchCancel(e) {
+export function onTouchCancel(e: PointerEvent): void {
   if (e.pointerType !== 'touch') return;
   activePointers.delete(e.pointerId);
   if (longPressPointerId === e.pointerId) cancelLongPress();

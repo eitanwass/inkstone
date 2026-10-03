@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "typecheck": "tsc",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "playwright test",
     "party:dev": "wrangler dev",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "typescript": "^7.0.2",
     "vite": "^6.0.0",
     "wrangler": "^3.114.17"
   }

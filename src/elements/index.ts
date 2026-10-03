@@ -28,29 +28,39 @@
 //
 // To add a type: create its file, then add it to ELEMENT_TYPES.
 
-import { state } from '../state.js';
-import { rect } from './rect.js';
-import { wall } from './wall.js';
-import { token } from './token.js';
-import { label } from './label.js';
+import { state } from '../state';
+import type {
+  BoardElement, Bounds, Coords, ElementBehavior, ElementType, EraseTarget, Handle, Point,
+} from '../types';
+import { rect } from './rect';
+import { wall } from './wall';
+import { token } from './token';
+import { label } from './label';
 
-const ELEMENT_TYPES = { rect, wall, token, label };
-const typeOf = el => ELEMENT_TYPES[el.type];
+const ELEMENT_TYPES: { [K in ElementType]: ElementBehavior<Extract<BoardElement, { type: K }>> } = {
+  rect, wall, token, label,
+};
 
-export function drawElementShape(ctx, el, isSelected) {
+// Undefined for a type this version doesn't know (e.g. from a newer save), so
+// those elements are skipped instead of crashing.
+function typeOf<T extends BoardElement>(el: T): ElementBehavior<T> | undefined {
+  return ELEMENT_TYPES[el.type] as unknown as ElementBehavior<T> | undefined;
+}
+
+export function drawElementShape(ctx: CanvasRenderingContext2D, el: BoardElement, isSelected: boolean): void {
   typeOf(el)?.draw(ctx, el, isSelected);
 }
 
-export function getElementBounds(el) {
+export function getElementBounds(el: BoardElement): Bounds | null {
   return typeOf(el)?.bounds(el) ?? null;
 }
 
-export function hitElement(el, wx, wy) {
+export function hitElement(el: BoardElement, wx: number, wy: number): boolean {
   return typeOf(el)?.hit(el, wx, wy) ?? false;
 }
 
 // Topmost element at a world point, as an index into state.elements.
-export function hitTest(wx, wy) {
+export function hitTest(wx: number, wy: number): number | null {
   for (let i = state.elements.length - 1; i >= 0; i--) {
     if (hitElement(state.elements[i], wx, wy)) return i;
   }
@@ -60,30 +70,38 @@ export function hitTest(wx, wy) {
 // What erasing at a grid cell would do to el: null if it's not touched,
 // otherwise {pieces, highlight} (see erase above). Whole-element types leave
 // no pieces and no highlight.
-export function eraseTarget(el, cellX, cellY) {
+export function eraseTarget(el: BoardElement, cellX: number, cellY: number): EraseTarget | null {
   const type = typeOf(el);
   if (type?.erase) return type.erase(el, cellX, cellY);
   return type?.occupiesCell?.(el, cellX, cellY) ? { pieces: [], highlight: null } : null;
 }
 
-export function elementCenter(el) {
-  return typeOf(el)?.center?.(el) ?? { x: el.x, y: el.y };
+// The point-based types (rect, token, label) don't define center, snapshot or
+// translate, so the fallbacks below treat the element as a plain {x, y}.
+export function elementCenter(el: BoardElement): Point {
+  return typeOf(el)?.center?.(el) ?? { x: (el as Point).x, y: (el as Point).y };
 }
 
-export function snapshotCoords(el) {
-  return typeOf(el)?.snapshot?.(el) ?? { x: el.x, y: el.y };
+export function snapshotCoords(el: BoardElement): Coords {
+  return typeOf(el)?.snapshot?.(el) ?? { x: (el as Point).x, y: (el as Point).y };
 }
 
-export function translateElement(el, dx, dy, origin = el) {
+export function translateElement(el: BoardElement, dx: number, dy: number, origin: Coords = el): void {
   const translate = typeOf(el)?.translate;
-  if (translate) translate(el, dx, dy, origin);
-  else { el.x = origin.x + dx; el.y = origin.y + dy; }
+  if (translate) {
+    translate(el, dx, dy, origin);
+  } else {
+    (el as Point).x = (origin as Point).x + dx;
+    (el as Point).y = (origin as Point).y + dy;
+  }
 }
 
-export function elementHandles(el, rotateOffset) {
+export function elementHandles(el: BoardElement, rotateOffset: number): Handle[] {
   return typeOf(el)?.handles?.(el, rotateOffset) ?? [];
 }
 
-export function rotateElement(el, rotation, delta, pivot, startCoords) {
+export function rotateElement(
+  el: BoardElement, rotation: number, delta: number, pivot: Point, startCoords: Coords,
+): void {
   typeOf(el)?.rotate?.(el, rotation, delta, pivot, startCoords);
 }

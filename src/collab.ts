@@ -19,14 +19,16 @@
 // a PartyKit-hosted room to a self-deployed Cloudflare Worker + Durable
 // Object without any change in this file beyond the default port below.
 
+import { byId } from './dom';
 import PartySocket from 'partysocket';
-import { state } from './state.js';
-import { applyRemoteSnapshot, setHistoryListener } from './history.js';
-import { showToast } from './toast.js';
+import { state } from './state';
+import { applyRemoteSnapshot, setHistoryListener } from './history';
+import { showToast } from './toast';
+import type { BoardElement } from './types';
 
 const RELAY_HOST = import.meta.env.VITE_RELAY_HOST || 'localhost:8787';
 
-let socket = null;
+let socket: PartySocket | null = null;
 
 function broadcastState() {
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
@@ -35,15 +37,15 @@ function broadcastState() {
 
 setHistoryListener(broadcastState);
 
-function setStatus(connected) {
-  document.getElementById('collab-status').classList.toggle('hidden', !connected);
+function setStatus(connected: boolean): void {
+  byId('collab-status').classList.toggle('hidden', !connected);
 }
 
 // `seed` is only true when *creating* a brand-new session: that client's
 // current board becomes the room's starting state. Joining an existing
 // session must NOT seed — it would race the server's reply with the room's
 // actual current state and could stomp it with a stale/empty local board.
-function connect(sessionId, { seed = false } = {}) {
+function connect(sessionId: string, { seed = false } = {}): void {
   if (socket) socket.close();
   socket = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket.addEventListener('open', () => {
@@ -52,7 +54,7 @@ function connect(sessionId, { seed = false } = {}) {
     if (seed) broadcastState();
   });
   socket.addEventListener('message', (evt) => {
-    applyRemoteSnapshot(JSON.parse(evt.data));
+    applyRemoteSnapshot(JSON.parse(evt.data) as BoardElement[]);
   });
   socket.addEventListener('close', () => setStatus(false));
 }
@@ -61,13 +63,13 @@ function currentUrlSessionId() {
   return new URL(window.location.href).searchParams.get('session');
 }
 
-function setUrlSessionId(sessionId) {
+function setUrlSessionId(sessionId: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set('session', sessionId);
   window.history.replaceState(null, '', url);
 }
 
-function positionPopover(popover, anchorBtn) {
+function positionPopover(popover: HTMLElement, anchorBtn: HTMLElement): void {
   popover.classList.remove('hidden');
   const r = anchorBtn.getBoundingClientRect();
   const pw = popover.offsetWidth;
@@ -77,9 +79,9 @@ function positionPopover(popover, anchorBtn) {
 }
 
 // ── Share popover ──────────────────────────────────────────────
-const shareBtn = document.getElementById('btn-share');
-const sharePopover = document.getElementById('share-popover');
-const shareCodeInput = document.getElementById('share-code-input');
+const shareBtn = byId('btn-share');
+const sharePopover = byId('share-popover');
+const shareCodeInput = byId<HTMLInputElement>('share-code-input');
 
 function hideSharePopover() {
   sharePopover.classList.add('hidden');
@@ -105,16 +107,16 @@ shareBtn.addEventListener('click', e => {
 
 shareCodeInput.addEventListener('click', () => shareCodeInput.select());
 
-document.getElementById('share-copy-link').addEventListener('click', () => {
+byId('share-copy-link').addEventListener('click', () => {
   navigator.clipboard.writeText(window.location.href)
     .then(() => showToast('Invite link copied to clipboard'))
     .catch(() => showToast('Could not copy link — copy it from the address bar'));
 });
 
 // ── Join popover ───────────────────────────────────────────────
-const joinBtn = document.getElementById('btn-join');
-const joinPopover = document.getElementById('join-popover');
-const joinCodeInput = document.getElementById('join-code-input');
+const joinBtn = byId('btn-join');
+const joinPopover = byId('join-popover');
+const joinCodeInput = byId<HTMLInputElement>('join-code-input');
 
 function hideJoinPopover() {
   joinPopover.classList.add('hidden');
@@ -135,7 +137,7 @@ joinBtn.addEventListener('click', e => {
 
 // Accepts either a bare session code or a full invite link, so pasting
 // either the code itself or the whole shared URL both work.
-function extractSessionId(input) {
+function extractSessionId(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
   try {
@@ -156,7 +158,7 @@ function joinSession() {
   hideJoinPopover();
 }
 
-document.getElementById('join-connect-btn').addEventListener('click', joinSession);
+byId('join-connect-btn').addEventListener('click', joinSession);
 
 joinCodeInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') joinSession();
@@ -164,8 +166,8 @@ joinCodeInput.addEventListener('keydown', e => {
 });
 
 document.addEventListener('click', e => {
-  if (!sharePopover.contains(e.target) && e.target !== shareBtn) hideSharePopover();
-  if (!joinPopover.contains(e.target) && e.target !== joinBtn) hideJoinPopover();
+  if (!sharePopover.contains(e.target as Node) && e.target !== shareBtn) hideSharePopover();
+  if (!joinPopover.contains(e.target as Node) && e.target !== joinBtn) hideJoinPopover();
 });
 
 // Loading a shared link still auto-connects (no popover needed) — only a

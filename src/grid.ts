@@ -2,12 +2,12 @@
 // The background dot grid, drawn live to the grid canvas and reused by PNG
 // export so the two can't drift apart.
 
-import { state, GRID } from './state.js';
-import { gridCanvas, gCtx } from './canvas.js';
+import { state, GRID } from './state';
+import { gridCanvas, gCtx } from './canvas';
 
 // Fills a width x height area of ctx with one dot per grid intersection,
 // following the current pan/zoom.
-export function drawGridDots(ctx, width, height, color) {
+export function drawGridDots(ctx: CanvasRenderingContext2D, width: number, height: number, color: string): void {
   const cellPx = GRID * state.zoom;
   const offsetX = ((state.panX % cellPx) + cellPx) % cellPx;
   const offsetY = ((state.panY % cellPx) + cellPx) % cellPx;

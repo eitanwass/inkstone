@@ -3,20 +3,22 @@
 // drawMain() is the one function nearly every interaction handler calls after
 // mutating state.
 
-import { state } from './state.js';
-import { mainCanvas, mCtx } from './canvas.js';
-import { drawGrid } from './grid.js';
-import { normalizeRect } from './geometry.js';
-import { getElementBounds, drawElementShape } from './elements/index.js';
-import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles.js';
+import { byId } from './dom';
+import { state } from './state';
+import { mainCanvas, mCtx } from './canvas';
+import { drawGrid } from './grid';
+import { normalizeRect } from './geometry';
+import { getElementBounds, drawElementShape } from './elements';
+import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles';
+import type { BoardElement, Bounds } from './types';
 
 // Sets the viewport transform and redraws. The one place that keeps the zoom
 // readout in sync with state.zoom.
-export function setView(panX, panY, zoom = state.zoom) {
+export function setView(panX: number, panY: number, zoom: number = state.zoom): void {
   state.panX = panX;
   state.panY = panY;
   state.zoom = zoom;
-  document.getElementById('zoom-label').textContent = `${Math.round(zoom * 100)}%`;
+  byId('zoom-label').textContent = `${Math.round(zoom * 100)}%`;
   drawGrid();
   drawMain();
 }
@@ -40,7 +42,9 @@ export function drawMain() {
 
   if (state.tool === 'select') drawSelectionHighlights(showsHandles ? state.selected[0] : -1);
   if (showsHandles) drawHandles(handleTarget);
-  if (state.handleDrag?.kind === 'rotate') drawRotationReadout(handleTarget, state.handleDrag.displayDeg);
+  if (showsHandles && state.handleDrag?.kind === 'rotate') {
+    drawRotationReadout(handleTarget, state.handleDrag.displayDeg ?? 0);
+  }
   if (state.isBoxSelecting && state.selectBox) drawSelectBox();
   if (state.tool === 'erase' && state.eraseHover) drawEraseHover();
   if (state.preview) drawElement(mCtx, state.preview, false, true);
@@ -51,15 +55,23 @@ export function drawMain() {
 // ── Highlight boxes ────────────────────────────────────────────
 // Sizes ending in Px are screen pixels; drawHighlightBox divides them by zoom
 // so the box looks the same at any zoom level.
-const SELECTION_STYLE = {
+interface HighlightStyle {
+  stroke: string;
+  fill: string;
+  padPx: number;
+  lineWidthPx: number;
+  dashPx?: number[];
+}
+
+const SELECTION_STYLE: HighlightStyle = {
   stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.15)',
   padPx: 4, lineWidthPx: 1.5, dashPx: [5, 3],
 };
-const BOX_SELECT_STYLE = {
+const BOX_SELECT_STYLE: HighlightStyle = {
   stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.12)',
   padPx: 0, lineWidthPx: 1,
 };
-const ERASE_STYLE = {
+const ERASE_STYLE: HighlightStyle = {
   stroke: 'rgba(160, 64, 64, 0.85)', fill: 'rgba(160, 64, 64, 0.18)',
   padPx: 6, lineWidthPx: 1.5, dashPx: [4, 3],
 };
@@ -69,13 +81,13 @@ const ERASE_STYLE = {
 // clears the element's own border, and the zoom division keeps the gap from
 // shrinking to nothing when zoomed out (which merges the box into a thick
 // border).
-function drawHighlightBox(bounds, strokeWidth, style) {
+function drawHighlightBox(bounds: Bounds, strokeWidth: number | undefined, style: HighlightStyle): void {
   const pad = style.padPx / state.zoom + (strokeWidth || 0) / 2;
   mCtx.save();
   mCtx.strokeStyle = style.stroke;
   mCtx.fillStyle = style.fill;
   mCtx.lineWidth = style.lineWidthPx / state.zoom;
-  if (style.dashPx) mCtx.setLineDash(style.dashPx.map(d => d / state.zoom));
+  if (style.dashPx) mCtx.setLineDash(style.dashPx.map((d) => d / state.zoom));
   mCtx.beginPath();
   mCtx.rect(bounds.x - pad, bounds.y - pad, bounds.w + pad * 2, bounds.h + pad * 2);
   mCtx.fill();
@@ -86,7 +98,7 @@ function drawHighlightBox(bounds, strokeWidth, style) {
 // Box around each selected element. skipIdx is the one element showing
 // resize/rotate handles instead (a dashed box around a rotated shape, or a
 // circle, looks wrong).
-function drawSelectionHighlights(skipIdx) {
+function drawSelectionHighlights(skipIdx: number): void {
   for (const idx of state.selected) {
     if (idx === skipIdx) continue;
     const el = state.elements[idx];
@@ -95,14 +107,16 @@ function drawSelectionHighlights(skipIdx) {
   }
 }
 
-function drawSelectBox() {
+function drawSelectBox(): void {
+  if (!state.selectBox) return;
   const { x1, y1, x2, y2 } = state.selectBox;
   drawHighlightBox(normalizeRect(x1, y1, x2, y2), 0, BOX_SELECT_STYLE);
 }
 
 // Faded red box around whatever a click with the eraser would remove.
-function drawEraseHover() {
+function drawEraseHover(): void {
   const hover = state.eraseHover;
+  if (!hover) return;
   if (hover.kind === 'segment') {
     const { x1, y1, x2, y2 } = hover;
     const box = normalizeRect(x1, y1, x2, y2);
@@ -116,7 +130,9 @@ function drawEraseHover() {
   if (bounds) drawHighlightBox(bounds, el.strokeWidth, ERASE_STYLE);
 }
 
-export function drawElement(ctx, el, isSelected, isPreview = false) {
+export function drawElement(
+  ctx: CanvasRenderingContext2D, el: BoardElement, isSelected: boolean, isPreview = false,
+): void {
   ctx.save();
   ctx.globalAlpha = isPreview ? 0.55 : 1;
   ctx.strokeStyle = el.strokeColor || '#e8dcc8';
@@ -134,13 +150,13 @@ export function drawElement(ctx, el, isSelected, isPreview = false) {
   ctx.restore();
 }
 
-function drawHandles(el) {
+function drawHandles(el: BoardElement): void {
   const handles = getHandles(el);
   const hr = HANDLE_RADIUS_PX / state.zoom;
   const rotateHandle = handles.find(h => h.kind === 'rotate');
 
   mCtx.save();
-  if (rotateHandle) {
+  if (rotateHandle?.from) {
     mCtx.strokeStyle = 'rgba(80,160,255,0.6)';
     mCtx.lineWidth = 1 / state.zoom;
     mCtx.beginPath();
@@ -167,7 +183,7 @@ function drawHandles(el) {
   mCtx.restore();
 }
 
-function drawRotationReadout(el, deg) {
+function drawRotationReadout(el: BoardElement, deg: number): void {
   const handle = getHandles(el).find(h => h.kind === 'rotate');
   if (!handle) return;
   const label = `${((deg % 360) + 360) % 360}°`;

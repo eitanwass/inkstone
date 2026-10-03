@@ -2,14 +2,15 @@
 // A line segment x1,y1 → x2,y2. Has no rotation field: "rotating" a wall
 // rotates both endpoints around their shared midpoint.
 
-import { state, GRID } from '../state.js';
-import { rotatePoint, dist, clipSegmentToCell } from '../geometry.js';
+import { state, GRID } from '../state';
+import { rotatePoint, dist, clipSegmentToCell } from '../geometry';
+import type { ElementBehavior, Point, WallCoords, WallElement } from '../types';
 
 const MIN_ERASE_SLIVER = 0.04; // drop leftovers under ~4% of the wall's length
 
-const center = el => ({ x: (el.x1 + el.x2) / 2, y: (el.y1 + el.y2) / 2 });
+const center = (el: WallElement): Point => ({ x: (el.x1 + el.x2) / 2, y: (el.y1 + el.y2) / 2 });
 
-export const wall = {
+export const wall: ElementBehavior<WallElement, WallCoords> = {
   center,
 
   draw(ctx, el) {
@@ -57,7 +58,7 @@ export const wall = {
     };
   },
 
-  snapshot: el => ({ x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2 }),
+  snapshot: (el) => ({ x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2 }),
 
   translate(el, dx, dy, origin = el) {
     el.x1 = origin.x1 + dx; el.y1 = origin.y1 + dy;

@@ -3,15 +3,16 @@
 // variable sizing have no radius, so every reader falls back to
 // DEFAULT_TOKEN_RADIUS.
 
-import { GRID, DEFAULT_TOKEN_RADIUS, FONT_FAMILY } from '../state.js';
-import { mCtx } from '../canvas.js';
-import { dist } from '../geometry.js';
+import { GRID, DEFAULT_TOKEN_RADIUS, FONT_FAMILY } from '../state';
+import { mCtx } from '../canvas';
+import { dist } from '../geometry';
+import type { ElementBehavior, TokenElement } from '../types';
 
 const DEFAULT_COLOR = '#e05c5c';
-const radiusOf = el => el.radius || DEFAULT_TOKEN_RADIUS;
-const nameFontSize = r => Math.floor(r * 0.52);
+const radiusOf = (el: TokenElement) => el.radius || DEFAULT_TOKEN_RADIUS;
+const nameFontSize = (r: number) => Math.floor(r * 0.52);
 
-function lighten(hex, amount) {
+function lighten(hex: string, amount: number): string {
   const num = parseInt(hex.replace('#', ''), 16);
   const r = Math.min(255, (num >> 16) + amount);
   const g = Math.min(255, ((num >> 8) & 0xff) + amount);
@@ -19,7 +20,7 @@ function lighten(hex, amount) {
   return `rgb(${r},${g},${b})`;
 }
 
-export const token = {
+export const token: ElementBehavior<TokenElement> = {
   draw(ctx, el) {
     const r = radiusOf(el);
     const color = el.color || DEFAULT_COLOR;

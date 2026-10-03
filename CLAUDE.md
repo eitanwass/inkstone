@@ -4,20 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-page D&D battle-map editor ("Inkstone"). Vanilla HTML/CSS/JS (ES
+A single-page D&D battle-map editor ("Inkstone"). Vanilla HTML/CSS and strict TypeScript (ES
 modules, no framework) bundled with Vite. [index.html](index.html) +
 [style.css](style.css) at the root; all behavior lives in [src/](src/) as
 small single-purpose modules (see Module layout below).
 
 ## Running it
 
-`npm run dev` (Vite dev server), `npm run build` (production bundle to `dist/`),
-`npm run preview`. The entry point is `<script type="module" src="src/main.js">`
+`npm run dev` (Vite dev server), `npm run typecheck` (`tsc --noEmit`, strict),
+`npm run build` (typecheck, then production bundle to `dist/`),
+`npm run preview`. The entry point is `<script type="module" src="src/main.ts">`
 in [index.html](index.html) — it must stay `type="module"`, and `public/`
 holds static assets (`icons.svg`, `logo.svg`) that Vite copies through
 unmodified rather than processing.
 
-There are no linters or formatters configured. There is a Playwright Test
+Vite strips types without checking them, so `npm run typecheck` is what
+actually enforces them (CI runs it). Shared types live in
+[src/types.ts](src/types.ts); `dom.ts` has `byId`/`qs`, which throw on a
+missing element so callers get non-null typed elements. There are no linters
+or formatters configured yet. There is a Playwright Test
 suite in [tests/](tests/) — `npm test` runs it (the config auto-starts the
 dev server). It drives the real UI (clicking toolbar buttons, dragging on
 the canvas) rather than calling module internals, since there's no exposed
@@ -45,39 +50,39 @@ deployed host before running `npm run build`.
 ## Module layout
 
 No framework, no virtual DOM, no state-management library — every module
-imports the same `state` object from `state.js` and mutates its properties
-directly, then calls `drawMain()` (`render.js`) or `drawGrid()` (`grid.js`) to
+imports the same `state` object from `state.ts` and mutates its properties
+directly, then calls `drawMain()` (`render.ts`) or `drawGrid()` (`grid.ts`) to
 re-render. Dependencies flow one direction (geometry → elements → render →
 selection/erase → pointer → UI wiring); nothing here imports back down that
 chain, so there are no circular imports to reason about.
 
 | File | Responsibility |
 |---|---|
-| `state.js` | The shared `state` object and the `GRID` constant. |
-| `canvas.js` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
-| `geometry.js` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
-| `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.js`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |
-| `handles.js` | Resize/rotate handle geometry and drag math. |
-| `grid.js` | The dot grid (live background and PNG export). |
-| `render.js` | Everything that draws to the main canvas. |
-| `history.js` | Undo/redo stack + localStorage persistence. |
-| `selection.js` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
-| `erase.js` | Erase tool targeting + hover preview. |
-| `pointer.js` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
-| `touch.js` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.js` offers it each event first. |
-| `modal.js` | The generic confirm dialog. |
-| `context-menu.js` | Right-click menus (element, token, empty-canvas paste). |
-| `dialogs.js` | Token-name and text-label placement dialogs. |
-| `toolbar.js` | Tool switching + the contextual style panel. |
-| `color-swatches.js` | Stroke/fill swatch rows and the custom-color popover. |
-| `view-actions.js` | Reset View, Clear All, Export PNG. |
-| `shortcuts.js` | Global keyboard shortcuts. |
-| `toast.js` | Toast notifications. |
-| `collab.js` | Live multi-user sync over a Durable Object room (see Collaboration below). |
-| `main.js` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
+| `state.ts` | The shared `state` object and the `GRID` constant. |
+| `canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
+| `geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
+| `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.ts`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |
+| `handles.ts` | Resize/rotate handle geometry and drag math. |
+| `grid.ts` | The dot grid (live background and PNG export). |
+| `render.ts` | Everything that draws to the main canvas. |
+| `history.ts` | Undo/redo stack + localStorage persistence. |
+| `selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
+| `erase.ts` | Erase tool targeting + hover preview. |
+| `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
+| `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
+| `modal.ts` | The generic confirm dialog. |
+| `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
+| `dialogs.ts` | Token-name and text-label placement dialogs. |
+| `toolbar.ts` | Tool switching + the contextual style panel. |
+| `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
+| `view-actions.ts` | Reset View, Clear All, Export PNG. |
+| `shortcuts.ts` | Global keyboard shortcuts. |
+| `toast.ts` | Toast notifications. |
+| `collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
+| `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 To add an element type, add a file in `elements/` and register it in
-`elements/index.js` (see the method list at the top of that file).
+`elements/index.ts` (see the method list at the top of that file).
 
 ## Architecture
 
@@ -97,7 +102,7 @@ codebase is organized around it.
 **Elements** (`state.elements`) are plain objects with a `type` discriminator:
 `rect`, `wall`, `token`, `label`. Elements are pure data (they're persisted,
 cloned for undo, and synced to peers, so they can't carry methods). Each type's
-behavior lives in its own `elements/<type>.js` object, and `elements/index.js`
+behavior lives in its own `elements/<type>.ts` object, and `elements/index.ts`
 maps `el.type` to it. Code elsewhere calls dispatchers like
 `getElementBounds(el)` or `hitElement(el, x, y)` instead of switching on
 `el.type`. A type provides `draw`, `bounds`, and `hit`, plus optional
@@ -107,7 +112,7 @@ Erase uses `occupiesCell` for types removed as a whole discrete prop. A type
 that erases piecemeal (`wall`, via `clipSegmentToCell`) provides `erase`
 instead, returning the pieces left behind and the part to highlight.
 
-**`cellOf` vs `snapToGrid`** (both in `geometry.js`) are not interchangeable
+**`cellOf` vs `snapToGrid`** (both in `geometry.ts`) are not interchangeable
 despite looking similar: `snapToGrid` *rounds* to the nearest grid line
 (correct for placing/dragging a shape's own coordinates onto a grid
 intersection), while `cellOf` *floors* to the cell's origin (correct for
@@ -124,7 +129,7 @@ radius snaps to `GRID / 2` steps — diameters of 1, 2, 3... whole grid cells,
 matching D&D's Medium/Large/Huge creature-size convention. Placement-drag
 has a dead zone below the default radius (`GRID * 0.42`) so incidental mouse
 drift during a plain click doesn't bump a "click to place" token up to the
-first snap step; see the `'token'` branch in `pointer.js`'s drag handler.
+first snap step; see the `'token'` branch in `pointer.ts`'s drag handler.
 Resizing an *existing* token needs no dead zone — the handle itself starts
 already at the current radius, so an un-moved grab re-resolves to ~the same
 size. Every place that reads a token's size falls back to that same
@@ -246,11 +251,11 @@ targeting logic as `eraseAtCell` itself, rather than a plain hit-test —
 otherwise the preview would highlight a whole wall when only one grid
 segment of it is about to be clipped.
 
-PNG export (`view-actions.js`) re-renders the grid and all elements onto an
+PNG export (`view-actions.ts`) re-renders the grid and all elements onto an
 offscreen 2x-resolution canvas rather than capturing the visible canvases
 directly (so exports are independent of current viewport resolution).
 
-**Collaboration** (`collab.js`) is a thin sync layer on top of the existing
+**Collaboration** (`collab.ts`) is a thin sync layer on top of the existing
 whole-document snapshot model, not a separate state system. A session is a
 Durable Object room ([party/server.js](party/server.js), a pure relay with
 no merge logic — one `InkstoneRoom` instance per session id, addressed by
@@ -265,7 +270,7 @@ full invite link (`extractSessionId()` accepts either) to connect to it
 without creating a new session. Every local `pushHistory()`/`undo()`/`redo()`
 broadcasts the full
 `state.elements` array to the room; an incoming snapshot from a peer is
-applied via `applyRemoteSnapshot()` (in `history.js`) the same way undo/redo
+applied via `applyRemoteSnapshot()` (in `history.ts`) the same way undo/redo
 already swaps in a full snapshot — except it deliberately does *not* go
 onto the local undo stack, so pressing Ctrl+Z undoes your own last edit,
 not whatever a peer just did. This is last-write-wins: edits to different
@@ -274,10 +279,10 @@ instant just have one of them win — there's no operation-level merge, since
 a CRDT would mean restructuring `state.elements` around a different data
 structure entirely for a hand-drawn map where that's rarely worth it.
 
-Because `history.js` sits *below* `collab.js` in the module chain (per the
-one-directional dependency rule above), it can't import `collab.js` to
-notify it of changes without creating a cycle. Instead `history.js` exposes
-`setHistoryListener(fn)`, and `collab.js` registers its own broadcast
+Because `history.ts` sits *below* `collab.ts` in the module chain (per the
+one-directional dependency rule above), it can't import `collab.ts` to
+notify it of changes without creating a cycle. Instead `history.ts` exposes
+`setHistoryListener(fn)`, and `collab.ts` registers its own broadcast
 function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
 
@@ -288,7 +293,7 @@ own (likely stale or empty) local board could race the server's reply and
 stomp the room's actual state before the real snapshot arrives.
 
 Running this locally needs the `wrangler dev` relay alongside Vite —
-`npm run party:dev` (defaults to `localhost:8787`, matching `collab.js`'s
+`npm run party:dev` (defaults to `localhost:8787`, matching `collab.ts`'s
 fallback `VITE_PARTYKIT_HOST`). For real multi-machine use the relay needs
 deploying (`npm run party:deploy`, i.e. `wrangler deploy`, authenticated via
 `CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` in `.env`) and

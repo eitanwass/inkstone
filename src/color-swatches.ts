@@ -5,29 +5,36 @@
 // itself isn't injected into the swatch row, it only ever lives in the
 // popover, like a browser color picker's "recent colors".
 
-import { state } from './state.js';
-import { updateLabelPreview } from './toolbar.js';
+import { byId, qs } from './dom';
+import { state } from './state';
+import { updateLabelPreview } from './toolbar';
 
-function setupColorRow(containerId, addBtnId, popoverId, storageKey, onPick) {
-  const container = document.getElementById(containerId);
-  const addBtn = document.getElementById(addBtnId);
-  const popover = document.getElementById(popoverId);
-  const swatchesEl = popover.querySelector('.color-popover-swatches');
-  const newBtn = popover.querySelector('.color-popover-new');
+function setupColorRow(
+  containerId: string,
+  addBtnId: string,
+  popoverId: string,
+  storageKey: string,
+  onPick: (color: string) => void,
+): void {
+  const container = byId(containerId);
+  const addBtn = byId(addBtnId);
+  const popover = byId(popoverId);
+  const swatchesEl = qs(popover, '.color-popover-swatches');
+  const newBtn = qs(popover, '.color-popover-new');
 
-  function getHistoryColors() {
+  function getHistoryColors(): string[] {
     return JSON.parse(localStorage.getItem(storageKey) || '[]');
   }
 
-  function rememberColor(color) {
+  function rememberColor(color: string): void {
     const recent = [color, ...getHistoryColors().filter(c => c !== color)].slice(0, 8);
     localStorage.setItem(storageKey, JSON.stringify(recent));
   }
 
-  function selectColor(color) {
+  function selectColor(color: string): void {
     container.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
     addBtn.classList.remove('active');
-    const builtIn = [...container.querySelectorAll('.swatch:not(.swatch-add)')]
+    const builtIn = [...container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)')]
       .find(b => b.dataset.color === color);
     if (builtIn) {
       builtIn.classList.add('active');
@@ -67,10 +74,10 @@ function setupColorRow(containerId, addBtnId, popoverId, storageKey, onPick) {
     popover.classList.add('hidden');
   }
 
-  container.querySelectorAll('.swatch:not(.swatch-add)').forEach(btn => {
+  container.querySelectorAll<HTMLElement>('.swatch:not(.swatch-add)').forEach(btn => {
     btn.addEventListener('click', () => {
       addBtn.style.background = '';
-      selectColor(btn.dataset.color);
+      selectColor(btn.dataset.color ?? '');
     });
   });
 
@@ -93,9 +100,9 @@ function setupColorRow(containerId, addBtnId, popoverId, storageKey, onPick) {
   });
 
   document.addEventListener('click', e => {
-    if (!popover.contains(e.target) && e.target !== addBtn) hidePopover();
+    if (!popover.contains(e.target as Node) && e.target !== addBtn) hidePopover();
   });
 }
 
-setupColorRow('stroke-swatches', 'stroke-custom-add', 'stroke-color-popover', 'tavernmap-custom-stroke', c => { state.strokeColor = c; updateLabelPreview(); });
-setupColorRow('fill-swatches',   'fill-custom-add',   'fill-color-popover',   'tavernmap-custom-fill',   c => state.fillColor = c);
+setupColorRow('stroke-swatches', 'stroke-custom-add', 'stroke-color-popover', 'tavernmap-custom-stroke', (c) => { state.strokeColor = c; updateLabelPreview(); });
+setupColorRow('fill-swatches',   'fill-custom-add',   'fill-color-popover',   'tavernmap-custom-fill',   (c) => { state.fillColor = c; });

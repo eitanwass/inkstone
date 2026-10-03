@@ -5,11 +5,13 @@
 // (move, resize, rotate, erase, reorder, ...) without bespoke undo logic
 // per action type.
 
-import { state } from './state.js';
-import { drawMain } from './render.js';
-import { showToast } from './toast.js';
+import { byId } from './dom';
+import { state } from './state';
+import { drawMain } from './render';
+import { showToast } from './toast';
+import type { BoardElement } from './types';
 
-const history = { stack: [], index: -1 };
+const history: { stack: BoardElement[][]; index: number } = { stack: [], index: -1 };
 const HISTORY_LIMIT = 100;
 
 // Inversion of control, not a direct import: collab.js (which broadcasts
@@ -17,8 +19,8 @@ const HISTORY_LIMIT = 100;
 // chain, so history.js can't import it without creating a cycle. Instead
 // collab.js registers itself here and gets called after every change that
 // should propagate to peers.
-let historyListener = null;
-export function setHistoryListener(fn) { historyListener = fn; }
+let historyListener: (() => void) | null = null;
+export function setHistoryListener(fn: () => void): void { historyListener = fn; }
 
 // Persistence piggybacks on the same chokepoint: pushHistory()/undo()/redo()
 // all call persistBoard(), which writes state.elements to localStorage. Only
@@ -55,7 +57,7 @@ export function pushHistory() {
 }
 
 // Jumps to another snapshot on the stack, then persists and broadcasts it.
-function restoreSnapshot(index, toastMessage) {
+function restoreSnapshot(index: number, toastMessage: string): void {
   history.index = index;
   state.elements = structuredClone(history.stack[index]);
   state.selected = [];
@@ -78,7 +80,7 @@ export function redo() {
 // Deliberately bypasses history.stack — undo/redo stays about *your own*
 // edits, not a peer's, so undoing right after a remote change doesn't
 // silently revert something you didn't do.
-export function applyRemoteSnapshot(elements) {
+export function applyRemoteSnapshot(elements: BoardElement[]): void {
   state.elements = elements;
   state.selected = [];
   drawMain();
@@ -86,9 +88,9 @@ export function applyRemoteSnapshot(elements) {
 }
 
 export function updateUndoRedoButtons() {
-  document.getElementById('btn-undo').disabled = history.index <= 0;
-  document.getElementById('btn-redo').disabled = history.index >= history.stack.length - 1;
+  byId<HTMLButtonElement>('btn-undo').disabled = history.index <= 0;
+  byId<HTMLButtonElement>('btn-redo').disabled = history.index >= history.stack.length - 1;
 }
 
-document.getElementById('btn-undo').addEventListener('click', undo);
-document.getElementById('btn-redo').addEventListener('click', redo);
+byId('btn-undo').addEventListener('click', undo);
+byId('btn-redo').addEventListener('click', redo);

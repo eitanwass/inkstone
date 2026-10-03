@@ -1,18 +1,19 @@
 // ── Text label ────────────────────────────────────────────────
 
-import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../state.js';
-import { mCtx } from '../canvas.js';
-import { cellOf } from '../geometry.js';
+import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../state';
+import { mCtx } from '../canvas';
+import { cellOf } from '../geometry';
+import type { ElementBehavior, LabelElement } from '../types';
 
 const DEFAULT_COLOR = '#e8dcc8';
-const fontSizeOf = el => el.fontSize || DEFAULT_FONT_SIZE;
+const fontSizeOf = (el: LabelElement) => el.fontSize || DEFAULT_FONT_SIZE;
 
-function textWidth(el) {
+function textWidth(el: LabelElement): number {
   mCtx.font = `${fontSizeOf(el)}px ${FONT_FAMILY}`;
   return mCtx.measureText(el.text).width;
 }
 
-export const label = {
+export const label: ElementBehavior<LabelElement> = {
   draw(ctx, el, isSelected) {
     const size = fontSizeOf(el);
     ctx.font = `${size}px ${FONT_FAMILY}`;

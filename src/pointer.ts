@@ -4,22 +4,24 @@
 // (pinch-zoom/pan, long-press menu) live in touch.js and get first look at
 // each event.
 
-import { state, cancelInProgressDrag, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state.js';
-import { iCanvas, clientToCanvas, clientToWorld } from './canvas.js';
-import { snapToGrid, cellOf, dist, clampZoom } from './geometry.js';
-import { hitTest } from './elements/index.js';
-import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles.js';
-import { drawMain, setView } from './render.js';
-import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection.js';
-import { updateEraseHover, eraseAtCell } from './erase.js';
-import { pushHistory } from './history.js';
-import { openTokenDialog, openTextDialog } from './dialogs.js';
-import { hideContextMenus } from './context-menu.js';
-import { armLongPress, onTouchDown, onTouchMove, onTouchUp, onTouchCancel } from './touch.js';
+import { byId } from './dom';
+import { state, cancelInProgressDrag, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state';
+import { iCanvas, clientToCanvas, clientToWorld } from './canvas';
+import { snapToGrid, cellOf, dist, clampZoom } from './geometry';
+import type { Point } from './types';
+import { hitTest } from './elements';
+import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles';
+import { drawMain, setView } from './render';
+import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection';
+import { updateEraseHover, eraseAtCell } from './erase';
+import { pushHistory } from './history';
+import { openTokenDialog, openTextDialog } from './dialogs';
+import { hideContextMenus } from './context-menu';
+import { armLongPress, onTouchDown, onTouchMove, onTouchUp, onTouchCancel } from './touch';
 
 export let lastMoveW = { x: 0, y: 0 };
 
-export function updateHoverCursor(world) {
+export function updateHoverCursor(world: Point): void {
   if (state.altHeld || state.isPanning || state.elementDrag || state.handleDrag || state.isErasing) return;
 
   if (state.tool === 'select' && state.selected.length === 1) {
@@ -48,7 +50,7 @@ export function updateHoverCursor(world) {
   }
 }
 
-function onPointerMove(e) {
+function onPointerMove(e: PointerEvent): void {
   if (onTouchMove(e)) return;
 
   const world = clientToWorld(e.clientX, e.clientY);
@@ -57,9 +59,9 @@ function onPointerMove(e) {
   // Update cursor pos display
   const gx = Math.round(world.x / GRID);
   const gy = Math.round(world.y / GRID);
-  document.getElementById('cursor-pos').textContent = `${gx}, ${gy}`;
+  byId('cursor-pos').textContent = `${gx}, ${gy}`;
 
-  if (state.isPanning) {
+  if (state.isPanning && state.panStart) {
     setView(e.clientX - state.panStart.x, e.clientY - state.panStart.y);
     return;
   }
@@ -88,18 +90,19 @@ function onPointerMove(e) {
     return;
   }
 
-  if (state.isDragging && state.preview) {
+  const preview = state.preview;
+  const s = state.dragStart;
+  if (state.isDragging && preview && s) {
     const snappedX = snapToGrid(world.x);
     const snappedY = snapToGrid(world.y);
-    const s = state.dragStart;
 
-    if (state.tool === 'rect') {
-      state.preview.w = snappedX - s.x;
-      state.preview.h = snappedY - s.y;
-    } else if (state.tool === 'wall') {
-      state.preview.x2 = snappedX;
-      state.preview.y2 = snappedY;
-    } else if (state.tool === 'token') {
+    if (preview.type === 'rect') {
+      preview.w = snappedX - s.x;
+      preview.h = snappedY - s.y;
+    } else if (preview.type === 'wall') {
+      preview.x2 = snappedX;
+      preview.y2 = snappedY;
+    } else if (preview.type === 'token') {
       // Token sizes snap to whole grid-cell diameters (radius steps of
       // GRID/2 -> 1, 2, 3... cells wide, matching D&D's Medium/Large/Huge
       // creature-size convention). Below the default radius it's a dead
@@ -107,7 +110,7 @@ function onPointerMove(e) {
       // the size up to the first snap step.
       const step = GRID / 2;
       const rawR = dist(s.x, s.y, world.x, world.y);
-      state.preview.radius = rawR <= DEFAULT_TOKEN_RADIUS
+      preview.radius = rawR <= DEFAULT_TOKEN_RADIUS
         ? DEFAULT_TOKEN_RADIUS
         : Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step);
     }
@@ -118,7 +121,7 @@ function onPointerMove(e) {
   updateHoverCursor(world);
 }
 
-function onPointerDown(e) {
+function onPointerDown(e: PointerEvent): void {
   if (onTouchDown(e)) return;
 
   if (e.button === 1 || (e.button === 0 && e.altKey)) {
@@ -230,7 +233,7 @@ function onPointerDown(e) {
   }
 }
 
-function onPointerUp(e) {
+function onPointerUp(e: PointerEvent): void {
   if (onTouchUp(e)) return;
 
   if (state.isErasing) {
@@ -275,7 +278,7 @@ function onPointerUp(e) {
   if (p.type === 'token') {
     // Name still needs to be entered before this becomes a real element —
     // openTokenDialog stashes the dragged radius until that dialog confirms.
-    openTokenDialog(p.x, p.y, p.radius);
+    openTokenDialog(p.x, p.y, p.radius ?? DEFAULT_TOKEN_RADIUS);
     state.preview = null;
     drawMain();
     return;
@@ -302,14 +305,14 @@ function onPointerUp(e) {
   drawMain();
 }
 
-function onPointerCancel(e) {
+function onPointerCancel(e: PointerEvent): void {
   onTouchCancel(e);
   state.isPanning = false;
   cancelInProgressDrag();
   drawMain();
 }
 
-function onWheel(e) {
+function onWheel(e: WheelEvent): void {
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
   const { x: sx, y: sy } = clientToCanvas(e.clientX, e.clientY);

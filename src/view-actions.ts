@@ -1,13 +1,14 @@
 // ── View & document-level actions ─────────────────────────────
 // Reset View, Clear All, Export PNG.
 
-import { state } from './state.js';
-import { iCanvas, mainCanvas } from './canvas.js';
-import { drawMain, drawElement, setView } from './render.js';
-import { drawGridDots } from './grid.js';
-import { pushHistory } from './history.js';
-import { showConfirm } from './modal.js';
-import { showToast } from './toast.js';
+import { byId } from './dom';
+import { state } from './state';
+import { iCanvas, mainCanvas } from './canvas';
+import { drawMain, drawElement, setView } from './render';
+import { drawGridDots } from './grid';
+import { pushHistory } from './history';
+import { showConfirm } from './modal';
+import { showToast } from './toast';
 
 // Single source of truth for the "default" viewport — used both at load and
 // by the Reset View button, so the two can never disagree on where "home" is.
@@ -15,9 +16,9 @@ export function resetView() {
   setView(iCanvas.offsetWidth * 0.1, iCanvas.offsetHeight * 0.1, 1);
 }
 
-document.getElementById('btn-reset-view').addEventListener('click', resetView);
+byId('btn-reset-view').addEventListener('click', resetView);
 
-document.getElementById('btn-clear').addEventListener('click', () => {
+byId('btn-clear').addEventListener('click', () => {
   showConfirm('Clear all elements from the map?', () => {
     state.elements = [];
     state.selected = [];
@@ -27,12 +28,13 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   });
 });
 
-document.getElementById('btn-export').addEventListener('click', () => {
+byId('btn-export').addEventListener('click', () => {
   // Render to offscreen canvas at 2x resolution
   const W = mainCanvas.width, H = mainCanvas.height;
   const off = document.createElement('canvas');
   off.width = W * 2; off.height = H * 2;
   const ctx = off.getContext('2d');
+  if (!ctx) return;
 
   // Background
   ctx.fillStyle = '#e9e4da';
@@ -48,6 +50,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
   ctx.restore();
 
   off.toBlob(blob => {
+    if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'dnd-map.png';

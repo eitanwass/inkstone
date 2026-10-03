@@ -4,14 +4,15 @@
 // is removed. updateEraseHover mirrors eraseAtCell's own targeting logic so
 // the hover preview always matches what a click would actually remove.
 
-import { state } from './state.js';
-import { cellOf } from './geometry.js';
-import { eraseTarget } from './elements/index.js';
-import { adjustSelectionForSplice } from './selection.js';
-import { drawMain } from './render.js';
-import { pushHistory } from './history.js';
+import { state } from './state';
+import { cellOf } from './geometry';
+import { eraseTarget } from './elements';
+import type { EraseHover, Point } from './types';
+import { adjustSelectionForSplice } from './selection';
+import { drawMain } from './render';
+import { pushHistory } from './history';
 
-export function eraseAtCell(cellX, cellY) {
+export function eraseAtCell(cellX: number, cellY: number): void {
   for (let i = state.elements.length - 1; i >= 0; i--) {
     const target = eraseTarget(state.elements[i], cellX, cellY);
     if (!target) continue;
@@ -25,16 +26,18 @@ export function eraseAtCell(cellX, cellY) {
   }
 }
 
-function eraseHoverEquals(a, b) {
+function eraseHoverEquals(a: EraseHover | null, b: EraseHover | null): boolean {
   if (a === b) return true;
-  if (!a || !b || a.kind !== b.kind) return false;
-  if (a.kind === 'segment') return a.x1 === b.x1 && a.y1 === b.y1 && a.x2 === b.x2 && a.y2 === b.y2;
-  return a.idx === b.idx;
+  if (!a || !b) return false;
+  if (a.kind === 'segment' && b.kind === 'segment') {
+    return a.x1 === b.x1 && a.y1 === b.y1 && a.x2 === b.x2 && a.y2 === b.y2;
+  }
+  return a.kind === 'element' && b.kind === 'element' && a.idx === b.idx;
 }
 
-export function updateEraseHover(world) {
+export function updateEraseHover(world: Point): void {
   const cellX = cellOf(world.x), cellY = cellOf(world.y);
-  let hit = null;
+  let hit: EraseHover | null = null;
   for (let i = state.elements.length - 1; i >= 0; i--) {
     const target = eraseTarget(state.elements[i], cellX, cellY);
     if (!target) continue;

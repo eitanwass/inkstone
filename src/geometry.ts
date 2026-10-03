@@ -2,20 +2,21 @@
 // Coordinate conversion, rotation, and segment/cell clipping. No DOM, no
 // element-type knowledge — just numbers in, numbers out.
 
-import { state, GRID, MIN_ZOOM, MAX_ZOOM } from './state.js';
+import { state, GRID, MIN_ZOOM, MAX_ZOOM } from './state';
+import type { Point, Bounds, Corner, RectElement } from './types';
 
-export function screenToWorld(sx, sy) {
+export function screenToWorld(sx: number, sy: number): Point {
   return {
     x: (sx - state.panX) / state.zoom,
     y: (sy - state.panY) / state.zoom,
   };
 }
 
-export function clampZoom(zoom) {
+export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 }
 
-export function snapToGrid(v) {
+export function snapToGrid(v: number): number {
   return Math.round(v / GRID) * GRID;
 }
 
@@ -23,18 +24,18 @@ export function snapToGrid(v) {
 // round. Used for erase targeting: "nearest grid line" (snapToGrid) and
 // "the cell containing this point" disagree for any point past the
 // midpoint of a cell, which previously made erase miss near a shape's edge.
-export function cellOf(v) {
+export function cellOf(v: number): number {
   return Math.floor(v / GRID) * GRID;
 }
 
-export function dist(ax, ay, bx, by) {
+export function dist(ax: number, ay: number, bx: number, by: number): number {
   return Math.hypot(ax - bx, ay - by);
 }
 
 // Rotate point p by angle (radians) around pivot. Used for both rendering
 // rotated rects and for resize/rotate handle math (de-rotating mouse coords
 // into an element's local frame).
-export function rotatePoint(p, pivot, angle) {
+export function rotatePoint(p: Point, pivot: Point, angle: number): Point {
   const cos = Math.cos(angle), sin = Math.sin(angle);
   const dx = p.x - pivot.x, dy = p.y - pivot.y;
   return {
@@ -43,12 +44,12 @@ export function rotatePoint(p, pivot, angle) {
   };
 }
 
-export function rotateVector(x, y, angle) {
+export function rotateVector(x: number, y: number, angle: number): Point {
   const cos = Math.cos(angle), sin = Math.sin(angle);
   return { x: x * cos - y * sin, y: x * sin + y * cos };
 }
 
-export function rectCornerLocal(el, id) {
+export function rectCornerLocal(el: RectElement, id: Corner): Point {
   const map = {
     nw: { x: el.x,         y: el.y },
     ne: { x: el.x + el.w,  y: el.y },
@@ -59,17 +60,23 @@ export function rectCornerLocal(el, id) {
 }
 
 // {x, y, w, h} of the box spanning two opposite corners, whichever way round.
-export function normalizeRect(x1, y1, x2, y2) {
+export function normalizeRect(x1: number, y1: number, x2: number, y2: number): Bounds {
   return { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
 }
 
-export function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+export function rectsOverlap(
+  ax: number, ay: number, aw: number, ah: number,
+  bx: number, by: number, bw: number, bh: number,
+): boolean {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
 // Liang-Barsky segment-vs-cell clip. Returns the [tMin, tMax] parametric
 // interval (0..1 along the segment) that lies inside the cell, or null.
-export function clipSegmentToCell(x1, y1, x2, y2, cx, cy, size) {
+export function clipSegmentToCell(
+  x1: number, y1: number, x2: number, y2: number,
+  cx: number, cy: number, size: number,
+): { tMin: number; tMax: number } | null {
   const minX = cx, maxX = cx + size, minY = cy, maxY = cy + size;
   const dx = x2 - x1, dy = y2 - y1;
   let tMin = 0, tMax = 1;
