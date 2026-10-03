@@ -33,11 +33,10 @@ Each item is meant to ship on its own.
 - ~~**Ruler / distance measuring** in cells and feet.~~
   - ~~Ruler tool (M): drag to measure, 5 ft a square, straight-line distance.~~
   - ~~A ruler on a shape's width and height shows while it is drawn or resized.~~
-- **Settings menu with a "Board" panel**: the unit (ft, m, squares) and how much one
-  square is worth, plus an optional "diagonals count as one square" rule (D&D 5e). The ruler and size rulers already read both
-  from `scale` in `src/measure.ts`, so this is the panel and saving it. (M)
-- **More stock shapes**: doors and windows on walls, circles, stairs, and a line
-  with an arrow. Rooms and walls cover dungeons; doors are what people draw next. (M)
+- ~~**Settings menu with a "Board" panel.**~~
+  - ~~A gear button opens it; the Board panel sets the unit (feet, meters, squares) and how much one square is worth.~~
+  - ~~A "D&D diagonal rules" toggle: the first diagonal counts as 1 square, the next as 2, and so on.~~
+  - ~~More panels can be added later (see `src/settings.ts`).~~
 - **Token polish**: colour per token, initials or an emoji/icon, a condition
   marker (dead, prone, ...) and a "duplicate and increment" for packs of enemies
   ("Goblin 1, 2, 3"). (M)
@@ -46,6 +45,9 @@ Each item is meant to ship on its own.
 - **Layer controls**: lock an element, send to back, hide/show a group, so a
   background room isn't dragged by accident. (M)
 - **Right-click and long-press menus reachable by keyboard** (known a11y gap). (M)
+- **More stock shapes**: doors and windows on walls, circles, stairs, and a line
+  with an arrow. Rooms and walls cover dungeons; doors are what people draw next. (M)
+
 
 ## Then: working with more than one map (M to L)
 

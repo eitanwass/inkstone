@@ -36,20 +36,24 @@ test.describe('the ruler', () => {
     await expect(readout(page)).toHaveText('30 ft');
   });
 
-  test('a 45° line is longer than a straight one with the same reach', async ({ page }) => {
+  test('counts diagonals the D&D way by default: a 45° line is longer than a straight one', async ({
+    page,
+  }) => {
     const toScreen = await worldToScreenFn(page);
     await page.keyboard.press('m');
     await drag(page, toScreen, { x: 200, y: 200 }, { x: 200 + 6 * 40, y: 200 });
     await expect(readout(page)).toHaveText('30 ft');
     await drag(page, toScreen, { x: 200, y: 200 }, { x: 200 + 6 * 40, y: 200 + 6 * 40 });
-    await expect(readout(page)).toHaveText('42.4 ft'); // 30 ft × √2
+    await expect(readout(page)).toHaveText('45 ft'); // 6 squares across and 6 down: 6 + 3
   });
 
-  test('measures the true straight-line distance (a 3-4-5 line is 25 ft)', async ({ page }) => {
+  test('a mixed line costs the longer side plus half the shorter (5 across, 2 down is 6 squares)', async ({
+    page,
+  }) => {
     const toScreen = await worldToScreenFn(page);
     await page.keyboard.press('m');
-    await drag(page, toScreen, { x: 200, y: 200 }, { x: 200 + 3 * 40, y: 200 + 4 * 40 });
-    await expect(readout(page)).toHaveText('25 ft');
+    await drag(page, toScreen, { x: 200, y: 200 }, { x: 200 + 5 * 40, y: 200 + 2 * 40 });
+    await expect(readout(page)).toHaveText('30 ft');
   });
 
   test('updates as it is dragged, in half squares', async ({ page }) => {
@@ -60,7 +64,9 @@ test.describe('the ruler', () => {
     await page.mouse.up();
   });
 
-  test('runs from the middle of one token to the middle of another', async ({ page }) => {
+  test('runs from the middle of one token to the middle of another, with the key pressed right after placing one', async ({
+    page,
+  }) => {
     const toScreen = await worldToScreenFn(page);
     await placeToken(page, toScreen, 160, 160, 'Aragorn');
     await placeToken(page, toScreen, 160 + 4 * 40, 160, 'Gimli');

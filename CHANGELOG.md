@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.6 - 2026-10-03
+
+- A ruler to measure distances (press M, or use the ruler in the tool bar).
+  Drag between two points to see how far it is, in feet.
+- Rooms, walls and tokens now show their size as you draw or resize them: a
+  ruler along a room's width and another along its height, and the length of a
+  wall.
+- A settings menu, behind the gear button at the top right. Its Board panel
+  sets the unit (feet, meters or squares) and how much one square is worth.
+- Diagonals are counted the D&D way: the first diagonal square is 1, the next
+  is 2, then 1, 2 and so on. Turn that off in the settings to measure the
+  straight line instead.
+
 ## 0.6.5 - 2026-10-03
 
 - Keyboard shortcuts: arrow keys move the selection one cell, Ctrl+A selects

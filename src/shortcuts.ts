@@ -54,7 +54,14 @@ function confirmAndDeleteSelected(): void {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (e.target instanceof HTMLElement && e.target.tagName === 'INPUT') return;
+  // Typing into a field, or anything inside an open modal (settings, confirm...), is not a
+  // shortcut: arrow keys on a radio button must not also nudge the map behind it.
+  if (e.target instanceof HTMLElement) {
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    // (A dialog that has just closed can still be where focus was for a moment: only a shown one counts.)
+    const dialog = e.target.closest('[aria-modal="true"]');
+    if (dialog && dialog.getClientRects().length > 0) return;
+  }
 
   // Lowercased so Shift doesn't change the letter (Ctrl+Shift+Z reports 'Z').
   const key = e.key.toLowerCase();

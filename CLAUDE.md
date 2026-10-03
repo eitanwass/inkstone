@@ -237,7 +237,8 @@ chain, so there are no circular imports to reason about.
 | `history.ts` | Undo/redo stack + localStorage persistence. |
 | `selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `erase.ts` | Erase tool targeting + hover preview. |
-| `measure.ts` | Pure measuring rules: `scale` (unit and size of a square, 5 ft by default; the future settings panel's one input), `gridDistance` (true straight-line distance, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
+| `measure.ts` | Pure measuring rules: `scale` (unit, size of a square, and the D&D diagonal rule; 5 ft with the rule on by default; the Board settings panel's one input), `UNITS` (the choices and each one's usual square), `validPerCell` / `parseScale` (checking a typed or stored size; the rule stays on unless stored as exactly `false`), `gridDistance` (with the D&D rule, the default: the DMG 1-2-1-2 count, the longer side plus half the shorter, rounded down; with it off, the true straight line, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
+| `settings.ts` | The settings modal, opened from the gear button in the action cluster. Panels are tabs down the left (only Board so far: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session). To add a panel, add a tab and a tabpanel in `index.html` and its controls here. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
 | `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
 | `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
@@ -382,8 +383,11 @@ persistent counterpart to the once-per-load "can't be saved" toast.
 line or the middle of a square, where tokens sit) and reads its length from
 `measure.ts`. The line lives in `state.ruler`, not in `state.elements`, so it is never
 saved, shared or an undo step; it stays after release and goes on a click that goes
-nowhere, Escape, or another tool. Distances are straight-line (a 45° line is √2 times
-a straight one), in `gridDistance`. Shapes show a ruler along their measured sides while
+nowhere, Escape, or another tool. Diagonals are counted the D&D way by default (the
+first diagonal square is 1, the next 2, then 1, 2...), or as the true straight line (a
+45° line is √2 times a straight one) when the "D&D diagonal rules" setting is turned
+off, in `gridDistance`; it affects the ruler and walls, never a room's sides (which are
+always axis-aligned). Shapes show a ruler along their measured sides while
 drawn or resized (not while moved or rotated): each element type's optional
 `dimensions(el)` lists the stretches (a room's width along its bottom edge and its
 height along its right edge, each its own ruler; a wall's length; a token's width) with

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { wall } from '../../../src/elements/wall';
+import { scale } from '../../../src/measure';
 import { state } from '../../../src/state';
 import type { WallElement } from '../../../src/types';
 
@@ -139,9 +140,19 @@ describe('wall.dimensions', () => {
     expect(d).toMatchObject({ text: '15 ft', from: { x: 0, y: 20 }, to: { x: 120, y: 20 } });
   });
 
-  it('is longer for a diagonal wall than a straight one with the same reach', () => {
+  it('is longer for a diagonal wall than a straight one with the same reach: 45 ft the D&D way (6 + 3 squares)', () => {
     const diagonal: WallElement = { ...horizontal, x1: 0, y1: 0, x2: 240, y2: 240 };
-    expect(wall.dimensions?.(diagonal)?.[0].text).toBe('42.4 ft');
+    expect(wall.dimensions?.(diagonal)?.[0].text).toBe('45 ft');
+  });
+
+  it('is 42.4 ft for that diagonal with the D&D rule off, the straight-line distance', () => {
+    const diagonal: WallElement = { ...horizontal, x1: 0, y1: 0, x2: 240, y2: 240 };
+    scale.dndDiagonals = false;
+    try {
+      expect(wall.dimensions?.(diagonal)?.[0].text).toBe('42.4 ft');
+    } finally {
+      scale.dndDiagonals = true;
+    }
   });
 
   it('puts the ruler beside the wall, on its lower or right-hand side', () => {

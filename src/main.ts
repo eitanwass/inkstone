@@ -22,6 +22,7 @@ import './view-actions';
 import './map-name';
 import './collab';
 import './changelog';
+import './settings';
 
 byId('version-label').textContent = `v${version}`;
 

@@ -46,6 +46,19 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with the settings open', async ({ page }) => {
+    await page.click('#btn-settings');
+    await expect(page.locator('#settings-modal')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('with the settings open and a size that cannot be used typed in', async ({ page }) => {
+    await page.click('#btn-settings');
+    await page.fill('#board-per-cell', '0');
+    await expect(page.locator('#board-per-cell')).toHaveAttribute('aria-invalid', 'true');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with an Undo toast showing', async ({ page }) => {
     await page.click('#btn-clear');
     await page.click('#modal-confirm');
