@@ -28,11 +28,13 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
-  test("with the What's new and share popovers open", async ({ page }) => {
+  test("with the What's new modal open", async ({ page }) => {
     await page.click('#btn-changelog');
-    await expect(page.locator('#changelog-popover')).toBeVisible();
+    await expect(page.locator('#changelog-modal')).toBeVisible();
     expect(await violations(page)).toEqual([]);
+  });
 
+  test('with the join popover open', async ({ page }) => {
     await page.click('#btn-join');
     await expect(page.locator('#join-popover')).toBeVisible();
     expect(await violations(page)).toEqual([]);
@@ -77,16 +79,37 @@ test('the selected swatch is exposed as pressed', async ({ page }) => {
   await expect(parchment).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('popover buttons report expanded state, and Escape returns focus to the button', async ({ page }) => {
-  const button = page.locator('#btn-changelog');
+test('popover buttons report their expanded state', async ({ page }) => {
+  const button = page.locator('#btn-join');
   await expect(button).toHaveAttribute('aria-expanded', 'false');
 
   await button.click();
   await expect(button).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#changelog-popover')).toBeFocused();
+
+  await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'false');
+});
+
+test("the What's new modal takes focus, keeps Tab inside, and Escape returns focus to its button", async ({
+  page,
+}) => {
+  const button = page.locator('#btn-changelog');
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#changelog-modal')).toBeFocused();
+
+  // Tab cycles through the modal's own controls and never reaches the page behind it.
+  const seen = new Set();
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press('Tab');
+    seen.add(await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName));
+    expect(await page.evaluate(() => !!document.activeElement?.closest('#changelog-modal'))).toBe(true);
+  }
+  expect(seen).toContain('changelog-close');
+  expect(seen).toContain('changelog-body');
 
   await page.keyboard.press('Escape');
-  await expect(button).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#changelog-overlay')).toBeHidden();
   await expect(button).toBeFocused();
 });
 

@@ -5,6 +5,11 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.4.2 - 2026-10-03
+
+- "What's new" now opens as a large dialog in the middle of the screen, with the
+  page blurred behind it. Close it with the × button, Escape, or a click outside.
+
 ## 0.4.1 - 2026-10-03
 
 - Fixed: on the live site, Share no longer makes Chrome ask to access apps and

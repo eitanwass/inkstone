@@ -1,19 +1,20 @@
-// ── "What's new" panel ─────────────────────────────────────────
-// Lists the releases in CHANGELOG.md, newest first, in a popover under the
-// changelog button. The button carries a dot until the user has opened the
-// panel for the current version.
+// ── "What's new" modal ─────────────────────────────────────────
+// Lists the releases in CHANGELOG.md, newest first, in a modal over a blurred
+// page, opened from the changelog button. The button carries a dot until the
+// user has opened the modal for the current version.
 
 import changelogText from '../CHANGELOG.md?raw';
 import { version } from '../package.json';
 import { parseChangelog } from './changelog-parse';
 import { byId } from './dom';
-import { closePopover, positionPopover } from './popover';
+import { restoreFocus, trapFocus } from './focus';
 import { storageGet, storageSet } from './storage';
 
 const SEEN_KEY = 'inkstone-changelog-seen';
 
 const button = byId('btn-changelog');
-const popover = byId('changelog-popover');
+const overlay = byId('changelog-overlay');
+const modal = byId('changelog-modal');
 
 function renderEntries(): void {
   const list = byId('changelog-list');
@@ -50,31 +51,32 @@ function markSeen(): void {
   storageSet(SEEN_KEY, version); // if storage is unavailable, the dot just comes back next visit
 }
 
-function hidePopover(): void {
-  closePopover(popover, button);
+let opener: Element | null = null;
+
+function openModal(): void {
+  opener = document.activeElement;
+  overlay.classList.remove('hidden');
+  modal.focus();
+  markSeen();
+}
+
+function closeModal(): void {
+  overlay.classList.add('hidden');
+  restoreFocus(opener ?? button);
 }
 
 renderEntries();
 if (lastSeenVersion() !== version) button.classList.add('has-update');
+trapFocus(modal);
 
-button.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (popover.classList.contains('hidden')) {
-    positionPopover(popover, button);
-    popover.focus();
-    markSeen();
-  } else {
-    hidePopover();
-  }
-});
+button.addEventListener('click', openModal);
+byId('changelog-close').addEventListener('click', closeModal);
 
-document.addEventListener('click', (e) => {
-  if (!popover.contains(e.target as Node) && e.target !== button) hidePopover();
+// A click on the blurred page outside the modal closes it.
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) closeModal();
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !popover.classList.contains('hidden')) {
-    hidePopover();
-    button.focus();
-  }
+  if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeModal();
 });

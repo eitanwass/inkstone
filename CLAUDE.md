@@ -72,7 +72,7 @@ The site only redeploys when the version changes. To release: bump the version
 `## <version> - <date>` section at the top of [CHANGELOG.md](CHANGELOG.md)
 (written for people using the editor, not for developers), and push. CI runs
 `npm run check:changelog`, which fails if the top entry doesn't match
-package.json. The app's "What's new" panel renders that same file.
+package.json. The app's "What's new" modal renders that same file.
 
 On Vercel (Git integration), [vercel.json](vercel.json) sets
 [scripts/should-deploy.mjs](scripts/should-deploy.mjs) as the Ignored Build
@@ -89,9 +89,10 @@ doesn't bump the version does not deploy.
   swatches use `aria-pressed`, popover buttons use `aria-expanded` (kept in
   sync by `positionPopover` / `closePopover` in `popover.ts`) — update them in
   the same place the visual `active` class changes.
-- Modals (`showConfirm`, `setupInputDialog` in `dialogs.ts`) trap focus, move
-  focus in, and give it back on close. Popovers move focus to themselves and
-  Escape returns it to their button.
+- Modals (`showConfirm`, `setupInputDialog` in `dialogs.ts`, and the "What's
+  new" modal) trap focus, move focus in, and give it back on close. A modal's
+  backdrop should *fade* in (never scale, or it briefly stops covering the
+  screen); only the box itself scales.
 - UI chrome sits inside `header` / `nav` / `footer` landmarks; they wrap
   `position: fixed` panels, so they don't affect layout.
 - Text must stay at least 4.5:1 against its background: `--text-muted` and
@@ -131,8 +132,8 @@ chain, so there are no circular imports to reason about.
 | `erase.ts` | Erase tool targeting + hover preview. |
 | `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
-| `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join, changelog). |
-| `changelog.ts` | The "What's new" popover: renders CHANGELOG.md, dots the button until the current version is opened. |
+| `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
+| `changelog.ts` | The "What's new" modal (about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
 | `changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
 | `storage.ts` | Never-throwing `localStorage` wrappers. All reads and writes go through here. |
 | `focus.ts` | `trapFocus` / `restoreFocus` for modals. |
