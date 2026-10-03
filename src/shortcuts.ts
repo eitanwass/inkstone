@@ -1,10 +1,18 @@
 // ── Global keyboard shortcuts ──────────────────────────────────
-// Tool switching, Home (reset view), +/- zoom, arrow-key nudge, Select all,
+// Tool switching, ? (shortcut list), Home (reset view), +/- zoom, arrow-key nudge, Select all,
 // Delete/Backspace, undo/redo, copy/paste.
 // Modifier+letter never falls through to the bare tool-shortcut map (so
 // Ctrl+V doesn't also switch to the Select tool via the 'v' shortcut).
 
-import { nudgeSelected, resetView, selectAll, zoomIn, zoomOut } from './controls';
+import {
+  closeShortcutsHelp,
+  nudgeSelected,
+  resetView,
+  selectAll,
+  toggleShortcutsHelp,
+  zoomIn,
+  zoomOut,
+} from './controls';
 import { redo, undo } from './history';
 import { showConfirm } from './modal';
 import { lastMoveW } from './pointer';
@@ -51,6 +59,9 @@ document.addEventListener('keydown', (e) => {
   const mod = e.ctrlKey || e.metaKey;
 
   if (!mod && TOOL_KEYS[key]) setTool(TOOL_KEYS[key]);
+
+  if (key === '?') toggleShortcutsHelp();
+  if (key === 'escape') closeShortcutsHelp();
 
   if (key === 'home') {
     resetView();

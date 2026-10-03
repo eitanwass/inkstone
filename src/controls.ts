@@ -5,9 +5,11 @@
 // these instead of carrying their own copy.
 
 import { iCanvas } from './canvas';
+import { byId } from './dom';
 import { translateElement } from './elements';
 import { clampZoom } from './geometry';
 import { pushHistory } from './history';
+import { closePopover } from './popover';
 import { drawMain, setView } from './render';
 import { GRID, state } from './state';
 
@@ -35,6 +37,35 @@ export function zoomOut(): void {
 export function resetView(): void {
   setView(iCanvas.offsetWidth * 0.1, iCanvas.offsetHeight * 0.1, 1);
 }
+
+// ── Help ───────────────────────────────────────────────────────
+const shortcutsBtn = byId('btn-shortcuts');
+const shortcutsPopover = byId('shortcuts-popover');
+
+export function closeShortcutsHelp(): void {
+  if (shortcutsPopover.classList.contains('hidden')) return;
+  closePopover(shortcutsPopover, shortcutsBtn);
+}
+
+// The list sits above its button (bottom-right), so it needs no JS placement.
+export function toggleShortcutsHelp(): void {
+  if (!shortcutsPopover.classList.contains('hidden')) {
+    closeShortcutsHelp();
+    return;
+  }
+  shortcutsPopover.classList.remove('hidden');
+  shortcutsBtn.setAttribute('aria-expanded', 'true');
+  shortcutsPopover.focus(); // so a keyboard user lands in it; Escape closes it from anywhere
+}
+
+shortcutsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleShortcutsHelp();
+});
+
+document.addEventListener('click', (e) => {
+  if (!shortcutsPopover.contains(e.target as Node)) closeShortcutsHelp();
+});
 
 // ── Selection ──────────────────────────────────────────────────
 // Moves the selection by whole cells (the arrow keys). One undo step per call.

@@ -17,8 +17,8 @@ Each item is meant to ship on its own.
   - ~~Ctrl+A selects all~~
   - ~~`+` / `-` zoom~~
   - ~~Escape deselects.~~
-- **Shortcut cheat sheet.** `?` opens a small list of every shortcut. The tooltips
-  already carry them, but nobody finds them by hovering.
+- ~~**Shortcut cheat sheet.**~~
+  - ~~`?` opens a small list of every shortcut.~~
 - **Zoom controls.** On-screen `+` / `-` and "fit map to screen". Right now zooming
   is wheel or pinch only, and Reset View goes to a fixed spot rather than to the map.
 - **Undo for Clear All** (check it already records a step; if not, make it) and a

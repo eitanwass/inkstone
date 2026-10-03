@@ -40,6 +40,12 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with the shortcut list open', async ({ page }) => {
+    await page.click('#btn-shortcuts');
+    await expect(page.locator('#shortcuts-popover')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with a map name set, and while it is being edited', async ({ page }) => {
     await page.click('#map-name');
     await page.keyboard.type('The Sunken Crypt of Vael');
