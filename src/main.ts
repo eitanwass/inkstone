@@ -4,13 +4,15 @@
 // the pure-side-effect modules (color swatches, keyboard shortcuts) that
 // nothing else imports, so their DOM wiring actually runs.
 
+import '@fontsource-variable/inter'; // the UI and map-text font
+import '@fontsource/eb-garamond/500.css'; // the wordmark
 import { version } from '../package.json';
 import { gridCanvas, iCanvas, mainCanvas } from './canvas';
 import { byId } from './dom';
 import { drawGrid } from './grid';
 import { loadPersistedBoard, pushHistory } from './history';
 import { drawMain } from './render';
-import { state } from './state';
+import { FONT_FAMILY, state } from './state';
 import { showToast } from './toast';
 import { setTool } from './toolbar';
 import { resetView } from './view-actions';
@@ -46,4 +48,12 @@ window.addEventListener('load', () => {
   showToast(saved ? 'Welcome back! Your map was restored.' : 'Welcome! Right-click elements for options.');
   pushHistory();
   drawMain();
+
+  // Page text waits for its font by itself, but canvas text doesn't: until the
+  // font has loaded the canvas quietly draws and measures with a fallback. So
+  // ask for the faces the canvas uses, and repaint once they're in.
+  Promise.all([
+    document.fonts.load(`14px ${FONT_FAMILY}`),
+    document.fonts.load(`bold 14px ${FONT_FAMILY}`),
+  ]).then(drawMain);
 });

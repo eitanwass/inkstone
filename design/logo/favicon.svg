@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- The small-size mark, for browser tabs (16-48px). The ring and ticks of the full
+       mark turn to mush that small, so they're dropped and the nib is drawn bigger. -->
+  <polygon points="9,0 55,0 64,9 64,55 55,64 9,64 0,55 0,9" fill="#1a1714"/>
+  <g transform="translate(32 32) scale(1.2) translate(-32 -32)">
+    <path d="M32 11c4 10 10 19 10 29l-4 11H26l-4-11c0-10 6-19 10-29z" fill="#c9a84c"/>
+    <path d="M32 11c4 10 10 19 10 29l-4 11h-6z" fill="#8a6a28"/>
+    <path d="M32 36v15" stroke="#1a1714" stroke-width="2.4"/>
+    <circle cx="32" cy="34" r="3.8" fill="#1a1714"/>
+  </g>
+</svg>

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkstone typography options</title>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Cormorant+Garamond:ital,wght@1,600&family=Fraunces:ital,wght@1,500&family=EB+Garamond:ital,wght@1,500&family=Spectral:ital,wght@1,500&family=Marcellus&family=Inter:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono&family=IBM+Plex+Mono&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f3efe6; color: #2a2520; font-family: 'Segoe UI', system-ui, sans-serif; padding: 40px 24px 72px; }
+    .wrap { max-width: 1180px; margin: 0 auto; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    h2.section { font-size: 17px; margin: 44px 0 4px; }
+    .sub { color: #6b5f50; font-size: 14px; margin-bottom: 20px; max-width: 760px; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+    .card { background: #fff; border: 1px solid #ddd5c4; border-radius: 10px; padding: 20px; }
+    .card h3 { font-size: 15px; margin-bottom: 4px; }
+    .card .note { color: #6b5f50; font-size: 13px; line-height: 1.45; margin-bottom: 14px; min-height: 38px; }
+    .label { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #8f8370; margin: 14px 0 8px; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* ── the app's palette ── */
+    .parchment { background-color: #e9e4da; background-image: radial-gradient(rgba(180,170,155,.55) 1.6px, transparent 1.7px); background-size: 40px 40px; border-radius: 6px; padding: 20px 22px; }
+    .darkbox { background: #1a1714; border-radius: 6px; padding: 18px 22px; }
+
+    /* ── the logo lockup (the app's top-left corner) ── */
+    .lockup { display: flex; align-items: center; gap: calc(10px * var(--k, 1)); }
+    .lockup .mark { width: calc(30px * var(--k, 1)); height: calc(30px * var(--k, 1)); display: block; }
+    .wordmark { --wm-size: 23px; font-size: calc(var(--wm-size) * var(--k, 1)); letter-spacing: .02em; color: #4a3f2e; white-space: nowrap; }
+    .on-dark .wordmark { color: #e8dcc8; }
+    .wm-current { font-family: 'IM Fell English', serif; font-style: italic; }
+    .wm-fell-sc { --wm-size: 20px; font-family: 'IM Fell English SC', serif; letter-spacing: .09em; }
+    .wm-cormorant { --wm-size: 27px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; }
+    .wm-fraunces { --wm-size: 22px; font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; }
+    .wm-garamond { --wm-size: 25px; font-family: 'EB Garamond', serif; font-style: italic; font-weight: 500; }
+    .wm-spectral { --wm-size: 22px; font-family: 'Spectral', serif; font-style: italic; font-weight: 500; }
+    .wm-marcellus { --wm-size: 22px; font-family: 'Marcellus', serif; letter-spacing: .06em; }
+
+    /* ── UI font + mono, as variables ── */
+    .ui-system { --font-ui: 'Segoe UI', system-ui, sans-serif; }
+    .ui-inter { --font-ui: 'Inter', sans-serif; }
+    .ui-source { --font-ui: 'Source Sans 3', sans-serif; }
+    .ui-plex { --font-ui: 'IBM Plex Sans', sans-serif; }
+    .ui-nunito { --font-ui: 'Nunito Sans', sans-serif; }
+    .ui-atkinson { --font-ui: 'Atkinson Hyperlegible', sans-serif; }
+    .mono-system { --font-mono: monospace; }
+    .mono-jetbrains { --font-mono: 'JetBrains Mono', monospace; }
+    .mono-plex { --font-mono: 'IBM Plex Mono', monospace; }
+
+    /* ── a miniature of the app's dark UI text, at the app's real sizes ── */
+    .ui-panel { background: #1e1b17; border: 1px solid #3a3228; border-radius: 8px; padding: 16px; font-family: var(--font-ui); color: #e8dcc8; }
+    .ui-panel .tags { display: flex; gap: 18px; margin-bottom: 14px; }
+    .ui-panel .tag { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8f8370; }
+    .ui-panel .dlg-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .ui-panel .dlg-text { font-size: 14px; line-height: 1.5; color: #a89885; margin-bottom: 12px; }
+    .ui-panel .dlg-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 14px; }
+    .ui-panel .btn { font-size: 12.5px; padding: 6px 14px; border-radius: 4px; background: #2a2520; border: 1px solid #3a3228; color: #a89885; }
+    .ui-panel .btn.primary { background: #7a6230; border-color: #c9a84c; color: #f5ecd0; }
+    .ui-panel .notes { font-size: 13px; line-height: 1.5; color: #a89885; padding-left: 18px; margin-bottom: 12px; }
+    .ui-panel .notes b { color: #e8dcc8; }
+    .ui-panel .tip { font-size: 12px; background: #2a2520; border: 1px solid #3a3228; border-radius: 6px; padding: 6px 10px; display: inline-block; }
+
+    .hud { font-family: var(--font-mono); font-size: 11px; color: #4a3f2e; display: flex; gap: 16px; justify-content: flex-end; }
+    .nums { font-family: var(--font-ui); font-variant-numeric: tabular-nums; font-size: 13px; color: #4a3f2e; }
+
+    /* a taste of text drawn on the map itself (token names and labels) */
+    .maptext { font-family: var(--font-ui); color: #2a2520; display: flex; gap: 22px; align-items: baseline; font-size: 14px; }
+
+    /* ── the playground ── */
+    .controls { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; }
+    .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8f8370; }
+    .controls select { font: 14px 'Segoe UI', system-ui, sans-serif; padding: 7px 10px; border: 1px solid #ccc3b0; border-radius: 6px; background: #fff; color: #2a2520; min-width: 240px; letter-spacing: 0; text-transform: none; }
+    .playground { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 800px) { .playground { grid-template-columns: 1fr; } }
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Inkstone typography options</h1>
+  <p class="sub">The wordmark and the UI text are separate decisions, so they're compared separately and then together. Everything here uses the new logo mark and the app's real sizes, colours and spacing (including the 9.5px uppercase labels). The fonts load from Google Fonts, so you need to be online to see them.</p>
+
+  <h2 class="section">Pairing playground</h2>
+  <p class="sub">Pick any wordmark, UI font and number font and see them together.</p>
+  <div class="controls">
+    <label>Wordmark<select id="pick-wm"><option value="wm-current">IM Fell English italic</option><option value="wm-fell-sc">IM Fell English small caps</option><option value="wm-cormorant">Cormorant Garamond italic</option><option value="wm-fraunces">Fraunces italic</option><option value="wm-garamond">EB Garamond italic</option><option value="wm-spectral">Spectral italic</option><option value="wm-marcellus">Marcellus</option></select></label>
+    <label>UI font<select id="pick-ui"><option value="ui-system">System UI (current)</option><option value="ui-inter">Inter</option><option value="ui-source">Source Sans 3</option><option value="ui-plex">IBM Plex Sans</option><option value="ui-nunito">Nunito Sans</option><option value="ui-atkinson">Atkinson Hyperlegible</option></select></label>
+    <label>HUD numbers<select id="pick-mono"><option value="mono-system">System monospace (current)</option><option value="mono-jetbrains">JetBrains Mono</option><option value="mono-plex">IBM Plex Mono</option></select></label>
+  </div>
+  <div id="playground" class="playground ui-system mono-system">
+    <div class="stack">
+      <div class="parchment" id="pg-corner"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-current">Inkstone</span></div></div>
+      <div class="darkbox" id="pg-corner-dark"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-current">Inkstone</span></div></div>
+      <div class="parchment"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div><div class="hud" style="margin-top:14px"><span>12, 8</span><span>100%</span></div></div>
+    </div>
+    <div><div class="ui-panel ">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div></div>
+  </div>
+
+  <h2 class="section">Wordmarks</h2>
+  <p class="sub">Each shown at the app's corner size (about 23px), at twice that, and on the dark background used for the tab icon and sharing cards.</p>
+  <div class="grid">
+    <section class="card">
+      <h3>IM Fell English italic</h3>
+      <p class="note">Current. Rough old-print letterforms, lots of character.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-current">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-current">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-current">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>IM Fell English small caps</h3>
+      <p class="note">Same family, formal and inscriptional; letter-spaced caps.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fell-sc">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fell-sc">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fell-sc">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Cormorant Garamond italic</h3>
+      <p class="note">Elegant and high-contrast; delicate at small sizes.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-cormorant">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-cormorant">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-cormorant">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Fraunces italic</h3>
+      <p class="note">Soft, warm "wonky" old-style; friendly but still bookish.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fraunces">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fraunces">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-fraunces">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>EB Garamond italic</h3>
+      <p class="note">Classic book type; calm, traditional, very readable.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-garamond">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-garamond">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-garamond">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Spectral italic</h3>
+      <p class="note">Screen-first serif; crisp and slightly modern.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-spectral">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-spectral">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-spectral">Inkstone</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Marcellus</h3>
+      <p class="note">Upright flared Roman, a hint of carved stone. No italics.</p>
+      <div class="label">In the app's corner</div>
+      <div class="parchment"><div class="lockup"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-marcellus">Inkstone</span></div></div>
+      <div class="label">Larger</div>
+      <div class="parchment"><div class="lockup" style="--k:2"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-marcellus">Inkstone</span></div></div>
+      <div class="label">On dark</div>
+      <div class="darkbox"><div class="lockup on-dark"><img class="mark" src="../logo/logo.svg" alt="" /><span class="wordmark wm-marcellus">Inkstone</span></div></div>
+    </section>
+  </div>
+
+  <h2 class="section">UI fonts</h2>
+  <p class="sub">The app's chrome at its real sizes: the tiny uppercase panel labels (9.5px), dialog text, buttons, changelog notes, a tooltip, and a line of numbers.</p>
+  <div class="grid">
+    <section class="card">
+      <h3>System UI (current)</h3>
+      <p class="note">Segoe UI on Windows; on Mac/Linux/phones you get that system's font instead, so this card looks different on every OS.</p>
+      <div class="ui-panel ui-system">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-system mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Inter</h3>
+      <p class="note">Neutral and very legible at tiny sizes; the safe modern choice.</p>
+      <div class="ui-panel ui-inter">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-inter mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Source Sans 3</h3>
+      <p class="note">Humanist and warm; slightly narrower, pairs well with serifs.</p>
+      <div class="ui-panel ui-source">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-source mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>IBM Plex Sans</h3>
+      <p class="note">More character and a technical edge; a touch wider.</p>
+      <div class="ui-panel ui-plex">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-plex mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Nunito Sans</h3>
+      <p class="note">Friendly, rounded feel; softest of the set.</p>
+      <div class="ui-panel ui-nunito">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-nunito mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>Atkinson Hyperlegible</h3>
+      <p class="note">Made for low vision: letters are drawn to be unmistakable. Fits the accessibility work.</p>
+      <div class="ui-panel ui-atkinson">
+        <div class="tags"><span class="tag">Stroke</span><span class="tag">Size</span><span class="tag">Fill</span></div>
+        <div class="dlg">
+          <div class="dlg-title">Rename token</div>
+          <p class="dlg-text">Names show under the token on the map and in exports. Up to 20 characters.</p>
+          <div class="dlg-buttons"><span class="btn">Cancel</span><span class="btn primary">Rename</span></div>
+        </div>
+        <ul class="notes"><li><b>0.4.2</b> What's new opens as a large dialog in the middle of the screen.</li><li>Fixed Ctrl+Shift+Z not redoing; it works alongside Ctrl+Y.</li></ul>
+        <div class="tip">Undo (Ctrl+Z) &nbsp;·&nbsp; Reset view (Home)</div>
+      </div>
+      <div class="label">Text drawn on the map, and the readout numbers</div>
+      <div class="parchment ui-atkinson mono-system"><div class="maptext"><span>Aragorn</span><span style="font-size:12px">Throne Room</span><span class="nums">1, 2 · 100%</span></div></div>
+    </section>
+  </div>
+
+  <h2 class="section">HUD numbers</h2>
+  <p class="sub">The cursor coordinates and zoom in the bottom-right corner. Monospace keeps the digits from jittering as they change.</p>
+  <div class="grid">
+    <section class="card">
+      <h3>System monospace (current)</h3>
+      <div class="parchment mono-system"><div class="hud"><span>12, 8</span><span>100%</span></div><div class="hud" style="margin-top:6px"><span>-103, 1450</span><span>8%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>JetBrains Mono</h3>
+      <div class="parchment mono-jetbrains"><div class="hud"><span>12, 8</span><span>100%</span></div><div class="hud" style="margin-top:6px"><span>-103, 1450</span><span>8%</span></div></div>
+    </section>
+    <section class="card">
+      <h3>IBM Plex Mono</h3>
+      <div class="parchment mono-plex"><div class="hud"><span>12, 8</span><span>100%</span></div><div class="hud" style="margin-top:6px"><span>-103, 1450</span><span>8%</span></div></div>
+    </section>
+  </div>
+</div>
+<script>
+  const pg = document.getElementById('playground');
+  const wmOptions = [...document.querySelectorAll('#pick-wm option')].map((o) => o.value);
+  function apply() {
+    const wm = document.getElementById('pick-wm').value;
+    const ui = document.getElementById('pick-ui').value;
+    const mono = document.getElementById('pick-mono').value;
+    pg.className = 'playground ' + ui + ' ' + mono;
+    for (const el of pg.querySelectorAll('.wordmark')) {
+      el.classList.remove(...wmOptions);
+      el.classList.add(wm);
+    }
+  }
+  for (const id of ['pick-wm', 'pick-ui', 'pick-mono']) document.getElementById(id).addEventListener('change', apply);
+</script>
+</body>
+</html>

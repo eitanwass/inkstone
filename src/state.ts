@@ -15,7 +15,8 @@ export const MIN_SHAPE_SIZE = GRID * 0.3; // smaller rect/wall drags are discard
 export const MIN_ZOOM = 0.15;
 export const MAX_ZOOM = 8;
 export const DEFAULT_FONT_SIZE = 14;
-export const FONT_FAMILY = "'Segoe UI', sans-serif";
+// Inter, bundled (see main.ts). Canvas text and the label preview use the same stack as the UI.
+export const FONT_FAMILY = "'Inter Variable', system-ui, sans-serif";
 
 interface AppState {
   tool: Tool;

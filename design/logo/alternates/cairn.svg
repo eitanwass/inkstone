@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Chamfered tile, the same cut corners as the app's panels -->
+  <polygon points="9,0 55,0 64,9 64,55 55,64 9,64 0,55 0,9" fill="#1a1714"/>
+  <!-- A cairn: stacked stones, the oldest way to mark a place on a map -->
+  <ellipse cx="32" cy="47" rx="21" ry="9.500" fill="#c9a84c" stroke="#1a1714" stroke-width="1.500"/>
+  <ellipse cx="31" cy="34" rx="15" ry="8" fill="#a89885" stroke="#1a1714" stroke-width="1.500"/>
+  <ellipse cx="33.500" cy="22.500" rx="10" ry="7" fill="#f5ecd0" stroke="#1a1714" stroke-width="1.500"/>
+</svg>

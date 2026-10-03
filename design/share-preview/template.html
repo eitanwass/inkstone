@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Inkstone share preview (1200x630)</title>
+  <!--
+    The link-preview card, rendered to a 1200x630 PNG by `npm run build:og`.
+
+    With no name it is the site card ("A battle-map editor ..."). With ?name=Some+Map
+    it is the card for a named map: the name is the hero. The same layout is meant to
+    be reused later to render per-map previews on demand.
+
+    Fonts come from the bundled @fontsource packages, so the output is the same on
+    every machine.
+  -->
+  <style>
+    @font-face {
+      font-family: 'EB Garamond';
+      font-weight: 500;
+      src: url('../../node_modules/@fontsource/eb-garamond/files/eb-garamond-latin-500-normal.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Inter Variable';
+      font-weight: 100 900;
+      src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1200px; height: 630px; overflow: hidden; }
+    body {
+      position: relative;
+      background-color: #e9e4da;
+      background-image: radial-gradient(rgba(180, 170, 155, 0.75) 2.6px, transparent 2.7px);
+      background-size: 60px 60px;
+      background-position: 30px 30px;
+      font-family: 'Inter Variable', system-ui, sans-serif;
+      color: #4a3f2e;
+    }
+
+    .lockup { display: flex; align-items: center; position: absolute; left: 80px; }
+    .lockup img { display: block; }
+    .wordmark { font-family: 'EB Garamond', Georgia, serif; font-weight: 500; letter-spacing: 0.02em; color: #4a3f2e; line-height: 1; }
+
+    /* ── the site card ── */
+    .site .lockup { top: 150px; gap: 28px; }
+    .site .lockup img { width: 108px; height: 108px; }
+    .site .wordmark { font-size: 112px; }
+    .site .tagline { position: absolute; left: 80px; top: 330px; width: 600px; font-size: 42px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+    .site .sub { position: absolute; left: 80px; top: 455px; width: 560px; font-size: 27px; line-height: 1.4; color: #6b5f50; }
+
+    /* ── the named-map card ── */
+    .named .lockup { top: 64px; gap: 16px; }
+    .named .lockup img { width: 56px; height: 56px; }
+    .named .wordmark { font-size: 60px; }
+    .named .live { position: absolute; left: 80px; top: 196px; display: flex; align-items: center; gap: 12px; padding: 9px 20px 9px 16px; background: #1a1714; border-radius: 999px; color: #e8dcc8; font-size: 20px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+    .named .live i { width: 14px; height: 14px; border-radius: 50%; background: #e5484d; }
+    .named .name-box { position: absolute; left: 80px; top: 262px; width: 600px; height: 230px; overflow: hidden; }
+    .named .name { font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 112px; line-height: 1.04; letter-spacing: 0.01em; color: #2e261a; overflow-wrap: anywhere; }
+    .named .invite { position: absolute; left: 80px; top: 520px; font-size: 28px; color: #6b5f50; }
+
+    .site .named-only, .named .site-only { display: none; }
+
+    /* the illustration: a little room on the map, bleeding off the corner */
+    svg.room { position: absolute; right: -30px; bottom: -30px; width: 600px; height: 500px; }
+  </style>
+</head>
+<body>
+  <div id="card" class="site">
+    <div class="lockup"><img src="../logo/logo.svg" alt="" /><span class="wordmark">Inkstone</span></div>
+
+    <p class="tagline site-only">A battle-map editor for tabletop RPGs</p>
+    <p class="sub site-only">Draw rooms, drop tokens, and share the map live with your table.</p>
+
+    <div class="live named-only"><i></i>Live map</div>
+    <div class="name-box named-only"><div class="name" id="name"></div></div>
+    <p class="invite named-only">Join this map on Inkstone</p>
+
+    <svg class="room" viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg" font-family="Inter Variable, sans-serif">
+      <!-- the room -->
+      <rect x="90" y="90" width="420" height="300" fill="#463b29" stroke="#e8dcc8" stroke-width="8"/>
+      <!-- a wall running off to the right, with a gap for a door -->
+      <path d="M510 240h90" stroke="#4a3f2e" stroke-width="10"/>
+      <!-- tokens -->
+      <g>
+        <circle cx="210" cy="205" r="38" fill="#e05c5c" stroke="#f3a3a3" stroke-width="3"/>
+        <text x="210" y="215" text-anchor="middle" font-size="30" font-weight="700" fill="#fff">AR</text>
+        <text x="210" y="267" text-anchor="middle" font-size="19" fill="#fff" stroke="rgba(0,0,0,.75)" stroke-width="4" paint-order="stroke">Aragorn</text>
+      </g>
+      <g>
+        <circle cx="390" cy="300" r="38" fill="#5c8ae0" stroke="#a9c1f1" stroke-width="3"/>
+        <text x="390" y="310" text-anchor="middle" font-size="30" font-weight="700" fill="#fff">GO</text>
+        <text x="390" y="362" text-anchor="middle" font-size="19" fill="#fff" stroke="rgba(0,0,0,.75)" stroke-width="4" paint-order="stroke">Gimli</text>
+      </g>
+      <!-- a label -->
+      <text x="300" y="138" text-anchor="middle" font-size="24" fill="#e8dcc8">Throne Room</text>
+    </svg>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const raw = (params.get('name') || '').trim();
+    const card = document.getElementById('card');
+
+    // Fit the name into its box. This must run after the fonts have loaded:
+    // measured with a fallback font, the widths (and so the fit) would be wrong.
+    function fitName() {
+      const name = raw.length > 60 ? raw.slice(0, 59).trimEnd() + '…' : raw; // keep it to a sensible length
+      const el = document.getElementById('name');
+      el.textContent = name; // textContent, never innerHTML: the name is user text
+      const overflows = () => el.scrollHeight > el.parentElement.clientHeight;
+      // shrink until the name fits its box, down to a floor...
+      let size = 112;
+      el.style.fontSize = size + 'px';
+      while (overflows() && size > 44) {
+        size -= 4;
+        el.style.fontSize = size + 'px';
+      }
+      // ...and if it still doesn't fit (a very wide name), trim it with an ellipsis
+      let text = name;
+      while (overflows() && text.length > 2) {
+        text = text.slice(0, -2).trimEnd() + '…';
+        el.textContent = text;
+      }
+    }
+
+    if (raw) card.className = 'named';
+
+    Promise.all([
+      document.fonts.load('500 100px "EB Garamond"'),
+      document.fonts.load('600 40px "Inter Variable"'),
+      document.fonts.load('700 20px "Inter Variable"'),
+    ])
+      .then(() => document.fonts.ready)
+      .then(() => {
+        if (raw) fitName();
+        window.__ready = true;
+      });
+  </script>
+</body>
+</html>

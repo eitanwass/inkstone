@@ -82,6 +82,60 @@ skips the build if it's unchanged. Preview builds always run, and if the
 comparison can't be made it builds rather than skips. So a push to master that
 doesn't bump the version does not deploy.
 
+## Logo and icons
+
+The mark is a pen nib that doubles as a compass needle ("ink, pointing north"),
+on the same chamfered tile as the UI panels. The sources live in
+[design/logo/](design/logo/): `logo.svg` (the full mark, used in the app's
+corner), `favicon.svg` (a simplified version: the compass ring and ticks vanish
+at 16px, so it drops them and draws the nib bigger), and `icon-fullbleed.svg`
+(an opaque square for iOS/Android home screens, kept inside the central 80%
+that platform masks don't cut into). `design/logo/alternates/` keeps rejected
+options in case of a change of mind (currently the cairn).
+
+Don't edit `public/logo.svg`, `favicon.svg`, `favicon.ico`,
+`apple-touch-icon.png` or `icon-*.png` by hand: edit the SVGs in `design/logo/`
+and run `npm run build:icons`, which regenerates all of them
+(`scripts/build-icons.mjs`; it rasterizes with Playwright's Chromium and builds
+the `.ico` itself). The generated files are committed, so a normal build never
+needs the script. `tests/icons.spec.js` fails if `public/` drifts from the
+sources, if an icon isn't served, or if a home-screen icon has transparency.
+`index.html` links the icons and `public/site.webmanifest` (name, colors,
+home-screen icons).
+
+## Design system and share preview
+
+[design/DESIGN.md](design/DESIGN.md) is the design guide (brand, logo, colour,
+type, shape, motion, tone), with a visual version in
+[design/style-guide.html](design/style-guide.html). Match it when adding UI. It
+describes values that live in the code, so `tests/design-docs.spec.js` fails if
+a `:root` token, a swatch colour, a token colour or the bundled fonts change
+without the guide changing too (and if a link in it breaks).
+
+Typography: **Inter** (variable, bundled via `@fontsource-variable/inter`) for
+the UI and for text drawn on the canvas, upright **EB Garamond** 500 for the
+wordmark, and the system monospace for the HUD numbers. Fonts are imported in
+`main.ts`, so nothing is fetched from Google. Canvas text doesn't wait for fonts
+the way page text does, so `main.ts` also loads the font explicitly and repaints.
+
+The link preview (`og:` and `twitter:` tags in `index.html`, image
+`public/og-image.png`) is rendered by `npm run build:og` from
+`design/share-preview/template.html`; don't edit the PNG by hand. Chat apps need
+an **absolute** image URL, so `index.html` uses a `%SITE_URL%` placeholder that
+`vite.config.ts` fills in at build time from `SITE_URL`, else Vercel's
+`VERCEL_PROJECT_PRODUCTION_URL`, else nothing (relative, fine for local dev).
+
+*Showing a map's name in its invite-link preview* is not built, but the template
+already renders a named card (`?name=...`). Crawlers don't run JavaScript, and
+the app is a static page, so doing it needs a server step: (1) carry the name in
+the invite link (`?map=Name`, the simplest) or have the relay store it; (2) a
+Vercel function that returns the page's HTML with that name in the title and
+`og:image` tags for `/?session=...` requests; (3) an image endpoint (for
+example `@vercel/og`, which renders HTML/CSS to a PNG and takes the fonts as
+buffers) that reuses this layout. Treat the name as untrusted text everywhere
+(length limit, escaping, a default card when it's missing), and note that putting
+a map's name in a link exposes it to whatever chat the link is pasted into.
+
 ## Accessibility and storage conventions
 
 - Icon-only buttons need an `aria-label` (the `title` stays as the tooltip with

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkstone style guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-toolbar: #1a1714; --bg-toolbar-hover: #25211d; --bg-toolbar-active: #2e2820; --border: #3a3228;
+      --accent: #c9a84c; --accent-dim: #7a6230; --text-primary: #e8dcc8; --text-muted: #a89885; --text-label: #8f8370;
+      --danger: #a04040; --canvas-bg: #e9e4da; --panel-chamfer: 9px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f3efe6; color: #2a2520; font-family: 'Inter', system-ui, sans-serif; padding: 40px 24px 80px; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    h1 { font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 40px; margin-bottom: 4px; color: #4a3f2e; }
+    h2 { font-size: 20px; font-weight: 600; margin: 56px 0 6px; padding-bottom: 8px; border-bottom: 1px solid #ddd5c4; }
+    h3 { font-size: 13px; font-weight: 600; margin: 24px 0 10px; color: #6b5f50; text-transform: uppercase; letter-spacing: .08em; }
+    p.lead { color: #6b5f50; font-size: 14px; line-height: 1.6; max-width: 720px; margin-bottom: 8px; }
+    p.lead code, td code { font-family: monospace; background: #e9e4da; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+    .parchment { background-color: #e9e4da; background-image: radial-gradient(rgba(180,170,155,.55) 1.6px, transparent 1.7px); background-size: 40px 40px; border-radius: 6px; padding: 22px 26px; }
+    .darkbox { background: #1a1714; border-radius: 6px; padding: 22px 26px; }
+    .cap { font-size: 11px; color: #8f8370; margin-top: 8px; max-width: 260px; line-height: 1.4; }
+
+    /* logo */
+    .lockup { display: flex; align-items: center; gap: 10px; }
+    .lockup img { width: 30px; height: 30px; display: block; }
+    .wordmark { font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 25px; letter-spacing: .02em; color: #4a3f2e; }
+    .darkbox .wordmark { color: #e8dcc8; }
+
+    /* colour */
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .chip { height: 64px; border-radius: 8px; display: flex; align-items: flex-end; padding: 8px 10px; font: 600 12px monospace; }
+    .sw-name { font-size: 13px; font-weight: 600; margin-top: 6px; }
+    .sw-use { font-size: 11.5px; color: #6b5f50; line-height: 1.35; }
+    table { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    th, td { text-align: left; padding: 6px 18px 6px 0; border-bottom: 1px solid #e3dccb; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #8f8370; font-weight: 600; }
+    .bad { color: #a04040; font-weight: 600; }
+
+    /* type */
+    .spec { display: grid; grid-template-columns: 150px 1fr; gap: 6px 24px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid #e3dccb; }
+    .spec .meta { font-size: 11.5px; color: #8f8370; line-height: 1.4; }
+    .on-dark { background: #1e1b17; color: #e8dcc8; padding: 14px 16px; border-radius: 8px; }
+
+    /* shape + components, copied from the app's CSS */
+    .panel { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-toolbar); color: var(--text-primary); font-size: 13px;
+      box-shadow: 0 14px 36px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.3);
+      clip-path: polygon(var(--panel-chamfer) 0, calc(100% - var(--panel-chamfer)) 0, 100% var(--panel-chamfer), 100% calc(100% - var(--panel-chamfer)), calc(100% - var(--panel-chamfer)) 100%, var(--panel-chamfer) 100%, 0 calc(100% - var(--panel-chamfer)), 0 var(--panel-chamfer)); }
+    .panel::before { content: ''; position: absolute; top: 0; left: 16px; right: 16px; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: .55; }
+    .tag { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-label); }
+    .ico { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; background: var(--bg-toolbar); color: var(--text-muted); border-radius: 6px; }
+    .ico.active { color: var(--accent); background: var(--bg-toolbar-active); }
+    figure { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 74px; }
+    figcaption { font-size: 10.5px; color: #8f8370; text-align: center; }
+    .btn { font: 12.5px Inter, sans-serif; padding: 7px 16px; border-radius: 4px; border: 1px solid var(--border); background: #2a2520; color: var(--text-muted); }
+    .btn.primary { background: var(--accent-dim); border-color: var(--accent); color: #f5ecd0; }
+    .btn.danger { background: #3a1515; border-color: var(--danger); color: #e06060; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px 4px 10px; background: var(--bg-toolbar); border: 1px solid var(--border); border-radius: 999px; color: var(--text-primary); font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .pill i { width: 8px; height: 8px; border-radius: 50%; background: #e5484d; }
+    .pill.reconnecting i { background: #d9a441; }
+    .toast { display: inline-block; background: #2a2520; border: 1px solid var(--border); color: var(--text-primary); padding: 8px 16px; border-radius: 6px; font-size: 12.5px; }
+    .modal { background: #1e1b17; border: 1px solid var(--border); border-radius: 8px; padding: 22px; width: 300px; color: var(--text-primary); box-shadow: 0 16px 48px rgba(0,0,0,.6); }
+    .modal h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .modal p { font-size: 14px; line-height: 1.5; color: var(--text-muted); margin-bottom: 16px; }
+    .modal .acts { display: flex; justify-content: flex-end; gap: 8px; }
+    .radius { width: 74px; height: 52px; background: #1a1714; color: #a89885; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .hud { font-family: monospace; font-size: 11px; color: #4a3f2e; opacity: .6; }
+  </style>
+</head>
+<body>
+<!-- The app's icon sprite, embedded: browsers won't load an external one from a file:// page -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="icon-undo" viewBox="0 0 20 20">
+    <path d="M7 5L3 9l4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M3 9h9a4 4 0 1 1 0 8h-2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  </symbol><symbol id="icon-redo" viewBox="0 0 20 20">
+    <path d="M13 5l4 4-4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M17 9H8a4 4 0 1 0 0 8h2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  </symbol><symbol id="icon-reset-view" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <path d="M10 1v3M10 16v3M1 10h3M16 10h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol><symbol id="icon-clear" viewBox="0 0 20 20">
+    <path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol><symbol id="icon-export" viewBox="0 0 20 20">
+    <path d="M10 3v9M6.5 9L10 12.5 13.5 9" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4 15h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol><symbol id="icon-select" viewBox="0 0 20 20">
+    <path d="M4 2l12 8-6 1-3 6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>
+  </symbol><symbol id="icon-room" viewBox="0 0 20 20">
+    <rect x="3" y="5" width="14" height="10" stroke="currentColor" stroke-width="1.4" fill="none" rx="1"/>
+  </symbol><symbol id="icon-wall" viewBox="0 0 20 20">
+    <line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol><symbol id="icon-token" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <circle cx="10" cy="10" r="2.5" fill="currentColor" opacity="0.5"/>
+  </symbol><symbol id="icon-label" viewBox="0 0 20 20">
+    <text x="4" y="15" font-size="13" fill="currentColor" font-family="serif" font-weight="bold">A</text>
+  </symbol><symbol id="icon-erase" viewBox="0 0 20 20">
+    <g transform="rotate(-30 10 10)">
+      <rect x="3" y="7" width="14" height="8" rx="1.6" stroke="currentColor" stroke-width="1.4" fill="none"/>
+      <line x1="3" y1="11" x2="17" y2="11" stroke="currentColor" stroke-width="1.4"/>
+    </g>
+  </symbol><symbol id="icon-plus" viewBox="0 0 20 20">
+    <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol><symbol id="icon-share" viewBox="0 0 20 20">
+    <circle cx="5" cy="10" r="2.2" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <circle cx="15" cy="5" r="2.2" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <circle cx="15" cy="15" r="2.2" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <path d="M7 9l6-3M7 11l6 3" stroke="currentColor" stroke-width="1.4"/>
+  </symbol><symbol id="icon-join" viewBox="0 0 20 20">
+    <path d="M8 12a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 8a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol><symbol id="icon-changelog" viewBox="0 0 20 20">
+    <path d="M5 2.5h7.5L16 6v11.5H5z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>
+    <path d="M12.5 2.5V6H16M7.5 10h6M7.5 13h6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol><symbol id="icon-close" viewBox="0 0 20 20">
+    <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </symbol></svg>
+<div class="wrap">
+  <h1>Inkstone style guide</h1>
+  <p class="lead">The visual companion to <code>DESIGN.md</code>: what the logo, colour, type, shape and components look like. The values come from <code>style.css</code> and the logo files in <code>design/logo</code>.</p>
+
+  <h2>Logo</h2>
+  <p class="lead">A pen nib that is also a compass needle: ink, pointing north. On a dark tile with cut corners, the same cut as the UI's panels.</p>
+  <div class="row">
+    <div><div class="parchment"><img src="logo/logo.svg" width="120" height="120" alt=""></div><p class="cap"><b>Full mark</b>: app corner, anything 24px or larger.</p></div>
+    <div><div class="parchment"><img src="logo/favicon.svg" width="120" height="120" alt=""></div><p class="cap"><b>Small-size mark</b>: browser tabs, under 24px. No ring or ticks.</p></div>
+    <div><div class="parchment"><img src="logo/icon-fullbleed.svg" width="120" height="120" alt=""></div><p class="cap"><b>Home-screen icon</b>: opaque square, mark kept in the central 80%.</p></div>
+    <div><div class="parchment"><img src="logo/alternates/cairn.svg" width="120" height="120" alt=""></div><p class="cap"><b>Alternate (not used)</b>: the cairn, kept in case of a change of mind.</p></div>
+  </div>
+  <h3>Lockup</h3>
+  <div class="row">
+    <div><div class="parchment"><div class="lockup"><img src="logo/logo.svg" alt=""><span class="wordmark">Inkstone</span></div></div><p class="cap">On parchment: mark 30px, gap 10px, EB Garamond 500, 25px, +0.02em, ink <code>#4a3f2e</code>.</p></div>
+    <div><div class="darkbox"><div class="lockup"><img src="logo/logo.svg" alt=""><span class="wordmark">Inkstone</span></div></div><p class="cap">On dark: name in <code>#e8dcc8</code>.</p></div>
+    <div><div class="parchment"><div class="lockup" style="zoom:2"><img src="logo/logo.svg" alt=""><span class="wordmark">Inkstone</span></div></div><p class="cap">Scales as one unit.</p></div>
+  </div>
+  <h3>Sizes</h3>
+  <div class="row" style="align-items:flex-end">
+    <figure style="width:auto"><img src="logo/favicon.svg" width="16" height="16" alt=""><figcaption>16 (favicon)</figcaption></figure>
+    <figure style="width:auto"><img src="logo/favicon.svg" width="32" height="32" alt=""><figcaption>32</figcaption></figure>
+    <figure style="width:auto"><img src="logo/logo.svg" width="30" height="30" alt=""><figcaption>30 (corner)</figcaption></figure>
+    <figure style="width:auto"><img src="logo/logo.svg" width="64" height="64" alt=""><figcaption>64</figcaption></figure>
+  </div>
+
+  <h2>Colour</h2>
+  <p class="lead">Dark brass chrome over a light parchment canvas. Gold is the one accent. Red means danger, live, or a map token, never decoration.</p>
+  <h3>Surfaces (the dark chrome)</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#1a1714;color:#f5ecd0;">#1a1714</div><div class="sw-name">--bg-toolbar</div><div class="sw-use">Floating panels, the logo tile</div></div><div class="sw"><div class="chip" style="background:#1e1b17;color:#f5ecd0;">#1e1b17</div><div class="sw-name">popover / modal</div><div class="sw-use">Popovers, dialogs, menus</div></div><div class="sw"><div class="chip" style="background:#25211d;color:#f5ecd0;">#25211d</div><div class="sw-name">--bg-toolbar-hover</div><div class="sw-use">Hover on chrome, text inputs</div></div><div class="sw"><div class="chip" style="background:#2a2520;color:#f5ecd0;">#2a2520</div><div class="sw-name">button surface</div><div class="sw-use">Secondary buttons, toasts</div></div><div class="sw"><div class="chip" style="background:#2e2820;color:#f5ecd0;">#2e2820</div><div class="sw-name">--bg-toolbar-active</div><div class="sw-use">Active tool background</div></div><div class="sw"><div class="chip" style="background:#3a3228;color:#f5ecd0;">#3a3228</div><div class="sw-name">--border</div><div class="sw-use">1px borders and dividers</div></div></div>
+<h3>Text</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#e8dcc8;color:#1a1714;border:1px solid #ccc3b0;">#e8dcc8</div><div class="sw-name">--text-primary</div><div class="sw-use">Main text on dark; default map stroke</div></div><div class="sw"><div class="chip" style="background:#a89885;color:#f5ecd0;">#a89885</div><div class="sw-name">--text-muted</div><div class="sw-use">Secondary text and icons on dark</div></div><div class="sw"><div class="chip" style="background:#8f8370;color:#f5ecd0;">#8f8370</div><div class="sw-name">--text-label</div><div class="sw-use">Small uppercase panel labels</div></div><div class="sw"><div class="chip" style="background:#4a3f2e;color:#f5ecd0;">#4a3f2e</div><div class="sw-name">ink</div><div class="sw-use">Text on the parchment</div></div><div class="sw"><div class="chip" style="background:#f5ecd0;color:#1a1714;border:1px solid #ccc3b0;">#f5ecd0</div><div class="sw-name">cream</div><div class="sw-use">Label on primary buttons</div></div></div>
+<h3>Accent and meaning</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#c9a84c;color:#1a1714;">#c9a84c</div><div class="sw-name">--accent</div><div class="sw-use">Gold: active, focus, primary action, the nib</div></div><div class="sw"><div class="chip" style="background:#7a6230;color:#f5ecd0;">#7a6230</div><div class="sw-name">--accent-dim</div><div class="sw-use">Primary button fill</div></div><div class="sw"><div class="chip" style="background:#8a6a28;color:#f5ecd0;">#8a6a28</div><div class="sw-name">nib shade</div><div class="sw-use">The nib's shaded half</div></div><div class="sw"><div class="chip" style="background:#a04040;color:#f5ecd0;">#a04040</div><div class="sw-name">--danger</div><div class="sw-use">Destructive actions</div></div><div class="sw"><div class="chip" style="background:#e06060;color:#f5ecd0;">#e06060</div><div class="sw-name">danger text</div><div class="sw-use">On the danger fill #3a1515</div></div><div class="sw"><div class="chip" style="background:#e5484d;color:#f5ecd0;">#e5484d</div><div class="sw-name">live</div><div class="sw-use">The "Live" dot while shared</div></div><div class="sw"><div class="chip" style="background:#d9a441;color:#1a1714;">#d9a441</div><div class="sw-name">warning</div><div class="sw-use">The dot while reconnecting</div></div></div>
+<h3>The canvas</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#e9e4da;color:#1a1714;border:1px solid #ccc3b0;">#e9e4da</div><div class="sw-name">--canvas-bg</div><div class="sw-use">Parchment</div></div></div>
+<h3>Map stroke palette</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#e8dcc8;color:#1a1714;border:1px solid #ccc3b0;">#e8dcc8</div><div class="sw-name">Parchment</div><div class="sw-use">Default stroke</div></div><div class="sw"><div class="chip" style="background:#8b5e3c;color:#f5ecd0;">#8b5e3c</div><div class="sw-name">Brown</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#4a7c59;color:#f5ecd0;">#4a7c59</div><div class="sw-name">Forest</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#5b7fa6;color:#f5ecd0;">#5b7fa6</div><div class="sw-name">Water</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#c9a84c;color:#1a1714;">#c9a84c</div><div class="sw-name">Gold</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#a04040;color:#f5ecd0;">#a04040</div><div class="sw-name">Blood</div><div class="sw-use"></div></div></div>
+<h3>Map fill palette</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#433b31;color:#f5ecd0;">#433b31</div><div class="sw-name">Dark</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#564837;color:#f5ecd0;">#564837</div><div class="sw-name">Dungeon</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#364c3f;color:#f5ecd0;">#364c3f</div><div class="sw-name">Forest</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#333e4e;color:#f5ecd0;">#333e4e</div><div class="sw-name">Water</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#463b29;color:#f5ecd0;">#463b29</div><div class="sw-name">Earth</div><div class="sw-use">Default fill</div></div></div>
+<h3>Token colours</h3><div class="swatches"><div class="sw"><div class="chip" style="background:#e05c5c;color:#f5ecd0;">#e05c5c</div><div class="sw-name">Red</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#5c8ae0;color:#f5ecd0;">#5c8ae0</div><div class="sw-name">Blue</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#5cba6a;color:#1a1714;">#5cba6a</div><div class="sw-name">Green</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#e0a85c;color:#1a1714;">#e0a85c</div><div class="sw-name">Amber</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#9a5ce0;color:#f5ecd0;">#9a5ce0</div><div class="sw-name">Violet</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#5ce0d4;color:#1a1714;">#5ce0d4</div><div class="sw-name">Cyan</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#e05caa;color:#f5ecd0;">#e05caa</div><div class="sw-name">Pink</div><div class="sw-use"></div></div><div class="sw"><div class="chip" style="background:#c8e05c;color:#1a1714;">#c8e05c</div><div class="sw-name">Lime</div><div class="sw-use"></div></div></div>
+
+  <h3>Contrast (measured)</h3>
+  <table>
+    <tr><th>Pair</th><th>Ratio</th></tr>
+    <tr><td>Text primary on toolbar</td><td>13.2:1</td></tr>
+    <tr><td>Text muted on toolbar / popover / button</td><td>6.4 / 6.1 / 5.4:1</td></tr>
+    <tr><td>Text label on toolbar / popover</td><td>4.8 / 4.6:1</td></tr>
+    <tr><td>Accent on toolbar</td><td>7.8:1</td></tr>
+    <tr><td>Primary button label (cream on <code>#7a6230</code>)</td><td>4.9:1</td></tr>
+    <tr><td>Ink on parchment</td><td>8.1:1</td></tr>
+    <tr><td>Danger text on danger fill</td><td>4.6:1</td></tr>
+    <tr><td class="bad">Gold on parchment</td><td class="bad">1.8:1, never use gold for text or icons on the canvas</td></tr>
+  </table>
+
+  <h2>Typography</h2>
+  <p class="lead">Two bundled families: EB Garamond (upright) for the name, Inter for everything else including text drawn on the map. System monospace for the HUD numbers.</p>
+  <div class="spec"><div class="meta">Wordmark<br>EB Garamond 500, 25px</div><div class="wordmark">Inkstone</div></div>
+  <div class="spec"><div class="meta">Release heading<br>Inter 600, 16px</div><div style="font-weight:600;font-size:16px">v0.5.0</div></div>
+  <div class="spec"><div class="meta">Dialog / release body<br>Inter 400, 14px / 1.5</div><div style="font-size:14px;line-height:1.5;max-width:520px;color:#4a3f2e">Names show under the token on the map and in exports. Up to 20 characters.</div></div>
+  <div class="spec"><div class="meta">Buttons, popovers<br>Inter 400–500, 12.5px</div><div style="font-size:12.5px">Cancel &nbsp; Rename &nbsp; Copy Link</div></div>
+  <div class="spec"><div class="meta">Panel labels<br>Inter 700, 9.5px, uppercase, +0.1em</div><div class="on-dark"><span class="tag">Stroke</span> &nbsp; <span class="tag">Size</span> &nbsp; <span class="tag">Fill</span></div></div>
+  <div class="spec"><div class="meta">Map text (canvas)<br>Inter, 12–14px</div><div style="font-size:14px">Aragorn &nbsp; <span style="font-size:12px">Throne Room</span></div></div>
+  <div class="spec"><div class="meta">HUD numbers<br>System monospace, 11px</div><div class="hud" style="font-size:11px;opacity:1">12, 8 &nbsp;&nbsp; 100%</div></div>
+
+  <h2>Shape and surface</h2>
+  <p class="lead">Chamfered panels with a brass hairline along the top edge and a deep soft shadow: the signature shape. The logo tile repeats it.</p>
+  <div class="parchment">
+    <div class="row" style="align-items:center">
+      <div class="panel"><span class="tag">Stroke</span><span class="ico active"><svg width="18" height="18"><use href="#icon-room"></use></svg></span><span class="ico"><svg width="18" height="18"><use href="#icon-wall"></use></svg></span></div>
+      <div class="radius" style="border-radius:4px">4px</div>
+      <div class="radius" style="border-radius:6px">6px</div>
+      <div class="radius" style="border-radius:8px">8px</div>
+      <div class="radius" style="border-radius:26px;width:92px">pill 999</div>
+    </div>
+  </div>
+  <p class="cap" style="max-width:none">Radii: 4 (buttons, inputs), 6 (popovers, menus, toasts, icon buttons), 8 (dialogs, modals), pill (Live), 50% (swatches, tokens). Layers: 50 ambient, 100 panels, 1000 popovers, 2000 modals, 3000 toasts.</p>
+
+  <h2>Icons</h2>
+  <p class="lead">20×20 grid, 1.4 stroke, round caps, <code>currentColor</code>. Muted on dark, primary on hover, gold when active.</p>
+  <div class="row" style="gap:10px"><figure><span class="ico"><svg width="20" height="20"><use href="#icon-undo"></use></svg></span><figcaption>undo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-redo"></use></svg></span><figcaption>redo</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-reset-view"></use></svg></span><figcaption>reset-view</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-clear"></use></svg></span><figcaption>clear</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-export"></use></svg></span><figcaption>export</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-select"></use></svg></span><figcaption>select</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-room"></use></svg></span><figcaption>room</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-wall"></use></svg></span><figcaption>wall</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-token"></use></svg></span><figcaption>token</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-label"></use></svg></span><figcaption>label</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-erase"></use></svg></span><figcaption>erase</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-plus"></use></svg></span><figcaption>plus</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-share"></use></svg></span><figcaption>share</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-join"></use></svg></span><figcaption>join</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-changelog"></use></svg></span><figcaption>changelog</figcaption></figure><figure><span class="ico"><svg width="20" height="20"><use href="#icon-close"></use></svg></span><figcaption>close</figcaption></figure></div>
+
+  <h2>Components</h2>
+  <div class="parchment">
+    <div class="row" style="align-items:center">
+      <span class="btn">Cancel</span><span class="btn primary">Rename</span><span class="btn danger">Delete</span>
+      <span class="pill"><i></i>Live</span><span class="pill reconnecting"><i></i>Reconnecting…</span>
+      <span class="toast">Copied element</span>
+    </div>
+    <div class="row" style="margin-top:22px">
+      <div class="modal"><h4>Remove token "Aragorn"?</h4><p>This can be undone with Ctrl+Z.</p><div class="acts"><span class="btn">Cancel</span><span class="btn danger">Remove</span></div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

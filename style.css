@@ -22,7 +22,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   background: var(--canvas-bg);
 }
 
@@ -101,9 +101,9 @@ canvas {
 }
 
 #brand-mark span {
-  font-family: 'IM Fell English', serif;
-  font-style: italic;
-  font-size: 23px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 25px;
   letter-spacing: 0.02em;
   color: #4a3f2e;
 }
@@ -234,6 +234,7 @@ canvas {
   bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
+  width: max-content; /* see #style-panel */
   max-width: calc(100vw - 16px);
   overflow-x: auto;
 }
@@ -244,6 +245,10 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
   gap: 12px;
+  /* A fixed box placed at left: 50% may only grow into the half of the screen
+     to its right, so without this it capped at 50vw and clipped its own
+     contents on anything under ~1200px wide. */
+  width: max-content;
   max-width: calc(100vw - 16px);
   overflow-x: auto;
 }
@@ -264,7 +269,7 @@ canvas {
 }
 
 #label-preview-text {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   line-height: 1;
   white-space: nowrap;
 }

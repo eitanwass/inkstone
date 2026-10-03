@@ -5,6 +5,13 @@ written for people using the editor; a bullet can wrap onto indented lines. The
 top entry must match the version in package.json (`npm run check:changelog`
 enforces it), and the app shows this file in its "What's new" panel.
 
+## 0.5.0 - 2026-10-03
+
+- New logo and favicon, and new type: Inter throughout, with the name set in
+  Garamond.
+- Links to Inkstone now show a preview card in chats.
+- Fixed the stroke and fill panel being cut off on smaller windows.
+
 ## 0.4.2 - 2026-10-03
 
 - "What's new" now opens as a large dialog in the middle of the screen, with the
