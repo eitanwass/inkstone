@@ -181,23 +181,31 @@ and no trailing slash.
 **A map's name in its invite-link preview.** Chat apps read a link's preview tags
 without running JavaScript, and the name only exists inside the running app, so:
 
-1. **The name travels in the link.** While a page is part of a session, `collab.ts`
-   keeps the address's `?map=` equal to the map's name (`syncUrlMapName`: when
+1. **The name travels in the link, and the link lives at `/join`.** While a page is
+   part of a session, `collab.ts` makes the address the invite link (path `/join`,
+   with `?session=`) and keeps its `?map=` equal to the map's name (`syncUrlMapName`: when
    sharing starts, on every committed rename, and when the room reports its name).
    "Copy Link" copies `location.href`, so it includes it. A link copied earlier
    keeps the name it had then.
-2. **`vercel.json` rewrites `/` with a `map` query to `api/share.ts`**, which fetches
-   the static `/index.html` and rewrites the title and `og:`/`twitter:` tags for that
-   name, pointing `og:image` at `/api/og?name=...`. Everyone who opens such a link
-   gets this page (the app is unchanged), so on *any* error the function redirects to
-   the same link without `?map=`, which the static page serves.
+2. **`vercel.json` rewrites `/join` to `api/share.ts`**, which fetches the static
+   `/index.html` and rewrites the title and `og:`/`twitter:` tags for that name,
+   pointing `og:image` at `/api/og?name=...`. Everyone who opens a `/join` link gets
+   this page (the app is unchanged). It must be `/join` and not `/`: **Vercel serves a
+   static file before it consults rewrites**, so a rewrite on `/` (where `index.html`
+   lives) never fires. This is how the first version failed in production, and a
+   test now rejects any rewrite whose path has a static file. On *any* error the
+   function redirects to `/` with the same session (the plain app) and says why in an
+   `x-share-fallback` header.
 3. **`api/og.ts` draws the card** (`api/_card.ts`: Satori lays out plain objects,
    resvg-wasm rasterizes, so it needs no browser and runs the same locally and on
    Vercel). The layout mirrors `design/share-preview/template.html`; change them
    together. Fonts must be **WOFF** (Satori can't read WOFF2 or variable fonts), so
    the function uses the static `@fontsource/inter` and `@fontsource/eb-garamond`
    files; `RUNTIME_FILES` lists everything it reads and `vercel.json`'s
-   `includeFiles` must cover them (a test checks both).
+   `includeFiles` must cover them (a test checks both). `og.ts` loads `_card.js` with
+   a dynamic import *inside* its try/catch, so even a renderer that can't load on the
+   server becomes a redirect to the site card (with an `x-og-fallback` header giving
+   the reason) rather than a 500.
 
 The name in the URL is untrusted text. Both functions run it through
 `normalizeMapName` (so at most 60 characters), `share.ts` HTML-escapes it and
@@ -211,7 +219,9 @@ Tests: `tests/unit/{share-function,og-function,preview-chain,vercel-config}.test
 (the chain test serves the static page and mounts both functions in a local
 server, then plays a chat app) and `tests/invite-link.spec.js`. What they can't
 cover is Vercel's own runtime (bundling, the rewrite, `includeFiles`), so after a
-deploy, check `/api/og?name=Test` and view-source on `/?session=x&map=Test`.
+deploy, check `curl -i "https://<site>/api/og?name=Test"` (a PNG, or a 302 whose
+`x-og-fallback` header says why not) and `curl -i "https://<site>/join?session=x&map=Test"`
+(a 200 page with the name in its title, or a 302 whose `x-share-fallback` says why not).
 
 `package.json` has an `overrides` entry pinning `fflate` to `^0.8.2`: Satori's font
 reader depends on `fflate` 0.7.x, which `npm audit` flags (its ZIP-reading function

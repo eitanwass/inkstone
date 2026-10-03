@@ -31,11 +31,19 @@ const FONTS = [
 
 const WASM_FILE = 'node_modules/@resvg/resvg-wasm/index_bg.wasm';
 const LOGO_FILE = 'public/logo.svg';
+// Not read by us: satori's text shaper (harfbuzzjs) loads it from disk when it starts, and
+// the function crashed on Vercel without it.
+const HARFBUZZ_WASM = 'node_modules/harfbuzzjs/hb.wasm';
 
 // Every file this module reads at runtime, relative to the project root.
 // vercel.json's `includeFiles` for the function must cover all of them (a test
 // checks that they exist and are listed there).
-export const RUNTIME_FILES: readonly string[] = [...FONTS.map((f) => f.file), WASM_FILE, LOGO_FILE];
+export const RUNTIME_FILES: readonly string[] = [
+  ...FONTS.map((f) => f.file),
+  WASM_FILE,
+  HARFBUZZ_WASM,
+  LOGO_FILE,
+];
 
 const read = (file: string) => readFileSync(join(process.cwd(), file));
 

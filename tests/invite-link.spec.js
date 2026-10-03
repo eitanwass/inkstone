@@ -33,6 +33,32 @@ test('while the map is not shared, renaming leaves the address alone', async ({ 
   expect(new URL(page.url()).search).toBe('');
 });
 
+test('sharing turns the address into the invite link: under /join, with the session', async ({ page }) => {
+  await loadWithRelay(page);
+  expect(new URL(page.url()).pathname).toBe('/'); // the ordinary app until it is shared
+  await share(page);
+  expect(new URL(page.url()).pathname).toBe('/join'); // on Vercel this path is answered by the preview function
+  expect(param(page, 'session')).toBeTruthy();
+});
+
+test('a /join link opens the app and joins its session', async ({ page }) => {
+  await page.routeWebSocket(/\/parties\//, () => {});
+  await page.goto('/join?session=room-42&map=The%20Sunken%20Crypt');
+  await page.waitForSelector('#tool-rect');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+  await expect(page.locator('#tool-select')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('reloading a shared map from its own address keeps it shared', async ({ page }) => {
+  await loadWithRelay(page);
+  await share(page);
+  const link = page.url();
+  await page.reload();
+  await page.waitForSelector('#tool-rect');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+  expect(page.url()).toBe(link);
+});
+
 test('a shared map’s link gets the name, follows renames, and drops it when the name is cleared', async ({
   page,
 }) => {

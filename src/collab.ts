@@ -140,8 +140,12 @@ function currentUrlSessionId() {
   return new URL(window.location.href).searchParams.get('session');
 }
 
+// A shared map's address is its invite link, and invite links live under /join: on
+// Vercel that path is answered by a function that fills in the preview tags (see
+// api/share.ts), which the root path can't be (a static file is served there first).
 function setUrlSessionId(sessionId: string): void {
   const url = new URL(window.location.href);
+  url.pathname = '/join';
   url.searchParams.set('session', sessionId);
   window.history.replaceState(null, '', url);
   syncUrlMapName();

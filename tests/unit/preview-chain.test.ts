@@ -6,7 +6,7 @@ import { GET as og } from '../../api/og';
 import { GET as share } from '../../api/share';
 
 // The whole link-preview chain, minus Vercel itself: a small server stands in for
-// it, serving the static page and sending "/?map=..." to the share function the
+// it, serving the static page and sending "/join" to the share function the
 // way vercel.json's rewrite does. Then it plays a chat app: fetch the invite link,
 // read the preview tags, fetch the image they point at.
 
@@ -24,7 +24,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       status: pageStatus,
       headers: { 'content-type': 'text/html' },
     });
-  } else if (url.pathname === '/' && url.searchParams.has('map')) {
+  } else if (url.pathname === '/join') {
     response = await share(request); // the rewrite in vercel.json
   } else if (url.pathname === '/api/og') {
     response = await og(request);
@@ -49,7 +49,7 @@ const metaContent = (html: string, attr: string, value: string) =>
 
 describe('an invite link for a named map', () => {
   it('gets preview tags with the name, and the image they point at is that map’s card', async () => {
-    const link = `${origin}/?session=abc123&map=${encodeURIComponent('The Sunken Crypt')}`;
+    const link = `${origin}/join?session=abc123&map=${encodeURIComponent('The Sunken Crypt')}`;
     const page = await fetch(link);
     expect(page.status).toBe(200);
     const html = await page.text();
@@ -68,7 +68,7 @@ describe('an invite link for a named map', () => {
   });
 
   it('is still the app: the same scripts and styles as the plain page', async () => {
-    const html = await (await fetch(`${origin}/?session=abc&map=Anything`)).text();
+    const html = await (await fetch(`${origin}/join?session=abc&map=Anything`)).text();
     const assets = (text: string) => [...text.matchAll(/(?:src|href)="(\/[^"]+)"/g)].map((m) => m[1]).sort();
     const plainAssets = assets(await (await fetch(`${origin}/`)).text());
     for (const asset of plainAssets.filter((a) => /\.(js|ts|css)$/.test(a)))
@@ -76,13 +76,13 @@ describe('an invite link for a named map', () => {
   });
 
   it('a link with no name gets the ordinary site card', async () => {
-    const html = await (await fetch(`${origin}/?session=abc`)).text();
+    const html = await (await fetch(`${origin}/join?session=abc`)).text();
     expect(html).toBe(PAGE);
     expect(metaContent(html, 'property', 'og:image')).toMatch(/\/og-image\.png$/);
   });
 
   it('a name the card can not draw falls back to the site card, not a broken image', async () => {
-    const link = `${origin}/?session=abc&map=${encodeURIComponent('מערת הגובלינים')}`;
+    const link = `${origin}/join?session=abc&map=${encodeURIComponent('מערת הגובלינים')}`;
     const html = await (await fetch(link)).text();
     const imageUrl = metaContent(html, 'property', 'og:image') ?? '';
     const image = await fetch(imageUrl, { redirect: 'manual' });
@@ -93,9 +93,12 @@ describe('an invite link for a named map', () => {
   it('if the page can not be loaded, the link redirects to itself without the name, so the app still opens', async () => {
     pageStatus = 500;
     try {
-      const response = await fetch(`${origin}/?session=abc&map=The%20Sunken%20Crypt`, { redirect: 'manual' });
+      const response = await fetch(`${origin}/join?session=abc&map=The%20Sunken%20Crypt`, {
+        redirect: 'manual',
+      });
       expect(response.status).toBe(302);
-      expect(response.headers.get('location')).toBe(`${origin}/?session=abc`);
+      expect(response.headers.get('location')).toBe(`${origin}/?session=abc`); // the plain app, same session
+      expect(response.headers.get('x-share-fallback')).toContain('answered 500');
     } finally {
       pageStatus = 200;
     }
