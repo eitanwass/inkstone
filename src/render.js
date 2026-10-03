@@ -2,7 +2,7 @@
 // Everything that draws to the grid/main canvases. drawMain() is the one
 // function nearly every interaction handler calls after mutating state.
 
-import { state, GRID } from './state.js';
+import { state, GRID, DEFAULT_TOKEN_RADIUS, DEFAULT_FONT_SIZE, FONT_FAMILY } from './state.js';
 import { gridCanvas, mainCanvas, gCtx, mCtx } from './canvas.js';
 import { rotatePoint, elementCenter } from './geometry.js';
 import { getElementBounds } from './elements.js';
@@ -28,6 +28,17 @@ export function drawGrid() {
       gCtx.fill();
     }
   }
+}
+
+// Sets the viewport transform and redraws. The one place that keeps the zoom
+// readout in sync with state.zoom.
+export function setView(panX, panY, zoom = state.zoom) {
+  state.panX = panX;
+  state.panY = panY;
+  state.zoom = zoom;
+  document.getElementById('zoom-label').textContent = `${Math.round(zoom * 100)}%`;
+  drawGrid();
+  drawMain();
 }
 
 export function drawMain() {
@@ -181,7 +192,7 @@ export function drawElement(ctx, el, isSelected, isPreview = false) {
       break;
     }
     case 'token': {
-      const r = el.radius || GRID * 0.42; // fallback for tokens saved before variable sizing existed
+      const r = el.radius || DEFAULT_TOKEN_RADIUS;
       // Shadow ring
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -202,14 +213,14 @@ export function drawElement(ctx, el, isSelected, isPreview = false) {
       // Initials
       const label = el.name ? el.name.slice(0, 2).toUpperCase() : '?';
       ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(r * 0.85)}px 'Segoe UI', sans-serif`;
+      ctx.font = `bold ${Math.floor(r * 0.85)}px ${FONT_FAMILY}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, el.x, el.y + 1);
 
       // Name below — outlined so it reads on the light canvas background
       if (el.name) {
-        ctx.font = `${Math.floor(r * 0.52)}px 'Segoe UI', sans-serif`;
+        ctx.font = `${Math.floor(r * 0.52)}px ${FONT_FAMILY}`;
         ctx.strokeStyle = 'rgba(0,0,0,0.75)';
         ctx.lineWidth = 3;
         ctx.lineJoin = 'round';
@@ -220,7 +231,7 @@ export function drawElement(ctx, el, isSelected, isPreview = false) {
       break;
     }
     case 'label': {
-      ctx.font = `${(el.fontSize || 14)}px 'Segoe UI', sans-serif`;
+      ctx.font = `${(el.fontSize || DEFAULT_FONT_SIZE)}px ${FONT_FAMILY}`;
       ctx.fillStyle = el.strokeColor || '#e8dcc8';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
@@ -228,7 +239,7 @@ export function drawElement(ctx, el, isSelected, isPreview = false) {
         const m = ctx.measureText(el.text);
         ctx.save();
         ctx.fillStyle = 'rgba(201,168,76,0.15)';
-        ctx.fillRect(el.x - 2, el.y - 2, m.width + 4, (el.fontSize || 14) + 4);
+        ctx.fillRect(el.x - 2, el.y - 2, m.width + 4, (el.fontSize || DEFAULT_FONT_SIZE) + 4);
         ctx.restore();
         ctx.fillStyle = el.strokeColor || '#e8dcc8';
       }

@@ -54,7 +54,7 @@ chain, so there are no circular imports to reason about.
 | File | Responsibility |
 |---|---|
 | `state.js` | The shared `state` object and the `GRID` constant. |
-| `canvas.js` | Canvas element/context references only. |
+| `canvas.js` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
 | `geometry.js` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
 | `elements.js` | Per-type bounds, hit-testing, grid-cell occupancy. |
 | `handles.js` | Resize/rotate handle geometry and drag math. |

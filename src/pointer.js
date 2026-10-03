@@ -5,12 +5,12 @@
 // standing in for the right-click context menu, since touch has no second
 // button to spare for it.
 
-import { state, GRID } from './state.js';
-import { iCanvas } from './canvas.js';
-import { screenToWorld, snapToGrid, cellOf, dist } from './geometry.js';
+import { state, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state.js';
+import { iCanvas, clientToCanvas, clientToWorld } from './canvas.js';
+import { snapToGrid, cellOf, dist, clampZoom } from './geometry.js';
 import { hitTest } from './elements.js';
 import { hasHandles, hitHandle, handleCursor, startHandleDrag, applyHandleDrag } from './handles.js';
-import { drawGrid, drawMain } from './render.js';
+import { drawMain, setView } from './render.js';
 import { startElementDrag, applyElementDrag, finishBoxSelect } from './selection.js';
 import { updateEraseHover, eraseAtCell } from './erase.js';
 import { pushHistory } from './history.js';
@@ -93,7 +93,7 @@ function updateGesture() {
   const newMid = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
 
   const scale = gesture.startDist > 0 ? newDist / gesture.startDist : 1;
-  const newZoom = Math.min(8, Math.max(0.15, gesture.startZoom * scale));
+  const newZoom = clampZoom(gesture.startZoom * scale);
 
   // The world point that sat under the gesture's starting midpoint stays
   // under the current midpoint as it zooms+pans together (so a two-finger
@@ -101,13 +101,7 @@ function updateGesture() {
   const wx = (gesture.startMid.x - gesture.startPanX) / gesture.startZoom;
   const wy = (gesture.startMid.y - gesture.startPanY) / gesture.startZoom;
 
-  state.zoom = newZoom;
-  state.panX = newMid.x - wx * newZoom;
-  state.panY = newMid.y - wy * newZoom;
-
-  document.getElementById('zoom-label').textContent = `${Math.round(state.zoom * 100)}%`;
-  drawGrid();
-  drawMain();
+  setView(newMid.x - wx * newZoom, newMid.y - wy * newZoom, newZoom);
 }
 
 export function updateHoverCursor(world) {
@@ -154,10 +148,7 @@ function onPointerMove(e) {
     }
   }
 
-  const rect = iCanvas.getBoundingClientRect();
-  const sx = e.clientX - rect.left;
-  const sy = e.clientY - rect.top;
-  const world = screenToWorld(sx, sy);
+  const world = clientToWorld(e.clientX, e.clientY);
   lastMoveW = world;
 
   // Update cursor pos display
@@ -166,10 +157,7 @@ function onPointerMove(e) {
   document.getElementById('cursor-pos').textContent = `${gx}, ${gy}`;
 
   if (state.isPanning) {
-    state.panX = e.clientX - state.panStart.x;
-    state.panY = e.clientY - state.panStart.y;
-    drawGrid();
-    drawMain();
+    setView(e.clientX - state.panStart.x, e.clientY - state.panStart.y);
     return;
   }
 
@@ -214,13 +202,11 @@ function onPointerMove(e) {
       // creature-size convention). Below the default radius it's a dead
       // zone — incidental mouse drift during a plain click shouldn't bump
       // the size up to the first snap step.
-      const defaultR = GRID * 0.42;
       const step = GRID / 2;
-      const maxR = GRID * 2.5;
       const rawR = dist(s.x, s.y, world.x, world.y);
-      state.preview.radius = rawR <= defaultR
-        ? defaultR
-        : Math.min(maxR, Math.round(rawR / step) * step);
+      state.preview.radius = rawR <= DEFAULT_TOKEN_RADIUS
+        ? DEFAULT_TOKEN_RADIUS
+        : Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step);
     }
     drawMain();
     return;
@@ -258,10 +244,7 @@ function onPointerDown(e) {
 
   if (e.pointerType === 'touch') scheduleLongPress(e);
 
-  const rect = iCanvas.getBoundingClientRect();
-  const sx = e.clientX - rect.left;
-  const sy = e.clientY - rect.top;
-  const world = screenToWorld(sx, sy);
+  const world = clientToWorld(e.clientX, e.clientY);
   const snappedX = snapToGrid(world.x);
   const snappedY = snapToGrid(world.y);
 
@@ -345,7 +328,7 @@ function onPointerDown(e) {
       state.preview = {
         type: 'token',
         x: center.x, y: center.y,
-        radius: GRID * 0.42,
+        radius: DEFAULT_TOKEN_RADIUS,
         color: '#e05c5c',
       };
       break;
@@ -425,14 +408,14 @@ function onPointerUp(e) {
   let valid = false;
 
   if (p.type === 'rect') {
-    valid = Math.abs(p.w) > GRID * 0.3 && Math.abs(p.h) > GRID * 0.3;
+    valid = Math.abs(p.w) > MIN_SHAPE_SIZE && Math.abs(p.h) > MIN_SHAPE_SIZE;
     if (valid) {
       // Normalize
       if (p.w < 0) { p.x += p.w; p.w = -p.w; }
       if (p.h < 0) { p.y += p.h; p.h = -p.h; }
     }
   } else if (p.type === 'wall') {
-    valid = dist(p.x1, p.y1, p.x2, p.y2) > GRID * 0.3;
+    valid = dist(p.x1, p.y1, p.x2, p.y2) > MIN_SHAPE_SIZE;
   }
 
   if (valid) {
@@ -457,24 +440,14 @@ function onPointerCancel(e) {
 function onWheel(e) {
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-  const rect = iCanvas.getBoundingClientRect();
-  const sx = e.clientX - rect.left;
-  const sy = e.clientY - rect.top;
+  const { x: sx, y: sy } = clientToCanvas(e.clientX, e.clientY);
 
-  // Zoom toward cursor
+  // Zoom toward cursor: keep the world point under it fixed on screen.
   const wx = (sx - state.panX) / state.zoom;
   const wy = (sy - state.panY) / state.zoom;
+  const zoom = clampZoom(state.zoom * factor);
 
-  state.zoom = Math.min(8, Math.max(0.15, state.zoom * factor));
-
-  state.panX = sx - wx * state.zoom;
-  state.panY = sy - wy * state.zoom;
-
-  document.getElementById('zoom-label').textContent =
-    `${Math.round(state.zoom * 100)}%`;
-
-  drawGrid();
-  drawMain();
+  setView(sx - wx * zoom, sy - wy * zoom, zoom);
 }
 
 iCanvas.addEventListener('pointermove', onPointerMove);

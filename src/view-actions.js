@@ -3,7 +3,7 @@
 
 import { state, GRID } from './state.js';
 import { iCanvas, mainCanvas } from './canvas.js';
-import { drawGrid, drawMain, drawElement } from './render.js';
+import { drawMain, drawElement, setView } from './render.js';
 import { pushHistory } from './history.js';
 import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
@@ -11,12 +11,7 @@ import { showToast } from './toast.js';
 // Single source of truth for the "default" viewport — used both at load and
 // by the Reset View button, so the two can never disagree on where "home" is.
 export function resetView() {
-  state.panX = iCanvas.offsetWidth * 0.1;
-  state.panY = iCanvas.offsetHeight * 0.1;
-  state.zoom = 1;
-  document.getElementById('zoom-label').textContent = '100%';
-  drawGrid();
-  drawMain();
+  setView(iCanvas.offsetWidth * 0.1, iCanvas.offsetHeight * 0.1, 1);
 }
 
 document.getElementById('btn-reset-view').addEventListener('click', resetView);

@@ -2,13 +2,17 @@
 // Coordinate conversion, rotation, and segment/cell clipping. No DOM, no
 // element-type knowledge — just numbers in, numbers out.
 
-import { state, GRID } from './state.js';
+import { state, GRID, MIN_ZOOM, MAX_ZOOM } from './state.js';
 
 export function screenToWorld(sx, sy) {
   return {
     x: (sx - state.panX) / state.zoom,
     y: (sy - state.panY) / state.zoom,
   };
+}
+
+export function clampZoom(zoom) {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 }
 
 export function snapToGrid(v) {

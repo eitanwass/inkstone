@@ -46,7 +46,7 @@ export function loadPersistedBoard() {
 
 export function pushHistory() {
   history.stack = history.stack.slice(0, history.index + 1);
-  history.stack.push(JSON.parse(JSON.stringify(state.elements)));
+  history.stack.push(structuredClone(state.elements));
   if (history.stack.length > HISTORY_LIMIT) history.stack.shift();
   history.index = history.stack.length - 1;
   updateUndoRedoButtons();
@@ -54,28 +54,24 @@ export function pushHistory() {
   if (historyListener) historyListener();
 }
 
-export function undo() {
-  if (history.index <= 0) return;
-  history.index--;
-  state.elements = JSON.parse(JSON.stringify(history.stack[history.index]));
+// Jumps to another snapshot on the stack, then persists and broadcasts it.
+function restoreSnapshot(index, toastMessage) {
+  history.index = index;
+  state.elements = structuredClone(history.stack[index]);
   state.selected = [];
   drawMain();
   updateUndoRedoButtons();
   persistBoard();
-  showToast('Undo');
+  showToast(toastMessage);
   if (historyListener) historyListener();
 }
 
+export function undo() {
+  if (history.index > 0) restoreSnapshot(history.index - 1, 'Undo');
+}
+
 export function redo() {
-  if (history.index >= history.stack.length - 1) return;
-  history.index++;
-  state.elements = JSON.parse(JSON.stringify(history.stack[history.index]));
-  state.selected = [];
-  drawMain();
-  updateUndoRedoButtons();
-  persistBoard();
-  showToast('Redo');
-  if (historyListener) historyListener();
+  if (history.index < history.stack.length - 1) restoreSnapshot(history.index + 1, 'Redo');
 }
 
 // Applied when a snapshot arrives from another connected client (collab.js).

@@ -5,12 +5,22 @@
 
 export const GRID = 40; // px per grid cell (logical)
 
+// Tokens saved before variable sizing existed have no radius, so every reader
+// falls back to DEFAULT_TOKEN_RADIUS.
+export const DEFAULT_TOKEN_RADIUS = GRID * 0.42;
+export const MAX_TOKEN_RADIUS = GRID * 2.5;
+export const MIN_SHAPE_SIZE = GRID * 0.3; // smaller rect/wall drags are discarded as stray clicks
+export const MIN_ZOOM = 0.15;
+export const MAX_ZOOM = 8;
+export const DEFAULT_FONT_SIZE = 14;
+export const FONT_FAMILY = "'Segoe UI', sans-serif";
+
 export const state = {
   tool: 'select',
   strokeColor: '#e8dcc8',
   fillColor: '#463b29',
   strokeWidth: 4,
-  fontSize: 14,
+  fontSize: DEFAULT_FONT_SIZE,
   // Viewport transform
   panX: 0,
   panY: 0,

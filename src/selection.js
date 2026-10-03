@@ -31,19 +31,38 @@ export function translateElementBy(el, dx, dy) {
   else { el.x += dx; el.y += dy; }
 }
 
-export function duplicateSelected() {
-  const OFFSET = GRID;
-  const idxs = [...state.selected].sort((a, b) => a - b);
-  const clones = idxs.map(i => {
-    const el = JSON.parse(JSON.stringify(state.elements[i]));
-    translateElementBy(el, OFFSET, OFFSET);
-    return el;
-  });
-  state.elements.push(...clones);
-  const start = state.elements.length - clones.length;
-  state.selected = clones.map((_, k) => start + k);
+// Selected indices in ascending (z-order) order.
+function selectedIndices() {
+  return [...state.selected].sort((a, b) => a - b);
+}
+
+// Adds elements to the front (or back) of the z-order, selects exactly them,
+// then redraws and records history. Shared by duplicate/paste/reorder.
+function addAndSelect(els, { atBack = false } = {}) {
+  if (atBack) state.elements.unshift(...els);
+  else state.elements.push(...els);
+  const start = atBack ? 0 : state.elements.length - els.length;
+  state.selected = els.map((_, k) => start + k);
   drawMain();
   pushHistory();
+}
+
+// Removes the selected elements from state.elements and returns them in
+// their original z-order.
+function takeSelected() {
+  const idxs = selectedIndices();
+  const taken = idxs.map(i => state.elements[i]);
+  [...idxs].reverse().forEach(i => state.elements.splice(i, 1));
+  return taken;
+}
+
+export function duplicateSelected() {
+  const clones = selectedIndices().map(i => {
+    const el = structuredClone(state.elements[i]);
+    translateElementBy(el, GRID, GRID);
+    return el;
+  });
+  addAndSelect(clones);
 }
 
 // ── Copy / paste ────────────────────────────────────────────────
@@ -53,8 +72,7 @@ export let clipboard = [];
 
 export function copySelection() {
   if (!state.selected.length) return;
-  const idxs = [...state.selected].sort((a, b) => a - b);
-  clipboard = idxs.map(i => JSON.parse(JSON.stringify(state.elements[i])));
+  clipboard = selectedIndices().map(i => structuredClone(state.elements[i]));
   showToast(clipboard.length > 1 ? `Copied ${clipboard.length} elements` : 'Copied element');
 }
 
@@ -77,37 +95,20 @@ export function pasteClipboard(anchorWorld) {
   const cx = bounds.x + bounds.w / 2, cy = bounds.y + bounds.h / 2;
   const dx = snapToGrid(anchorWorld.x - cx), dy = snapToGrid(anchorWorld.y - cy);
   const clones = clipboard.map(el => {
-    const clone = JSON.parse(JSON.stringify(el));
+    const clone = structuredClone(el);
     translateElementBy(clone, dx, dy);
     return clone;
   });
-  state.elements.push(...clones);
-  const start = state.elements.length - clones.length;
-  state.selected = clones.map((_, k) => start + k);
-  drawMain();
-  pushHistory();
+  addAndSelect(clones);
   showToast(clones.length > 1 ? `Pasted ${clones.length} elements` : 'Pasted element');
 }
 
 export function bringSelectedToFront() {
-  const idxs = [...state.selected].sort((a, b) => a - b);
-  const moved = idxs.map(i => state.elements[i]);
-  [...idxs].sort((a, b) => b - a).forEach(i => state.elements.splice(i, 1));
-  state.elements.push(...moved);
-  const start = state.elements.length - moved.length;
-  state.selected = moved.map((_, k) => start + k);
-  drawMain();
-  pushHistory();
+  addAndSelect(takeSelected());
 }
 
 export function sendSelectedToBack() {
-  const idxs = [...state.selected].sort((a, b) => a - b);
-  const moved = idxs.map(i => state.elements[i]);
-  [...idxs].sort((a, b) => b - a).forEach(i => state.elements.splice(i, 1));
-  state.elements.unshift(...moved);
-  state.selected = moved.map((_, k) => k);
-  drawMain();
-  pushHistory();
+  addAndSelect(takeSelected(), { atBack: true });
 }
 
 // ── Moving the selection ──────────────────────────────────────

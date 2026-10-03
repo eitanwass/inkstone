@@ -3,7 +3,7 @@
 // the handles themselves lives in render.js (it needs canvas access this
 // module doesn't otherwise care about).
 
-import { state, GRID } from './state.js';
+import { state, GRID, DEFAULT_TOKEN_RADIUS, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE } from './state.js';
 import { rotatePoint, rotateVector, elementCenter, rectCornerLocal, dist, snapToGrid } from './geometry.js';
 import { snapshotCoords } from './elements.js';
 
@@ -43,7 +43,7 @@ export function getHandles(el) {
     // No rotate handle — rotating a circle is a no-op. Radius is the only
     // degree of freedom, so a single handle (SE, matching the rect corner
     // convention) is enough — not one per cardinal direction.
-    const r = el.radius || GRID * 0.42;
+    const r = el.radius || DEFAULT_TOKEN_RADIUS;
     const a = Math.PI / 4;
     return [
       { id: 'se', kind: 'resize-radius', x: el.x + r * Math.cos(a), y: el.y + r * Math.sin(a) },
@@ -127,9 +127,8 @@ export function applyHandleDrag(world, precise) {
     // no dead zone needed: the handle itself starts already at the current
     // radius, so an un-moved drag naturally re-resolves to ~the same size.
     const step = GRID / 2;
-    const maxR = GRID * 2.5;
     const rawR = dist(el.x, el.y, world.x, world.y);
-    el.radius = Math.max(step, Math.min(maxR, Math.round(rawR / step) * step));
+    el.radius = Math.max(step, Math.min(MAX_TOKEN_RADIUS, Math.round(rawR / step) * step));
     return;
   }
 
@@ -140,14 +139,13 @@ export function applyHandleDrag(world, precise) {
     const local = rotatePoint(world, anchorWorld, -rotation);
     const dx = snapToGrid(local.x - anchorWorld.x);
     const dy = snapToGrid(local.y - anchorWorld.y);
-    const MIN = GRID * 0.3;
 
     const signs = {
       se: { sx: 1, sy: 1 }, nw: { sx: -1, sy: -1 },
       ne: { sx: 1, sy: -1 }, sw: { sx: -1, sy: 1 },
     }[corner];
-    const w = Math.max(MIN, dx * signs.sx);
-    const h = Math.max(MIN, dy * signs.sy);
+    const w = Math.max(MIN_SHAPE_SIZE, dx * signs.sx);
+    const h = Math.max(MIN_SHAPE_SIZE, dy * signs.sy);
 
     // Offset of the (fixed) anchor corner from the box center, in local axes.
     const anchorOffset = {

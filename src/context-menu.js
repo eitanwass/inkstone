@@ -4,8 +4,7 @@
 // menu (Paste only, shown when the clipboard has something in it).
 
 import { state } from './state.js';
-import { iCanvas } from './canvas.js';
-import { screenToWorld } from './geometry.js';
+import { iCanvas, clientToWorld } from './canvas.js';
 import { hitTest } from './elements.js';
 import { drawMain } from './render.js';
 import {
@@ -30,11 +29,7 @@ export function suppressNativeContextMenu() {
 export function openContextMenuAt(clientX, clientY) {
   hideContextMenus();
 
-  const rect = iCanvas.getBoundingClientRect();
-  const sx = clientX - rect.left;
-  const sy = clientY - rect.top;
-  const world = screenToWorld(sx, sy);
-
+  const world = clientToWorld(clientX, clientY);
   const idx = hitTest(world.x, world.y);
 
   if (idx !== null && state.elements[idx].type === 'token') {

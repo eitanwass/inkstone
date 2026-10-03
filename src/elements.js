@@ -4,7 +4,7 @@
 // hitElement, and elementOccupiesCell — switch on el.type and must be
 // extended together when adding a new element type.
 
-import { state, GRID } from './state.js';
+import { state, GRID, DEFAULT_TOKEN_RADIUS, DEFAULT_FONT_SIZE, FONT_FAMILY } from './state.js';
 import { mCtx } from './canvas.js';
 import { rotatePoint, elementCenter, rectCornerLocal, dist, cellOf } from './geometry.js';
 
@@ -26,21 +26,21 @@ export function getElementBounds(el) {
       return { x, y, w: Math.max(Math.abs(el.x2 - el.x1), 1), h: Math.max(Math.abs(el.y2 - el.y1), 1) };
     }
     case 'token': {
-      const drawR = el.radius || GRID * 0.42; // matches render.js's fallback
+      const drawR = el.radius || DEFAULT_TOKEN_RADIUS;
       const r = drawR + 2; // small pad beyond the visible circle
       if (!el.name) return { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       // Include the name label drawn below the token.
       const nameFontSize = Math.floor(drawR * 0.52);
-      mCtx.font = `${nameFontSize}px 'Segoe UI', sans-serif`;
+      mCtx.font = `${nameFontSize}px ${FONT_FAMILY}`;
       const nameWidth = mCtx.measureText(el.name).width;
       const halfW = Math.max(r, nameWidth / 2);
       const bottom = el.y + drawR + 10 + nameFontSize;
       return { x: el.x - halfW, y: el.y - r, w: halfW * 2, h: bottom - (el.y - r) };
     }
     case 'label': {
-      mCtx.font = `${el.fontSize || 14}px 'Segoe UI', sans-serif`;
+      mCtx.font = `${el.fontSize || DEFAULT_FONT_SIZE}px ${FONT_FAMILY}`;
       const w = mCtx.measureText(el.text).width;
-      return { x: el.x, y: el.y, w, h: el.fontSize || 14 };
+      return { x: el.x, y: el.y, w, h: el.fontSize || DEFAULT_FONT_SIZE };
     }
   }
   return null;
@@ -86,11 +86,11 @@ export function hitElement(el, wx, wy) {
       return dist(wx, wy, el.x1 + t*dx, el.y1 + t*dy) < 10 / state.zoom;
     }
     case 'token': {
-      return dist(wx, wy, el.x, el.y) < (el.radius || GRID * 0.42) + 4;
+      return dist(wx, wy, el.x, el.y) < (el.radius || DEFAULT_TOKEN_RADIUS) + 4;
     }
     case 'label': {
-      const fSize = el.fontSize || 14;
-      mCtx.font = `${fSize}px 'Segoe UI', sans-serif`;
+      const fSize = el.fontSize || DEFAULT_FONT_SIZE;
+      mCtx.font = `${fSize}px ${FONT_FAMILY}`;
       const w = mCtx.measureText(el.text).width;
       return wx >= el.x - 2 && wx <= el.x + w + 2 && wy >= el.y - 2 && wy <= el.y + fSize + 2;
     }
@@ -114,7 +114,7 @@ export function elementOccupiesCell(el, cellX, cellY) {
       // AABB-overlap (same style as rect), not just "is this the center
       // cell" — a large dragged-bigger token should erase from any cell it
       // visually covers, not only the one its center happens to sit in.
-      const r = el.radius || GRID * 0.42;
+      const r = el.radius || DEFAULT_TOKEN_RADIUS;
       return cellX < el.x + r && cellX + GRID > el.x - r &&
              cellY < el.y + r && cellY + GRID > el.y - r;
     }
