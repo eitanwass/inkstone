@@ -96,11 +96,14 @@ test('the red live indicator appears under the action cluster only while the map
   await expect(indicator).toHaveText('Live');
   await expect(page.locator('#collab-status .live-dot')).toHaveCSS('background-color', 'rgb(229, 72, 77)');
 
-  // It sits in the right-hand column, right-aligned below the action cluster.
+  // It sits in the right-hand column below the action cluster, just left of the save indicator,
+  // which is the one flush with the cluster's right edge.
   const cluster = await page.locator('#action-cluster').boundingBox();
   const pill = await indicator.boundingBox();
+  const saveChip = await page.locator('#save-status').boundingBox();
   expect(pill.y).toBeGreaterThanOrEqual(cluster.y + cluster.height);
-  expect(pill.x + pill.width).toBeCloseTo(cluster.x + cluster.width, 0);
+  expect(pill.x + pill.width).toBeLessThanOrEqual(saveChip.x);
+  expect(saveChip.x + saveChip.width).toBeCloseTo(cluster.x + cluster.width, 0);
 
   // A dropped connection is no longer "live": the dot stops being red.
   connections[0].close();

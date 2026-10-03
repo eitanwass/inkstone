@@ -23,8 +23,8 @@ Each item is meant to ship on its own.
   - ~~`+` / `-` and "fit map to screen".~~
 - ~~**Undo for Clear All and other destructive actions.**~~
   - ~~A toast with an "Undo" button after Clear All and after deleting elements or a token.~~
-- **Saved-state feedback.** A quiet "Saved" mark so people trust that the map
-  survives a reload.
+- ~~**Saved-state feedback.**~~
+  - ~~A quiet "Saved" mark so people trust that the map survives a reload.~~
 - **First-visit hint.** A one-line, dismissible tip on an empty map ("Press R and
   drag to draw a room"). New visitors currently land on a blank canvas.
 

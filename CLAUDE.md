@@ -369,7 +369,12 @@ and `redo()` all call `persistBoard()`, which writes `state.elements` to
 `localStorage` (`STORAGE_KEY = 'inkstone-board'`). Only the board content
 persists across a reload — the undo/redo stack itself does not, so a fresh
 load always starts with a single history baseline (nothing to undo to) even
-though the map reappears.
+though the map reappears. Every save updates the save indicator in the top-right rail, right of the Live pill
+(`showSaveStatus` in `history.ts`, element `#save-status`, a small dark chip because
+gold wouldn't read on parchment): a yellow spinner while saving (held for 600ms, since
+a localStorage write is instant and would otherwise give no sign), a green check once
+saved, a red X at once if the browser refused. Its hover text says which. That is the
+persistent counterpart to the once-per-load "can't be saved" toast.
 
 **Resize/rotate handles** (rect, wall, and token, single-selection only) are
 computed by `getHandles()` and hit-tested by `hitHandle()`; dragging one sets

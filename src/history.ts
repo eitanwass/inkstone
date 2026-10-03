@@ -39,8 +39,34 @@ const NAME_STORAGE_KEY = 'inkstone-map-name';
 // work won't survive a reload.
 let warnedSaveFailed = false;
 
+// The save indicator beside the Live pill: a spinner while saving, a check once saved, an X if
+// the browser refused. A save to localStorage is instant, so a success shows the spinner for a
+// moment first (restarted by each further save), or an edit would give no sign of being saved.
+const SAVING_MS = 600;
+const SAVE_LABELS = { saving: 'Saving…', saved: 'Saved', failed: 'Not saved' };
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
+function setSaveState(state: keyof typeof SAVE_LABELS): void {
+  const status = byId('save-status');
+  status.dataset.state = state;
+  status.setAttribute('aria-label', SAVE_LABELS[state]);
+  status.title = SAVE_LABELS[state];
+}
+
+function showSaveStatus(saved: boolean): void {
+  clearTimeout(saveTimer);
+  if (!saved) {
+    setSaveState('failed');
+    return;
+  }
+  setSaveState('saving');
+  saveTimer = setTimeout(() => setSaveState('saved'), SAVING_MS);
+}
+
 export function persistBoard(): void {
-  if (storageSet(STORAGE_KEY, JSON.stringify(state.elements)) || warnedSaveFailed) return;
+  const saved = storageSet(STORAGE_KEY, JSON.stringify(state.elements));
+  showSaveStatus(saved);
+  if (saved || warnedSaveFailed) return;
   warnedSaveFailed = true;
   showToast(
     "Your map can't be saved in this browser (storage is full or blocked), so it won't survive a reload.",
@@ -61,8 +87,12 @@ export function loadPersistedBoard(): BoardElement[] | null {
 // undo history (renaming and undoing don't interact), so it has its own
 // chokepoint, called when a rename is committed or one arrives from a peer.
 export function persistMapName(): void {
-  if (state.mapName) storageSet(NAME_STORAGE_KEY, state.mapName);
-  else storageRemove(NAME_STORAGE_KEY);
+  if (!state.mapName) {
+    storageRemove(NAME_STORAGE_KEY);
+    showSaveStatus(true);
+    return;
+  }
+  showSaveStatus(storageSet(NAME_STORAGE_KEY, state.mapName));
 }
 
 export function loadPersistedMapName(): string {

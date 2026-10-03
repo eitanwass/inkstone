@@ -53,6 +53,17 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('when the browser cannot save, and the indicator says so', async ({ page }) => {
+    await page.addInitScript(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException('full', 'QuotaExceededError');
+      };
+    });
+    await resetBoard(page);
+    await expect(page.locator('#save-status')).toHaveAttribute('data-state', 'failed');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with a map name set, and while it is being edited', async ({ page }) => {
     await page.click('#map-name');
     await page.keyboard.type('The Sunken Crypt of Vael');

@@ -270,12 +270,48 @@ canvas {
 /* .floating-panel is position: fixed; inside the rail it flows with it. */
 #action-cluster { position: relative; }
 
+/* The Live pill (while a map is shared) and the save indicator share a row, indicator on the right. */
+#status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A dark chip like the Live pill: gold would not read on the parchment (1.8:1). Yellow
+   spinner while saving, green check once saved, red X if the browser refused. */
+#save-status {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: default;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+
+#save-status .save-icon { display: none; grid-area: 1 / 1; }
+#save-status[data-state='saving'] .save-saving,
+#save-status[data-state='saved'] .save-saved,
+#save-status[data-state='failed'] .save-failed { display: block; }
+
+#save-status[data-state='saving'] { color: var(--accent); }
+#save-status[data-state='saved'] { color: #5fbf85; }
+#save-status[data-state='failed'] { color: #f0686d; border-color: #f0686d; }
+
+#save-status .save-saving { animation: save-spin 0.9s linear infinite; }
+@keyframes save-spin { to { transform: rotate(360deg); } }
+
 /* Shown while a map is shared. Red = live, like a broadcast badge. */
 #collab-status {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 4px 12px 4px 10px;
+  height: 20px; /* same height as the save indicator beside it */
+  padding: 0 12px 0 10px;
+  box-sizing: border-box;
   background: var(--bg-toolbar);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -961,9 +997,9 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
     top: calc(76px + env(safe-area-inset-top, 0px));
     left: calc(24px + env(safe-area-inset-left, 0px));
     transform: none;
-    max-width: calc(100vw - 48px);
+    max-width: calc(100vw - 48px - 40px); /* room for the save indicator */
   }
-  body.is-sharing #map-title { max-width: calc(100vw - 48px - 130px); }
+  body.is-sharing #map-title { max-width: calc(100vw - 48px - 130px - 40px); }
   #map-name { text-align: left; }
   #toast { top: calc(124px + env(safe-area-inset-top, 0px)); }
 }
@@ -982,9 +1018,9 @@ body.tool-wall      #interaction-canvas { cursor: crosshair; }
   #map-title {
     top: calc(74px + env(safe-area-inset-top, 0px));
     left: calc(14px + env(safe-area-inset-left, 0px));
-    max-width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px - 40px);
   }
-  body.is-sharing #map-title { max-width: calc(100vw - 28px - 130px); }
+  body.is-sharing #map-title { max-width: calc(100vw - 28px - 130px - 40px); }
 
   .floating-panel { padding: 5px; gap: 2px; }
   #style-panel { gap: 8px; }
