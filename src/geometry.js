@@ -64,6 +64,11 @@ export function rectCornerLocal(el, id) {
   return map[id];
 }
 
+// {x, y, w, h} of the box spanning two opposite corners, whichever way round.
+export function normalizeRect(x1, y1, x2, y2) {
+  return { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
+}
+
 export function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }

@@ -6,7 +6,7 @@
 import { state, DEFAULT_TOKEN_RADIUS, DEFAULT_FONT_SIZE, FONT_FAMILY } from './state.js';
 import { mainCanvas, mCtx } from './canvas.js';
 import { drawGrid } from './grid.js';
-import { rotatePoint, elementCenter } from './geometry.js';
+import { rotatePoint, elementCenter, normalizeRect } from './geometry.js';
 import { getElementBounds } from './elements.js';
 import { getHandles, hasHandles, HANDLE_RADIUS_PX } from './handles.js';
 
@@ -22,8 +22,7 @@ export function setView(panX, panY, zoom = state.zoom) {
 }
 
 export function drawMain() {
-  const W = mainCanvas.width, H = mainCanvas.height;
-  mCtx.clearRect(0, 0, W, H);
+  mCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
   mCtx.save();
   mCtx.translate(state.panX, state.panY);
@@ -33,105 +32,88 @@ export function drawMain() {
     drawElement(mCtx, el, state.selected.includes(idx));
   });
 
-  const singleHandleTarget =
+  const handleTarget =
     state.tool === 'select' && state.selected.length === 1
       ? state.elements[state.selected[0]]
       : null;
-  const showsHandles = hasHandles(singleHandleTarget);
+  const showsHandles = hasHandles(handleTarget);
 
-  // Selection highlight: semi-transparent blue box around each selected
-  // element, except the single rect/wall/token that's showing resize/rotate
-  // handles instead (a dashed AABB around a rotated shape — or a circle —
-  // looks wrong).
-  if (state.tool === 'select' && state.selected.length) {
-    state.selected.forEach(idx => {
-      if (showsHandles && idx === state.selected[0]) return;
-      const el = state.elements[idx];
-      if (!el) return;
-      const bounds = getElementBounds(el);
-      if (!bounds) return;
-      // Same zoom-correction as the erase-hover highlight below: a fixed
-      // world-unit pad shrinks to nothing on screen once zoomed out, letting
-      // the dashed line merge back into a thick-stroked element's own border.
-      const pad = 4 / state.zoom + (el.strokeWidth || 0) / 2;
-      mCtx.save();
-      mCtx.strokeStyle = 'rgba(80, 160, 255, 0.9)';
-      mCtx.fillStyle   = 'rgba(80, 160, 255, 0.15)';
-      mCtx.lineWidth   = 1.5 / state.zoom;
-      mCtx.setLineDash([5 / state.zoom, 3 / state.zoom]);
-      mCtx.beginPath();
-      mCtx.rect(bounds.x - pad, bounds.y - pad, bounds.w + pad * 2, bounds.h + pad * 2);
-      mCtx.fill();
-      mCtx.stroke();
-      mCtx.setLineDash([]);
-      mCtx.restore();
-    });
-  }
-
-  if (showsHandles) drawHandles(singleHandleTarget);
-
-  if (state.handleDrag && state.handleDrag.kind === 'rotate') {
-    drawRotationReadout(singleHandleTarget, state.handleDrag.displayDeg);
-  }
-
-  // Rubber-band selection box
-  if (state.isBoxSelecting && state.selectBox) {
-    const { x1, y1, x2, y2 } = state.selectBox;
-    const bx = Math.min(x1, x2), by = Math.min(y1, y2);
-    const bw = Math.abs(x2 - x1), bh = Math.abs(y2 - y1);
-    mCtx.save();
-    mCtx.strokeStyle = 'rgba(80, 160, 255, 0.9)';
-    mCtx.fillStyle   = 'rgba(80, 160, 255, 0.12)';
-    mCtx.lineWidth   = 1 / state.zoom;
-    mCtx.beginPath();
-    mCtx.rect(bx, by, bw, bh);
-    mCtx.fill();
-    mCtx.stroke();
-    mCtx.restore();
-  }
-
-  // Erase hover: faded red outline around whatever the eraser would remove.
-  // The pad has to clear the element's own stroke width, or the dashed
-  // highlight visually merges into a thick colored border and looks like
-  // notches cut out of it instead of an outline wrapping the whole shape.
-  // The constant part of the pad is in *screen* pixels (divided by zoom,
-  // same as the dashed line's own width/dash pattern below) — a fixed
-  // world-unit pad shrinks to nothing on screen once zoomed out, which is
-  // exactly what let the highlight merge back into the border before.
-  if (state.tool === 'erase' && state.eraseHover) {
-    let bx, by, bw, bh;
-    if (state.eraseHover.kind === 'segment') {
-      const { x1, y1, x2, y2 } = state.eraseHover;
-      const pad = 6 / state.zoom + (state.eraseHover.strokeWidth || 0) / 2;
-      bx = Math.min(x1, x2) - pad; by = Math.min(y1, y2) - pad;
-      bw = Math.max(Math.abs(x2 - x1), 1) + pad * 2; bh = Math.max(Math.abs(y2 - y1), 1) + pad * 2;
-    } else {
-      const el = state.elements[state.eraseHover.idx];
-      const bounds = getElementBounds(el);
-      if (bounds) {
-        const pad = 6 / state.zoom + (el.strokeWidth || 0) / 2;
-        bx = bounds.x - pad; by = bounds.y - pad; bw = bounds.w + pad * 2; bh = bounds.h + pad * 2;
-      }
-    }
-    if (bx !== undefined) {
-      mCtx.save();
-      mCtx.strokeStyle = 'rgba(160, 64, 64, 0.85)';
-      mCtx.fillStyle   = 'rgba(160, 64, 64, 0.18)';
-      mCtx.lineWidth   = 1.5 / state.zoom;
-      mCtx.setLineDash([4 / state.zoom, 3 / state.zoom]);
-      mCtx.strokeRect(bx, by, bw, bh);
-      mCtx.fillRect(bx, by, bw, bh);
-      mCtx.setLineDash([]);
-      mCtx.restore();
-    }
-  }
-
-  // Preview shape while drawing
-  if (state.preview) {
-    drawElement(mCtx, state.preview, false, true);
-  }
+  if (state.tool === 'select') drawSelectionHighlights(showsHandles ? state.selected[0] : -1);
+  if (showsHandles) drawHandles(handleTarget);
+  if (state.handleDrag?.kind === 'rotate') drawRotationReadout(handleTarget, state.handleDrag.displayDeg);
+  if (state.isBoxSelecting && state.selectBox) drawSelectBox();
+  if (state.tool === 'erase' && state.eraseHover) drawEraseHover();
+  if (state.preview) drawElement(mCtx, state.preview, false, true);
 
   mCtx.restore();
+}
+
+// ── Highlight boxes ────────────────────────────────────────────
+// Sizes ending in Px are screen pixels; drawHighlightBox divides them by zoom
+// so the box looks the same at any zoom level.
+const SELECTION_STYLE = {
+  stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.15)',
+  padPx: 4, lineWidthPx: 1.5, dashPx: [5, 3],
+};
+const BOX_SELECT_STYLE = {
+  stroke: 'rgba(80, 160, 255, 0.9)', fill: 'rgba(80, 160, 255, 0.12)',
+  padPx: 0, lineWidthPx: 1,
+};
+const ERASE_STYLE = {
+  stroke: 'rgba(160, 64, 64, 0.85)', fill: 'rgba(160, 64, 64, 0.18)',
+  padPx: 6, lineWidthPx: 1.5, dashPx: [4, 3],
+};
+
+// Draws a translucent outlined box around bounds. The padding is the style's
+// screen-pixel gap plus half the element's stroke width: the stroke term
+// clears the element's own border, and the zoom division keeps the gap from
+// shrinking to nothing when zoomed out (which merges the box into a thick
+// border).
+function drawHighlightBox(bounds, strokeWidth, style) {
+  const pad = style.padPx / state.zoom + (strokeWidth || 0) / 2;
+  mCtx.save();
+  mCtx.strokeStyle = style.stroke;
+  mCtx.fillStyle = style.fill;
+  mCtx.lineWidth = style.lineWidthPx / state.zoom;
+  if (style.dashPx) mCtx.setLineDash(style.dashPx.map(d => d / state.zoom));
+  mCtx.beginPath();
+  mCtx.rect(bounds.x - pad, bounds.y - pad, bounds.w + pad * 2, bounds.h + pad * 2);
+  mCtx.fill();
+  mCtx.stroke();
+  mCtx.restore();
+}
+
+// Box around each selected element. skipIdx is the one element showing
+// resize/rotate handles instead (a dashed box around a rotated shape, or a
+// circle, looks wrong).
+function drawSelectionHighlights(skipIdx) {
+  for (const idx of state.selected) {
+    if (idx === skipIdx) continue;
+    const el = state.elements[idx];
+    const bounds = el && getElementBounds(el);
+    if (bounds) drawHighlightBox(bounds, el.strokeWidth, SELECTION_STYLE);
+  }
+}
+
+function drawSelectBox() {
+  const { x1, y1, x2, y2 } = state.selectBox;
+  drawHighlightBox(normalizeRect(x1, y1, x2, y2), 0, BOX_SELECT_STYLE);
+}
+
+// Faded red box around whatever a click with the eraser would remove.
+function drawEraseHover() {
+  const hover = state.eraseHover;
+  if (hover.kind === 'segment') {
+    const { x1, y1, x2, y2 } = hover;
+    const box = normalizeRect(x1, y1, x2, y2);
+    box.w = Math.max(box.w, 1);
+    box.h = Math.max(box.h, 1);
+    drawHighlightBox(box, hover.strokeWidth, ERASE_STYLE);
+    return;
+  }
+  const el = state.elements[hover.idx];
+  const bounds = getElementBounds(el);
+  if (bounds) drawHighlightBox(bounds, el.strokeWidth, ERASE_STYLE);
 }
 
 export function drawElement(ctx, el, isSelected, isPreview = false) {

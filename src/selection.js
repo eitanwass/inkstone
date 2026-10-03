@@ -4,7 +4,7 @@
 // adjustSelectionForSplice to keep state.selected valid.
 
 import { state, GRID } from './state.js';
-import { snapToGrid, rectsOverlap } from './geometry.js';
+import { snapToGrid, rectsOverlap, normalizeRect } from './geometry.js';
 import { getElementBounds, snapshotCoords } from './elements.js';
 import { drawMain } from './render.js';
 import { pushHistory } from './history.js';
@@ -140,13 +140,12 @@ export function applyElementDrag(world) {
 // ── Rubber-band box select ────────────────────────────────────
 export function finishBoxSelect() {
   const { x1, y1, x2, y2 } = state.selectBox;
-  const bx = Math.min(x1, x2), by = Math.min(y1, y2);
-  const bw = Math.abs(x2 - x1), bh = Math.abs(y2 - y1);
+  const box = normalizeRect(x1, y1, x2, y2);
 
   const hits = [];
   state.elements.forEach((el, i) => {
     const b = getElementBounds(el);
-    if (b && rectsOverlap(bx, by, bw, bh, b.x, b.y, b.w, b.h)) hits.push(i);
+    if (b && rectsOverlap(box.x, box.y, box.w, box.h, b.x, b.y, b.w, b.h)) hits.push(i);
   });
 
   if (state.selectionBoxAdditive) {
