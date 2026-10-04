@@ -238,7 +238,7 @@ chain, so there are no circular imports to reason about.
 | `selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `erase.ts` | Erase tool targeting + hover preview. |
 | `measure.ts` | Pure measuring rules: `scale` (unit, size of a square, and the D&D diagonal rule; 5 ft with the rule on by default; the Board settings panel's one input), `UNITS` (the choices and each one's usual square), `validPerCell` / `parseScale` (checking a typed or stored size; the rule stays on unless stored as exactly `false`), `gridDistance` (with the D&D rule, the default: the DMG 1-2-1-2 count, the longer side plus half the shorter, rounded down; with it off, the true straight line, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
-| `settings.ts` | The settings modal, opened from the gear button in the action cluster. Panels are tabs down the left (only Board so far: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session). To add a panel, add a tab and a tabpanel in `index.html` and its controls here. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
+| `settings/` | The settings modal, opened from the gear button in the action cluster. `index.ts` is the modal (open, close, the tabs) and the Board panel: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session. `conditions.ts` is the Conditions panel (below). The tabs down the left are one tab stop, with the arrow keys moving between them. To add a panel, add a tab and a tabpanel in `index.html` and its controls as a new file in this folder, imported from `main.ts`. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
 | `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
 | `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
@@ -252,7 +252,12 @@ chain, so there are no circular imports to reason about.
 | `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
 | `dialogs.ts` | The text-label placement dialog. |
 | `token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
-| `token-card.ts` | The card above a selected token (its name and color for now; image, HP and AC to come): placement, editing, the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
+| `conditions/index.ts` | Pure: what a condition is (`{ id, name, color, icon }`), the icon library (`ICONS`, built from the standalone SVG files in `src/conditions/icons/`, one per icon and named for it: a 24-unit box with one `<path>`, line styling on the `<svg>`, `stroke-dasharray` on the path for a dashed one. They are read at build time with `import.meta.glob` and `parseIconSvg` takes the path out, which is drawn on the canvas as a `Path2D` and in the page as an `<svg>` path. To add an icon, add a file there: it appears in the Settings icon picker, and a test checks each file is a clean single-path SVG), the sixteen `DEFAULT_CONDITIONS` (the 5e conditions plus Dead), and the checks (`isCondition`, `parseConditions`) used for anything read from storage or from a session. |
+| `conditions/library.ts` | The conditions a person can choose from: the defaults plus their own custom ones, kept in this browser under `inkstone-conditions` (ids start `custom-`, so nothing can pose as a default). `draftProblem` says in words why a draft can't be used (name missing or taken, any capitals, defaults included). |
+| `conditions/tokens.ts` | Putting conditions on tokens and taking them off (`toggleCondition`, one undo step each; at most 12 per token), and `refreshCondition`, which brings the copies on tokens up to date when a custom condition is edited. |
+| `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a person or someone in their session typed. |
+| `settings/conditions.ts` | The Conditions panel in Settings: your own conditions (add, edit, delete) with a live preview, a color and icon picker, and the defaults listed for reference. |
+| `token-card.ts` | The card above a selected token (its name, color and conditions for now; image, HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `toolbar.ts` | Tool switching + the contextual style panel. |
 | `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
 | `controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
@@ -321,6 +326,23 @@ clicking away keeps the name (one undo step; unchanged is none; trimmed; empty r
 it); Escape restores the old one and keeps the token selected. The card is positioned from
 `render.ts`'s `onMainDrawn` hook, which is registered rather than imported to keep the
 module chain one-way.
+
+**Conditions** (Prone, Poisoned, a custom "Hexed"...) are objects, not words: `{ id, name,
+color, icon }` (`conditions.ts`). A token holds its own whole copies in `conditions?:
+Condition[]` (left off when there are none), so a token is complete in itself and shows
+right in a session whether or not the others have the same custom conditions in their
+settings, which are per browser. The consequence is copy semantics: **editing** a custom
+condition in Settings updates the copy on every token carrying that id (`refreshCondition`,
+one undo step), **deleting** one only removes it from the list to choose from, and tokens
+that have it keep it. They are set in three places that share `toggleCondition`: the
+picker in the token card (type to filter, Enter switches the first match), the token
+menu's right-click "Conditions" submenu (a tick per condition, stays open so several can be
+switched in one visit), and removing a pill. On the canvas (`elements/badges.ts`) up to
+three show as round badges on the top of the rim, a fourth turns the last into a count
+(`+2`), and below 55% zoom they fold into one gold dot; a token with the Dead condition is
+greyed and crossed out instead. Hovering a token lists its conditions by name. Read from
+storage or a session, conditions go through `parseConditions`, which cleans a token's list
+rather than dropping the token (and rejects any color that isn't plain `#rrggbb`).
 
 **Tokens have a variable `radius`**, set either by dragging while placing
 one or, after the fact, via resize handles on an already-selected token

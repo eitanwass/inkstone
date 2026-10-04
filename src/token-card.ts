@@ -9,13 +9,17 @@
 // session once); Escape puts the old name back.
 
 import { iCanvas } from './canvas';
+import { conditionBadge } from './conditions/icon';
+import { allConditions } from './conditions/library';
+import { hasCondition, toggleCondition } from './conditions/tokens';
 import { byId } from './dom';
+import { hitTest } from './elements';
 import { PALETTE } from './elements/token';
 import { pushHistory } from './history';
 import { drawMain, onMainDrawn } from './render';
 import { DEFAULT_TOKEN_RADIUS, state } from './state';
 import { setTool } from './toolbar';
-import type { TokenElement } from './types';
+import type { Point, TokenElement } from './types';
 
 const card = byId('token-card');
 const nameField = byId<HTMLInputElement>('token-name-field');
@@ -92,6 +96,146 @@ customInput.addEventListener('change', () => {
 });
 customInput.addEventListener('blur', finishPicking);
 
+// ── Conditions ─────────────────────────────────────────────────
+// What the token is under, as pills with a remove button, and a picker of every condition there is
+// (the default ones and the person's own) to switch on and off. Each switch is one undo step.
+const pills = byId('token-cond-pills');
+const addButton = byId<HTMLButtonElement>('token-cond-add');
+const picker = byId('token-cond-picker');
+const filterField = byId<HTMLInputElement>('token-cond-filter');
+const grid = byId('token-cond-grid');
+
+let pickerOpen = false;
+// What the pills currently show, so they are rebuilt only when it changes. Starts as something no token
+// has, so the first token's pills (even "None") are drawn.
+let shownKey: string | null = null;
+let pickerFor: TokenElement | null = null;
+
+const keyOf = (token: TokenElement): string =>
+  (token.conditions ?? []).map((c) => `${c.id}|${c.name}|${c.color}|${c.icon}`).join(';');
+
+function showPills(token: TokenElement): void {
+  const key = keyOf(token);
+  if (key === shownKey) return;
+  shownKey = key;
+  const conditions = token.conditions ?? [];
+  if (!conditions.length) {
+    const none = document.createElement('span');
+    none.className = 'tc-none';
+    none.textContent = 'None';
+    pills.replaceChildren(none);
+    return;
+  }
+  pills.replaceChildren(
+    ...conditions.map((condition) => {
+      const pill = document.createElement('span');
+      pill.className = 'tc-pill';
+      const name = document.createElement('span');
+      name.textContent = condition.name;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', `Remove ${condition.name}`);
+      remove.addEventListener('click', () => {
+        const current = cardToken();
+        if (current) toggleCondition(current, condition);
+      });
+      pill.append(conditionBadge(condition, 18), name, remove);
+      return pill;
+    }),
+  );
+}
+
+// The picker's buttons: one per condition, pressed if the token has it.
+function buildPicker(): void {
+  grid.replaceChildren(
+    ...allConditions().map((condition) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tc-cond';
+      button.dataset.id = condition.id;
+      const name = document.createElement('span');
+      name.textContent = condition.name;
+      button.append(conditionBadge(condition, 20), name);
+      button.addEventListener('click', () => {
+        const current = cardToken();
+        if (current) toggleCondition(current, condition);
+      });
+      return button;
+    }),
+  );
+}
+
+function markPicker(token: TokenElement): void {
+  for (const button of grid.querySelectorAll<HTMLButtonElement>('.tc-cond')) {
+    button.setAttribute('aria-pressed', String(hasCondition(token, button.dataset.id ?? '')));
+  }
+}
+
+function filterPicker(): void {
+  const wanted = filterField.value.trim().toLowerCase();
+  for (const button of grid.querySelectorAll<HTMLButtonElement>('.tc-cond')) {
+    const name = button.textContent?.toLowerCase() ?? '';
+    button.hidden = !!wanted && !name.includes(wanted);
+  }
+}
+
+function openPicker(): void {
+  pickerOpen = true;
+  filterField.value = '';
+  buildPicker(); // fresh each time, so conditions made in Settings are there
+  picker.hidden = false;
+  addButton.setAttribute('aria-expanded', 'true');
+  addButton.textContent = 'Done';
+  const token = cardToken();
+  if (token) {
+    markPicker(token);
+    place(token); // the card is taller now
+  }
+  filterField.focus();
+}
+
+function closePicker(): void {
+  if (!pickerOpen) return;
+  pickerOpen = false;
+  picker.hidden = true;
+  addButton.setAttribute('aria-expanded', 'false');
+  addButton.textContent = '+ Add';
+  const token = cardToken();
+  if (token && !card.classList.contains('hidden')) place(token); // and shorter again
+}
+
+function showConditions(token: TokenElement): void {
+  if (pickerFor !== token) {
+    closePicker(); // another token: start with the picker shut
+    pickerFor = token;
+  }
+  showPills(token);
+  if (pickerOpen) markPicker(token);
+}
+
+addButton.addEventListener('click', () => {
+  if (pickerOpen) closePicker();
+  else openPicker();
+});
+
+filterField.addEventListener('input', filterPicker);
+
+picker.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closePicker();
+    addButton.focus();
+    e.stopPropagation(); // Escape here shuts the picker; it does not also deselect the token
+  } else if (e.key === 'Enter' && e.target === filterField) {
+    // Enter switches the first condition the filter leaves, so "pro", Enter is Prone.
+    const first = grid.querySelector<HTMLButtonElement>('.tc-cond:not([hidden])');
+    const token = cardToken();
+    const condition = allConditions().find((c) => c.id === first?.dataset.id);
+    if (token && condition) toggleCondition(token, condition);
+    e.preventDefault();
+  }
+});
+
 // Which token is being typed into, and what its name was before.
 let editing: { token: TokenElement; original: string } | null = null;
 
@@ -110,9 +254,16 @@ function place(token: TokenElement): void {
   const y = screen.top + state.panY + token.y * state.zoom;
   const { offsetWidth: width, offsetHeight: height } = card;
 
-  // Above the token, or below it (and its name) if the top of the screen is in the way.
-  let top = y - radius - GAP_PX - height;
-  if (top < screen.top + KEEP_CLEAR_OF_TOP_PX) top = y + radius + GAP_PX + NAME_LABEL_PX;
+  // Above the token, or below it (and its name) if the top of the screen is in the way. A tall card
+  // (the picker open) may fit on neither side, so it goes where there is more room, and is then kept on
+  // the screen even if that means covering part of the token.
+  const above = y - radius - GAP_PX - height;
+  const below = y + radius + GAP_PX + NAME_LABEL_PX;
+  const roomAbove = y - radius - GAP_PX - (screen.top + KEEP_CLEAR_OF_TOP_PX);
+  const roomBelow = screen.top + window.innerHeight - below - 8;
+  let top = above >= screen.top + KEEP_CLEAR_OF_TOP_PX ? above : below;
+  if (top === below && roomBelow < height && roomAbove > roomBelow) top = above;
+  top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
   const left = Math.max(8, Math.min(x - width / 2, window.innerWidth - width - 8));
   card.style.left = `${left}px`;
   card.style.top = `${top}px`;
@@ -123,13 +274,18 @@ function update(): void {
   const token = cardToken();
   if (!token || state.elementDrag || state.handleDrag) {
     // Gone, or moving out of the way: whatever was being typed is kept first.
-    if (!token) commit();
+    if (!token) {
+      commit();
+      closePicker();
+      pickerFor = null;
+    }
     card.classList.add('hidden');
     return;
   }
   if (editing && editing.token !== token) commit(); // another token was chosen: keep this one's name first
   if (!editing && document.activeElement !== nameField) nameField.value = token.name ?? '';
   showColor(token);
+  showConditions(token);
   place(token);
 }
 
@@ -202,3 +358,41 @@ export function chooseTokenColor(idx: number): void {
 }
 
 onMainDrawn(update);
+
+// ── Reading a token's conditions by hovering it ────────────────
+// A list beside the pointer with each condition's badge and name, so someone who doesn't know the
+// icons still gets the word. Not for the token whose card is open (it already lists them there).
+const tip = byId('token-tip');
+let tipFor: TokenElement | null = null;
+
+export function hideConditionsTip(): void {
+  tip.classList.add('hidden');
+  tipFor = null;
+}
+
+// Called as the pointer moves over the map, with where it is in the world and on the screen.
+export function updateConditionsTip(world: Point, clientX: number, clientY: number): void {
+  const index = hitTest(world.x, world.y);
+  const hovered = index === null ? undefined : state.elements[index];
+  if (hovered?.type !== 'token' || !hovered.conditions?.length || hovered === cardToken()) {
+    hideConditionsTip();
+    return;
+  }
+  if (tipFor !== hovered) {
+    tipFor = hovered;
+    tip.replaceChildren(
+      ...hovered.conditions.map((condition) => {
+        const line = document.createElement('div');
+        const name = document.createElement('span');
+        name.textContent = condition.name;
+        line.append(conditionBadge(condition, 18), name);
+        return line;
+      }),
+    );
+  }
+  tip.classList.remove('hidden');
+  const left = Math.min(clientX + 16, window.innerWidth - tip.offsetWidth - 8);
+  const top = Math.min(clientY + 16, window.innerHeight - tip.offsetHeight - 8);
+  tip.style.left = `${Math.max(8, left)}px`;
+  tip.style.top = `${Math.max(8, top)}px`;
+}

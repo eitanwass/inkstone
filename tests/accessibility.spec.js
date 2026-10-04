@@ -58,6 +58,47 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]); // with a name typed in, too
   });
 
+  test("with a token's conditions: the picker open, and some applied", async ({ page }) => {
+    await page.click('#tool-token');
+    const box = await page.locator('#interaction-canvas').boundingBox();
+    const origin = [box.x + box.width * 0.1, box.y + box.height * 0.1];
+    await page.mouse.click(origin[0] + 250, origin[1] + 250); // placed in the cell at (240, 240)...
+    await page.click('#tool-select');
+    await page.mouse.click(origin[0] + 260, origin[1] + 260); // ...whose centre is (260, 260)
+    await page.click('#token-cond-add');
+    await expect(page.locator('#token-cond-picker')).toBeVisible();
+    await page.locator('#token-cond-grid .tc-cond', { hasText: 'Prone' }).click();
+    await page.locator('#token-cond-grid .tc-cond', { hasText: 'Poisoned' }).click();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test("with the token menu's Conditions submenu open", async ({ page }) => {
+    await page.click('#tool-token');
+    const box = await page.locator('#interaction-canvas').boundingBox();
+    const origin = [box.x + box.width * 0.1, box.y + box.height * 0.1];
+    await page.mouse.click(origin[0] + 250, origin[1] + 250); // placed in the cell at (240, 240)...
+    await page.mouse.click(origin[0] + 260, origin[1] + 260, { button: 'right' }); // ...whose centre is (260, 260)
+    await page.locator('#ctx-token-conditions').hover();
+    await expect(page.locator('#token-conditions-menu')).toBeVisible();
+    await page.locator('#token-conditions-menu .ctx-cond', { hasText: 'Stunned' }).click();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('with the Conditions settings open, a custom one made and being edited', async ({ page }) => {
+    await page.click('#btn-settings');
+    await page.click('#settings-tab-conditions');
+    await page.fill('#cond-name', 'Hexed');
+    await page.locator('#cond-icons [data-icon="moon"]').click();
+    await page.click('#cond-save');
+    await page.getByRole('button', { name: 'Edit Hexed' }).click();
+    await expect(page.locator('#settings-panel-conditions')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+    await page.fill('#cond-name', 'prone'); // with an error showing, too
+    await page.click('#cond-save');
+    await expect(page.locator('#cond-problem')).toContainText('already');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with the settings open', async ({ page }) => {
     await page.click('#btn-settings');
     await expect(page.locator('#settings-modal')).toBeVisible();

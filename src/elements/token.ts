@@ -6,10 +6,12 @@
 import { mCtx } from '../canvas';
 import { dist } from '../geometry';
 import { formatDistance } from '../measure';
-import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID } from '../state';
+import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID, state } from '../state';
 import type { ElementBehavior, TokenElement } from '../types';
+import { crossOut, drawBadges, isDead } from './badges';
 
 const DEFAULT_COLOR = '#e05c5c';
+const DEAD_COLOR = '#8b857a'; // a dead token is drawn grey, whatever color it had
 
 // The colours a token comes in. New tokens take them in turn, so a handful placed one after
 // another can be told apart, and the token card offers them as swatches.
@@ -57,7 +59,8 @@ export const token: ElementBehavior<TokenElement> = {
 
   draw(ctx, el) {
     const r = radiusOf(el);
-    const color = el.color || DEFAULT_COLOR;
+    const dead = isDead(el);
+    const color = dead ? DEAD_COLOR : el.color || DEFAULT_COLOR;
 
     // Shadow ring
     ctx.save();
@@ -94,6 +97,10 @@ export const token: ElementBehavior<TokenElement> = {
       ctx.fillStyle = '#fff';
       ctx.fillText(el.name, el.x, el.y + r + 10);
     }
+
+    // Dead is crossed out; anything else it is under shows as badges.
+    if (dead) crossOut(ctx, el, r);
+    else drawBadges(ctx, el, r, state.zoom);
   },
 
   bounds(el) {

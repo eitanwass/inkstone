@@ -36,7 +36,7 @@ Each item is meant to ship on its own.
 - ~~**Settings menu with a "Board" panel.**~~
   - ~~A gear button opens it; the Board panel sets the unit (feet, meters, squares) and how much one square is worth.~~
   - ~~A "D&D diagonal rules" toggle: the first diagonal counts as 1 square, the next as 2, and so on.~~
-  - ~~More panels can be added later (see `src/settings.ts`).~~
+  - ~~More panels can be added later (see `src/settings/`).~~
 - **Token polish** (M)
   - ~~Place tokens without a name dialog: a plain disc straight away.~~
   - ~~A card above the selected token, with a name field (`src/token-card.ts`).~~
@@ -44,7 +44,7 @@ Each item is meant to ship on its own.
     so whole-map sync and saving don't carry copies; offer images already used.
   - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
-  - A condition marker (dead, prone, ...).
+  - ~~Conditions (dead, prone, ...): badges on the token, set from its card or a right-click submenu, with your own in Settings.~~
   - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~ (Ctrl+D, or Duplicate in the token's menu.)
 - **Text and label styling**: bold/size presets and a background plate so labels
   read over busy maps. (S)

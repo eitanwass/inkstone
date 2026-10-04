@@ -191,8 +191,8 @@
     </div>
   </section>
 
-  <!-- The token card: details of the selected token, above it (see src/token-card.ts). Only the name
-       so far; image, HP and AC are meant to go here too. -->
+  <!-- The token card: details of the selected token, above it (see src/token-card.ts): its name, color
+       and conditions so far; image, HP and AC are meant to go here too. -->
   <div id="token-card" class="hidden" role="group" aria-label="Token details">
     <input id="token-name-field" type="text" maxlength="20" placeholder="Name" aria-label="Token name" autocomplete="off" spellcheck="false" enterkeyhint="done" />
     <!-- Color: the token palette as swatches (built in src/token-card.ts), then any color -->
@@ -201,7 +201,22 @@
         <input type="color" id="token-color-custom" aria-label="Custom color" />
       </label>
     </div>
+    <!-- Conditions: the ones it has as removable pills, and a picker of all the ones to choose from -->
+    <div id="token-conditions" role="group" aria-label="Token conditions">
+      <div class="tc-head">
+        <span class="tc-label">Conditions</span>
+        <button type="button" id="token-cond-add" class="tc-add" aria-expanded="false" aria-controls="token-cond-picker">+ Add</button>
+      </div>
+      <div id="token-cond-pills" class="tc-pills"></div>
+      <div id="token-cond-picker" class="tc-picker" hidden>
+        <input type="text" id="token-cond-filter" placeholder="Type to filter" aria-label="Filter conditions" autocomplete="off" spellcheck="false" />
+        <div id="token-cond-grid" class="tc-grid" role="group" aria-label="Conditions to choose from"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- Hovering a token with conditions lists them by name (see updateConditionsTip in src/token-card.ts) -->
+  <div id="token-tip" class="hidden" role="tooltip"></div>
 
   <!-- The measurement on screen (ruler distance, or the size of the shape being drawn), as text:
        the canvas draws it, this lets screen readers and the tests read it. -->
@@ -279,6 +294,9 @@
     <canvas id="interaction-canvas" role="application" aria-label="Map canvas. Press V, R, W, T, L, E or M to choose a tool."></canvas>
   </main>
 
+  <!-- The right-click menus: all in one labelled region, so none of them sits outside a landmark -->
+  <div role="region" aria-label="Context menus">
+
   <!-- Context menu -->
   <div id="context-menu" class="hidden">
     <div class="ctx-item" id="ctx-copy">
@@ -306,15 +324,24 @@
     </div>
   </div>
 
+  <!-- The token menu's "Conditions" submenu: every condition, ticked if the token has it (built in src/context-menu.ts) -->
+  <div id="token-conditions-menu" class="hidden" role="menu" aria-label="Conditions" tabindex="0"></div>
+
   <!-- Token context menu -->
   <div id="token-context-menu" class="hidden">
     <div class="ctx-item ctx-danger" id="ctx-token-delete">🗑 Remove Token</div>
     <div class="ctx-item" id="ctx-token-rename">✏ Rename</div>
     <div class="ctx-item" id="ctx-token-color">🎨 Change Color</div>
+    <div class="ctx-item ctx-submenu-row" id="ctx-token-conditions">
+      <span class="ctx-label"><span class="ctx-icon">⚑</span> Conditions</span>
+      <span class="ctx-shortcut">›</span>
+    </div>
     <div class="ctx-item" id="ctx-token-duplicate">
       <span class="ctx-label"><span class="ctx-icon">⧉</span> Duplicate</span>
       <span class="ctx-shortcut">Ctrl+D</span>
     </div>
+  </div>
+
   </div>
 
   <!-- Confirm dialog -->
@@ -383,7 +410,7 @@
     </div>
   </div>
 
-  <!-- Settings: a modal over a blurred page, opened from the gear button (see src/settings.ts).
+  <!-- Settings: a modal over a blurred page, opened from the gear button (see src/settings/index.ts).
        A panel is a tab in the list on the left plus a section on the right. -->
   <div id="settings-overlay" class="hidden">
     <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
@@ -396,6 +423,7 @@
       <div id="settings-layout">
         <div id="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
           <button id="settings-tab-board" role="tab" aria-selected="true" aria-controls="settings-panel-board">Board</button>
+          <button id="settings-tab-conditions" role="tab" aria-selected="false" aria-controls="settings-panel-conditions" tabindex="-1">Conditions</button>
         </div>
         <section id="settings-panel-board" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-board" tabindex="0">
           <h3>Board</h3>
@@ -438,6 +466,47 @@
             <div class="settings-examples-label" aria-hidden="true">Examples</div>
             <p class="settings-example" id="board-example"></p>
             <p class="settings-example" id="board-diagonal-example"></p>
+          </div>
+        </section>
+
+        <!-- Conditions: make your own, to add to the default ones (see src/settings/conditions.ts) -->
+        <section id="settings-panel-conditions" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-conditions" tabindex="0" hidden>
+          <h3>Conditions</h3>
+          <p class="settings-note">Shown on tokens as badges. Add your own here and they appear with the default ones when you give a token a condition. Saved in this browser.</p>
+
+          <div class="settings-field">
+            <div class="settings-sublabel" id="cond-custom-heading">Your conditions</div>
+            <ul class="cond-list" id="cond-custom-list" aria-labelledby="cond-custom-heading"></ul>
+            <p class="settings-example" id="cond-custom-empty">None yet. Make one below.</p>
+          </div>
+
+          <form class="settings-field cond-form" id="cond-form" novalidate aria-labelledby="cond-form-title">
+            <div class="settings-sublabel" id="cond-form-title">Add a condition</div>
+            <div class="cond-form-top">
+              <div class="cond-field">
+                <label for="cond-name">Name</label>
+                <input type="text" id="cond-name" maxlength="20" placeholder="e.g. Hexed" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="cond-preview" aria-hidden="true"><span id="cond-preview-badge"></span><span id="cond-preview-name"></span></div>
+            </div>
+            <fieldset class="cond-field">
+              <legend>Color</legend>
+              <div class="cond-colors" id="cond-colors"></div>
+            </fieldset>
+            <fieldset class="cond-field">
+              <legend>Icon</legend>
+              <div class="cond-icons" id="cond-icons" role="radiogroup" aria-label="Icon"></div>
+            </fieldset>
+            <p class="settings-error" id="cond-problem" role="alert"></p>
+            <div class="cond-actions">
+              <button type="submit" class="btn-primary" id="cond-save">Add condition</button>
+              <button type="button" class="btn-secondary" id="cond-cancel" hidden>Cancel</button>
+            </div>
+          </form>
+
+          <div class="settings-field">
+            <div class="settings-sublabel" id="cond-default-heading">Default conditions</div>
+            <ul class="cond-list cond-list-defaults" id="cond-default-list" aria-labelledby="cond-default-heading"></ul>
           </div>
         </section>
       </div>

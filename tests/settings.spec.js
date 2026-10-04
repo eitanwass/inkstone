@@ -217,11 +217,10 @@ test.describe('the D&D diagonal rule', () => {
       .locator('.switch-track')
       .evaluate((el) => getComputedStyle(el, '::after').transform);
     await rule(page).uncheck();
-    await page.waitForTimeout(200); // the knob slides
-    const knobOff = await page
-      .locator('.switch-track')
-      .evaluate((el) => getComputedStyle(el, '::after').transform);
-    expect(knobOff).not.toBe(knobOn);
+    // The knob slides across; wait for it to arrive rather than guess how long that takes.
+    await expect
+      .poll(() => page.locator('.switch-track').evaluate((el) => getComputedStyle(el, '::after').transform))
+      .not.toBe(knobOn);
   });
 
   test('the explanation is a ? that shows it on hover, and on keyboard focus', async ({ page }) => {

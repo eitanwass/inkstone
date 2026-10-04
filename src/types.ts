@@ -3,6 +3,8 @@
 // they're modelled as a discriminated union on `type`. Their behavior lives in
 // src/elements/ — see elements/index.ts.
 
+import type { Condition } from './conditions';
+
 export interface Point {
   x: number;
   y: number;
@@ -47,6 +49,9 @@ export interface TokenElement extends ElementStyle {
   radius?: number;
   name?: string;
   color?: string;
+  // What it is under (Prone, Poisoned, a custom one...), whole objects rather than names: see
+  // conditions/. None when there are none (the field is left off, not an empty list).
+  conditions?: Condition[];
 }
 
 export interface LabelElement extends ElementStyle {

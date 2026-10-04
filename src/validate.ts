@@ -4,6 +4,7 @@
 // session id can send anything). Everything past these checks can assume
 // elements have the shape in types.ts.
 
+import { parseConditions } from './conditions';
 import { normalizeMapName } from './map-name-text';
 import type { BoardElement, BoardSnapshot, ElementType } from './types';
 
@@ -39,12 +40,21 @@ function isElement(value: unknown): value is BoardElement {
   );
 }
 
+// A valid element with anything inside it that isn't valid taken out, rather than the element
+// dropped: a token's bad conditions are cleaned (see parseConditions), and the token stays.
+function tidy(el: BoardElement): BoardElement {
+  if (el.type !== 'token' || el.conditions === undefined) return el;
+  const { conditions: _dropped, ...rest } = el;
+  const conditions = parseConditions(el.conditions);
+  return conditions.length ? { ...rest, conditions } : rest;
+}
+
 // The valid elements in data, or null if data isn't a list at all. Invalid
 // entries are dropped rather than rejecting the whole board, so one bad
 // element can't cost someone their map. That includes elements of a type this
 // version doesn't know.
 export function parseElements(data: unknown): BoardElement[] | null {
-  return Array.isArray(data) ? data.filter(isElement) : null;
+  return Array.isArray(data) ? data.filter(isElement).map(tidy) : null;
 }
 
 // What a collaborator's message holds: either the current format, an object with
@@ -53,7 +63,7 @@ export function parseElements(data: unknown): BoardElement[] | null {
 // isn't text is ignored rather than rejecting the whole message. Null if there
 // is no usable list of elements at all.
 export function parseSnapshot(data: unknown): BoardSnapshot | null {
-  if (Array.isArray(data)) return { elements: data.filter(isElement) };
+  if (Array.isArray(data)) return { elements: data.filter(isElement).map(tidy) };
   if (typeof data !== 'object' || data === null) return null;
   const { elements, name } = data as Raw;
   const parsed = parseElements(elements);

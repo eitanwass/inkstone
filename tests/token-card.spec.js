@@ -286,7 +286,7 @@ test.describe('color', () => {
     await select(page);
     const before = (await colors(page))[0];
     await click(page, '#123456'); // clicked in the picker, which is still open
-    await expect(page.locator('.token-swatch-custom')).toHaveClass(/selected/); // the token already has it
+    await expect(page.locator('#token-colors .token-swatch-custom')).toHaveClass(/selected/); // the token already has it
     await expect(page.locator('#token-colors .token-swatch[aria-pressed="true"]')).toHaveCount(0);
     expect((await colors(page))[0]).toBe(before); // (not saved until the picker is closed)
 
@@ -345,11 +345,11 @@ test.describe('color', () => {
     await select(page);
     await click(page, '#123456');
     await close(page);
-    await expect(page.locator('.token-swatch-custom')).toHaveClass(/selected/);
+    await expect(page.locator('#token-colors .token-swatch-custom')).toHaveClass(/selected/);
     await expect(page.locator('#token-colors .token-swatch[aria-pressed="true"]')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Blue' }).click(); // back to a swatch
-    await expect(page.locator('.token-swatch-custom')).not.toHaveClass(/selected/);
+    await expect(page.locator('#token-colors .token-swatch-custom')).not.toHaveClass(/selected/);
   });
 
   test('a color picked while the picker is open does not leak onto another token', async ({ page }) => {
@@ -364,7 +364,7 @@ test.describe('color', () => {
     expect(after[0]).toBe('#0a0a0a');
     expect(after[1]).toBe(otherBefore);
     await page.mouse.click(other.x + 20, other.y + 20); // the other token's card: its own color is marked
-    await expect(page.locator('.token-swatch-custom')).not.toHaveClass(/selected/);
+    await expect(page.locator('#token-colors .token-swatch-custom')).not.toHaveClass(/selected/);
   });
 
   test('the colors and the name are independent', async ({ page }) => {

@@ -23,6 +23,7 @@ import './map-name';
 import './collab';
 import './changelog';
 import './settings';
+import './settings/conditions';
 import './token-card';
 
 byId('version-label').textContent = `v${version}`;

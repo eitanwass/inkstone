@@ -117,3 +117,55 @@ describe('parseSnapshot', () => {
     }
   });
 });
+
+describe("a token's conditions", () => {
+  const prone = { id: 'prone', name: 'Prone', color: '#6d4fc7', icon: 'arrow-down' };
+  const hexed = { id: 'custom-1', name: 'Hexed', color: '#a1b2c3', icon: 'moon' };
+  const token = (conditions: unknown) => ({ type: 'token', x: 20, y: 20, name: 'Bob', conditions });
+
+  it('are kept, as whole objects', () => {
+    expect(parseElements([token([prone, hexed])])).toEqual([token([prone, hexed])]);
+  });
+
+  it('are left off a token that has none, and an empty list is no list', () => {
+    expect(parseElements([{ type: 'token', x: 1, y: 1 }])).toEqual([{ type: 'token', x: 1, y: 1 }]);
+    const [t] = parseElements([token([])]) ?? [];
+    expect(t).toEqual({ type: 'token', x: 20, y: 20, name: 'Bob' });
+    expect('conditions' in (t as object)).toBe(false);
+  });
+
+  it('are cleaned, not the whole token dropped, when some are not valid', () => {
+    const bad = [
+      { id: 'x', name: 'No icon', color: '#000000', icon: 'nope' },
+      prone,
+      'prone',
+      null,
+      { hexed: 1 },
+    ];
+    expect(parseElements([token(bad)])).toEqual([token([prone])]);
+  });
+
+  it('are removed, and the token kept, when they are not a list at all', () => {
+    for (const junk of ['prone', 5, {}, true, null]) {
+      const [t] = parseElements([token(junk)]) ?? [];
+      expect(t, JSON.stringify(junk)).toEqual({ type: 'token', x: 20, y: 20, name: 'Bob' });
+    }
+  });
+
+  it('drop a colour that is not a plain #rrggbb, which would end up in drawing code', () => {
+    const evil = { ...hexed, color: 'url(javascript:alert(1))' };
+    expect(parseElements([token([evil, prone])])).toEqual([token([prone])]);
+  });
+
+  it("are cleaned for a collaborator's message too, in either format", () => {
+    const dirty = [token([prone, { nope: 1 }])];
+    expect(parseSnapshot({ name: 'Map', elements: dirty })?.elements).toEqual([token([prone])]);
+    expect(parseSnapshot(dirty)?.elements).toEqual([token([prone])]);
+  });
+
+  it('are limited to what a token can carry', () => {
+    const many = Array.from({ length: 40 }, (_, i) => ({ ...hexed, id: `custom-${i}` }));
+    const [t] = parseElements([token(many)]) ?? [];
+    expect((t as { conditions: unknown[] }).conditions).toHaveLength(12);
+  });
+});

@@ -8,12 +8,12 @@
 // To add a panel: a tab button and a tabpanel section in index.html, then the code for its
 // controls here.
 
-import { byId } from './dom';
-import { restoreFocus, trapFocus } from './focus';
-import { formatDistance, gridDistance, parseScale, scale, UNITS, validPerCell } from './measure';
-import { drawMain } from './render';
-import { GRID } from './state';
-import { storageGet, storageSet } from './storage';
+import { byId } from '../dom';
+import { restoreFocus, trapFocus } from '../focus';
+import { formatDistance, gridDistance, parseScale, scale, UNITS, validPerCell } from '../measure';
+import { drawMain } from '../render';
+import { GRID } from '../state';
+import { storageGet, storageSet } from '../storage';
 
 const STORAGE_KEY = 'inkstone-board-settings';
 
@@ -130,11 +130,23 @@ function selectTab(selected: HTMLElement): void {
   for (const tab of tabs) {
     const isSelected = tab === selected;
     tab.setAttribute('aria-selected', String(isSelected));
+    tab.tabIndex = isSelected ? 0 : -1; // the list is one tab stop; the arrow keys move within it
     byId(tab.getAttribute('aria-controls') ?? '').hidden = !isSelected;
   }
 }
 
 for (const tab of tabs) tab.addEventListener('click', () => selectTab(tab));
+
+// Up and Down (or Left and Right) move between the panels' tabs, as in any tab list.
+byId('settings-tabs').addEventListener('keydown', (e) => {
+  const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+  const at = tabs.indexOf(document.activeElement as HTMLElement);
+  if (!step || at < 0) return;
+  e.preventDefault();
+  const next = tabs[(at + step + tabs.length) % tabs.length];
+  selectTab(next);
+  next.focus();
+});
 
 loadSaved();
 buildUnitChoices();

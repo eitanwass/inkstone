@@ -25,6 +25,7 @@ import {
   MIN_SHAPE_SIZE,
   state,
 } from './state';
+import { hideConditionsTip, updateConditionsTip } from './token-card';
 import { armLongPress, onTouchCancel, onTouchDown, onTouchMove, onTouchUp } from './touch';
 import type { Point } from './types';
 
@@ -139,9 +140,11 @@ function onPointerMove(e: PointerEvent): void {
   }
 
   updateHoverCursor(world);
+  if (e.pointerType === 'mouse') updateConditionsTip(world, e.clientX, e.clientY); // a fingertip doesn't hover
 }
 
 function onPointerDown(e: PointerEvent): void {
+  hideConditionsTip(); // whatever happens next, the list it was showing is out of date
   if (onTouchDown(e)) return;
 
   if (e.button === 1 || (e.button === 0 && e.altKey)) {
@@ -388,6 +391,7 @@ iCanvas.addEventListener('dblclick', (e) => {
   editTokenName();
 });
 
+iCanvas.addEventListener('pointerleave', hideConditionsTip);
 iCanvas.addEventListener('pointerdown', onPointerDown);
 iCanvas.addEventListener('pointerup', onPointerUp);
 iCanvas.addEventListener('pointercancel', onPointerCancel);

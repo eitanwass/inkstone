@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.7 - 2026-10-04
+
+- Conditions on tokens: Prone, Poisoned, Stunned and the rest of the fifteen
+  from the rules, plus Dead. They show as small badges on the token (three, then
+  a count), and a dead token is greyed and crossed out. Hover a token to read
+  its conditions by name.
+- Give a token conditions from the card above it, or right-click it and choose
+  Conditions. Make your own in Settings, under Conditions: a name, a color and
+  an icon.
+- Tokens are placed without asking for a name. Click a token to open its card
+  and give it a name and a color. Enter or double-click also starts the name.
+- Duplicating a token with a number at the end of its name numbers the copy on:
+  "Goblin 1" becomes "Goblin 2". Duplicate is also in the token's menu.
+
 ## 0.6.6 - 2026-10-03
 
 - A ruler to measure distances (press M, or use the ruler in the tool bar).
