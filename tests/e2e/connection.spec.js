@@ -14,7 +14,17 @@ async function loadWithMockRelay(page, { roomState = null, onMessage = null } = 
   await page.routeWebSocket(/\/parties\//, (ws) => {
     connections.push(ws);
     if (onMessage) ws.onMessage((message) => onMessage(connections.indexOf(ws), message));
-    if (roomState !== null && connections.length > 1) ws.send(JSON.stringify(roomState));
+    // Like the real relay: the first connection finds a fresh room (and the app gives it its map);
+    // a later one is sent the room's map.
+    const first = connections.length === 1;
+    ws.send(
+      JSON.stringify({
+        type: 'doc',
+        fresh: first,
+        name: '',
+        elements: first ? [] : (roomState?.elements ?? []),
+      }),
+    );
   });
   await resetBoard(page);
   return connections;

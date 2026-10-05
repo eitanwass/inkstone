@@ -19,6 +19,9 @@ export interface Bounds {
 
 // Style fields any element may carry; only the ones a type uses are set.
 interface ElementStyle {
+  // Names the element to other people in a session (see collab/changes.ts). Given the first time the
+  // map is saved or sent, so it is missing on a new element until then.
+  id?: string;
   strokeColor?: string;
   fillColor?: string;
   strokeWidth?: number;
@@ -75,13 +78,6 @@ export interface WallCoords {
   y2: number;
 }
 export type Coords = Point | WallCoords;
-
-// What a collaborator sends and receives: the whole board, plus the map's name.
-// Older clients send just the elements, so the name is optional here.
-export interface BoardSnapshot {
-  elements: BoardElement[];
-  name?: string;
-}
 
 export type Tool = 'select' | 'rect' | 'wall' | 'token' | 'text' | 'erase' | 'ruler';
 

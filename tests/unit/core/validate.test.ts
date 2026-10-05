@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseElements, parseSnapshot } from '../../../src/core/validate';
+import { parseElements } from '../../../src/core/validate';
 
 describe('parseElements', () => {
   it('returns null for anything that is not a list', () => {
@@ -76,47 +76,6 @@ describe('parseElements', () => {
   });
 });
 
-describe('parseSnapshot', () => {
-  const room = { type: 'rect', x: 0, y: 0, w: 80, h: 40 };
-
-  it('reads the current format: the elements and the map name', () => {
-    expect(parseSnapshot({ name: 'The Sunken Crypt', elements: [room] })).toEqual({
-      name: 'The Sunken Crypt',
-      elements: [room],
-    });
-  });
-
-  it('is null for a bare list of elements (not a message)', () => {
-    expect(parseSnapshot([room])).toBeNull();
-  });
-
-  it('keeps an empty name, which means the map is unnamed', () => {
-    expect(parseSnapshot({ name: '', elements: [] })).toEqual({ name: '', elements: [] });
-  });
-
-  it('tidies the name the same way the editor does', () => {
-    expect(parseSnapshot({ name: '  A   B  ', elements: [] })).toEqual({ name: 'A B', elements: [] });
-    expect(parseSnapshot({ name: 'x'.repeat(100), elements: [] })?.name).toHaveLength(60);
-  });
-
-  it('ignores a name that is not text but still applies the elements', () => {
-    for (const name of [42, null, {}, [], true]) {
-      expect(parseSnapshot({ name, elements: [room] })).toEqual({ elements: [room] });
-    }
-  });
-
-  it('drops invalid elements', () => {
-    const bad = { type: 'hologram', x: 0, y: 0 };
-    expect(parseSnapshot({ name: 'A', elements: [room, bad] })).toEqual({ name: 'A', elements: [room] });
-  });
-
-  it('is null when there is no usable list of elements', () => {
-    for (const data of [null, undefined, 42, 'text', {}, { name: 'A' }, { name: 'A', elements: 'no' }]) {
-      expect(parseSnapshot(data)).toBeNull();
-    }
-  });
-});
-
 describe("a token's conditions", () => {
   const prone = { id: 'prone', name: 'Prone', color: '#6d4fc7', icon: 'arrow-down' };
   const hexed = { id: 'custom-1', name: 'Hexed', color: '#a1b2c3', icon: 'moon' };
@@ -154,11 +113,6 @@ describe("a token's conditions", () => {
   it('drop a colour that is not a plain #rrggbb, which would end up in drawing code', () => {
     const evil = { ...hexed, color: 'url(javascript:alert(1))' };
     expect(parseElements([token([evil, prone])])).toEqual([token([prone])]);
-  });
-
-  it("are cleaned for a collaborator's message too", () => {
-    const dirty = [token([prone, { nope: 1 }])];
-    expect(parseSnapshot({ name: 'Map', elements: dirty })?.elements).toEqual([token([prone])]);
   });
 
   it('are limited to what a token can carry', () => {

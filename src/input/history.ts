@@ -5,10 +5,11 @@
 // (move, resize, rotate, erase, reorder, ...) without bespoke undo logic
 // per action type.
 
+import { applyChanges, type Change, ensureIds } from '../collab/changes';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
 import { storageGet, storageRemove, storageSet } from '../core/storage';
-import type { BoardElement, BoardSnapshot } from '../core/types';
+import type { BoardElement } from '../core/types';
 import { parseElements } from '../core/validate';
 import { drawMain } from '../draw/render';
 import { normalizeMapName } from '../ui/map-name-text';
@@ -99,15 +100,14 @@ export function loadPersistedMapName(): string {
   return normalizeMapName(storageGet(NAME_STORAGE_KEY));
 }
 
-// Sends the current document to collaborators without recording an undo step.
-// Used when only the name changed: the relay remembers just the latest message
-// to catch up whoever joins next, so a rename sends the whole snapshot (name
-// plus the unchanged elements) and not a name-only message.
+// Tells collaborators what changed without recording an undo step. Used when only the name
+// changed: the change that goes out is just the new name, never the map.
 export function broadcastDocument(): void {
   if (historyListener) historyListener();
 }
 
 export function pushHistory() {
+  ensureIds(state.elements);
   history.stack = history.stack.slice(0, history.index + 1);
   history.stack.push(structuredClone(state.elements));
   if (history.stack.length > HISTORY_LIMIT) history.stack.shift();
@@ -142,16 +142,40 @@ export function redo() {
   if (history.index < history.stack.length - 1) restoreSnapshot(history.index + 1, 'Redo');
 }
 
-// Applied when a snapshot arrives from another connected client (collab.js).
-// Deliberately bypasses history.stack — undo/redo stays about *your own*
-// edits, not a peer's, so undoing right after a remote change doesn't
-// silently revert something you didn't do. A snapshot with no name (an older
-// client's) leaves the map's name alone.
-export function applyRemoteSnapshot(snapshot: BoardSnapshot): void {
-  state.elements = snapshot.elements;
+// What arrives from another connected client (collab.ts) never goes onto the undo stack as a step:
+// undo/redo stays about *your own* edits, so undoing right after a remote change doesn't silently
+// revert something you didn't do.
+
+// The whole map, when connecting to a room: it replaces this one, and is the new starting point for
+// undo (going back to a map from before joining would send the room a map it never had).
+export function applyRemoteDocument(name: string, elements: BoardElement[]): void {
+  ensureIds(elements);
+  state.elements = elements;
   state.selected = [];
-  if (snapshot.name !== undefined) {
-    state.mapName = snapshot.name;
+  state.mapName = name;
+  persistMapName();
+  history.stack = [structuredClone(elements)];
+  history.index = 0;
+  updateUndoRedoButtons();
+  drawMain();
+  persistBoard();
+}
+
+// What someone else changed. It is applied to the map you are looking at and to every step of your
+// undo history, so undoing your own edit later keeps their work instead of putting the old map back.
+// Whatever you had selected stays selected, unless they deleted it.
+export function applyRemoteChanges(changes: Change[]): void {
+  ensureIds(state.elements);
+  const selectedIds = state.selected.map((i) => state.elements[i]?.id);
+  state.elements = applyChanges(state.elements, changes);
+  state.selected = selectedIds.flatMap((id) => {
+    const i = state.elements.findIndex((el) => el.id === id);
+    return i < 0 ? [] : [i];
+  });
+  history.stack = history.stack.map((snapshot) => applyChanges(snapshot, structuredClone(changes)));
+  const rename = changes.findLast((c) => c.t === 'name');
+  if (rename?.t === 'name') {
+    state.mapName = rename.name;
     persistMapName();
   }
   drawMain();

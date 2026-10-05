@@ -125,14 +125,12 @@ Deliberate design points:
   elements; renaming never creates an undo step and undo/redo never changes the
   name. The name has its own persistence (`persistMapName`, key
   `inkstone-map-name`) and is saved once per commit.
-- **Synced once, when editing finishes** (the commit), never per keystroke.
-  Because the relay remembers only the *latest* message to catch up whoever joins
-  next, a rename sends the whole snapshot via `broadcastDocument()` (history.ts)
-  without recording a history step, not a name-only message.
-- **Wire format.** `collab.ts` sends `{ name, elements }`. `parseSnapshot`
-  (validate.ts) ignores a name that isn't text (the local name is left alone) while
-  still applying the elements; a bare array of elements is not a message. The relay
-  only checks that it is a snapshot (see "The room is kept").
+- **Synced once, when editing finishes** (the commit), never per keystroke, as a change
+  of its own, `{ t: 'name', name }` (see "Collaboration"): a rename never carries the map, so it
+  can't overwrite anyone's work. `broadcastDocument()` (history.ts) sends it without
+  recording a history step.
+- **Wire format.** A name that isn't text is dropped from a message (the local name is
+  left alone) while the rest of it is applied (`protocol.ts`).
 - **A peer's rename never overwrites what you're typing**: `refreshMapName()`
   leaves the field alone while it has focus, and it shows the shared name when you
   finish (or press Escape). Offline renames follow the same rule as offline edits:
@@ -142,20 +140,6 @@ Deliberate design points:
   to a row below them, left-aligned, leaving room for the "Live" pill (`body.is-sharing`
   is set while the pill shows). The toast sits below the name for the same reason.
   Focus uses an ink-coloured outline, not the gold one, which is 1.8:1 on parchment.
-
-**Known limitation (deliberate for now).** Because a rename sends the renamer's
-whole snapshot (see above), it can overwrite other people's work in two cases:
-(1) a joiner who renames *before the room's map has reached them* sends their own
-older board (confirmed with a probe: the message carried the joiner's stale
-elements); (2) a rename sent while someone else is mid-edit carries a copy that
-lacks that edit (the same lost-update every whole-snapshot edit has under
-last-write-wins, but a rename makes it happen without touching the map). The fix
-is to send the name as its own message that never carries the map, with the relay
-remembering the map and the name separately for catch-up. That needs a relay
-change, and the relay must be redeployed *before* the client: an old relay would
-remember a name-only message as the whole room. The new relay should keep accepting
-today's formats. A client-only guard (hold a joiner's rename until they have
-caught up) fixes just case 1.
 
 ## Design system and share preview
 
@@ -236,7 +220,7 @@ chain, so there are no circular imports to reason about.
 | `core/state.ts` | The shared `state` object and the `GRID` constant. |
 | `core/types.ts` | Shared types: the `BoardElement` union, `ElementBehavior`, drag/hover shapes. |
 | `core/dom.ts` | `byId` / `qs`: typed element lookups that throw if the element is missing. |
-| `core/validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements. |
+| `core/validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements (and cleaning a token's bad conditions and picture). |
 | `core/canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
 | `core/geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
 | `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.ts`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |
@@ -276,6 +260,8 @@ chain, so there are no circular imports to reason about.
 | `ui/hint.ts` | The first-visit welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; hides for good (`inkstone-hint-seen`) once anything is drawn. It is `pointer-events: none`, so it never blocks drawing. |
 | `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
 | `collab/collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
+| `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |
+| `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `changes`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 To add an element type, add a file in `elements/` and register it in
@@ -510,10 +496,10 @@ PNG export (`view-actions.ts`) re-renders the grid and all elements onto an
 offscreen 2x-resolution canvas rather than capturing the visible canvases
 directly (so exports are independent of current viewport resolution).
 
-**Collaboration** (`collab.ts`) is a thin sync layer on top of the existing
-whole-document snapshot model, not a separate state system. A session is a
-Durable Object room ([party/server.js](party/server.js), a pure relay with
-no merge logic — one `InkstoneRoom` instance per session id, addressed by
+**Collaboration** (`collab/`) is a thin sync layer on top of the existing
+whole-document undo model, not a separate state system. A session is a
+Durable Object room ([party/server.js](party/server.js), a relay that keeps the map per
+element — one `InkstoneRoom` instance per session id, addressed by
 a Worker `fetch` handler that routes `/parties/<name>/<room>` requests to
 it) keyed by a random id carried in the URL (`?session=...`). Clicking
 "Share" (`btn-share`) lazily creates that id with `crypto.randomUUID()`
@@ -522,17 +508,32 @@ puts it in the URL via `history.replaceState`, connects, and opens a
 popover showing the code with a "Copy Link" button. "Join" (`btn-join`)
 opens a sibling popover where a user pastes another session's code or
 full invite link (`extractSessionId()` accepts either) to connect to it
-without creating a new session. Every local `pushHistory()`/`undo()`/`redo()`
-broadcasts the full
-`state.elements` array to the room; an incoming snapshot from a peer is
-applied via `applyRemoteSnapshot()` (in `history.ts`) the same way undo/redo
-already swaps in a full snapshot — except it deliberately does *not* go
-onto the local undo stack, so pressing Ctrl+Z undoes your own last edit,
-not whatever a peer just did. This is last-write-wins: edits to different
-elements never collide, but two people editing the same element at the same
-instant just have one of them win — there's no operation-level merge, since
-a CRDT would mean restructuring `state.elements` around a different data
-structure entirely for a hand-drawn map where that's rarely worth it.
+without creating a new session.
+
+**What goes over the wire is changes, not snapshots** (`changes.ts`, pure and unit
+tested). Every element has a stable `id` (`ensureIds`, called by `pushHistory` and before
+sending; a duplicate or paste arrives with its original's id and is given a new one).
+Every local `pushHistory()`/`undo()`/`redo()` calls `broadcastState`, which `diff`s the
+map against `synced` (what the room is believed to hold) and sends
+`{ type: 'changes', changes }`: `set` (an element, new or edited; new ids go last),
+`del` (an id), `order` (all ids, only when the order isn't what adding and removing gives
+anyway) and `name`. So undo stays whole-snapshot (see below) while the traffic is just the
+difference, and two people editing *different* elements never collide; the same element
+at the same instant is last-write-wins. Token images no longer travel on every edit.
+
+The relay sends one other kind of message, `{ type: 'doc', fresh, name, elements }`, the whole
+map, to each client as it connects (`protocol.ts` checks both kinds on arrival, dropping a bad
+change on its own). A room nobody has used yet (new, or expired) is `fresh`: the client
+then gives it its own map (a `doc` message from the client, which the relay accepts only
+while the room is fresh, so the first to arrive wins and a late or stale one just gets the
+room's map back). Otherwise the room's map replaces the local one (`applyRemoteDocument`,
+which also makes it the new start of the undo history). Nothing is sent before the room has
+told us its map (`synced` is null), so a joiner's old local board can't leak into a room.
+
+A peer's changes are applied with `applyRemoteChanges` (history.ts), which does *not* make an
+undo step, so Ctrl+Z undoes your own last edit, not whatever a peer just did. They are applied
+to every step of your undo stack too, so undoing your own edit later keeps their work, and
+your selection is kept by id (unless they deleted what you had selected).
 
 Because `history.ts` sits *below* `collab.ts` in the module chain (per the
 one-directional dependency rule above), it can't import `collab.ts` to
@@ -541,14 +542,16 @@ notify it of changes without creating a cycle. Instead `history.ts` exposes
 function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
 
-**The room is kept.** The relay stores the latest snapshot in the Durable Object's storage (written once per burst of edits, and at once when the last person leaves), so whoever opens the link later, even after everyone has left, gets the map as it was. A room is deleted a week after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms don't fill the free plan. The relay drops any message that isn't a map snapshot or is over 1,000,000 characters (`isSnapshot`), since what it stores lasts. Tested in `tests/unit/party/`.
-
-Only the session **creator** seeds the room with their current board (on
-the **first** `open` event only, gated by a `seed` flag passed to
-`connect()`); a client *joining* an existing session never does. Without that
-asymmetry, a joiner's own (likely stale or empty) local board could race the
-server's reply and stomp the room's actual state before the real snapshot
-arrives. The same reasoning is why a *re*connect never re-seeds.
+**The room is kept.** The relay keeps the map in the Durable Object's storage, one row per
+element (`el:<id>`) plus `order` and `meta` (the name), so an edit writes only the rows it
+changed (once per burst of edits, and at once when the last person leaves). Whoever opens the
+link later, even after everyone has left, gets the map as it was. A room is deleted a week
+after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms
+don't fill the free plan. The relay drops any message that isn't well formed (an element
+needs an id of letters, digits, `_` and `-` and a known type) or is over its limits (150,000
+characters an element, 2,000 elements, 900,000 in all, kept under Cloudflare's 1 MiB per
+message), since what it stores lasts. It can't import `changes.ts`, so its checks are kept in
+step by hand. Tested in `tests/unit/party/`.
 
 **Connection loss.** `partysocket` reconnects on its own; `collab.ts` surfaces
 it. The status pill (`#collab-status`, in the top-right rail under the action cluster, red dot
@@ -556,7 +559,7 @@ for live) goes `Connecting…` → `Live`, and on a
 drop to `Reconnecting…` (with a toast, announced once, not on every retry
 attempt). If the relay can't be reached for 8 seconds on the first connect, a
 toast says so. The policy for edits made while offline is **the shared map
-wins**: the relay sends its copy on reconnect and `applyRemoteSnapshot` makes
+wins**: the relay sends its copy on reconnect and `applyRemoteDocument` makes
 it the local map, so offline edits are replaced. `broadcastState` notes
 `unsentEdits` when it can't send, and the reconnect toast says so when that
 happened. (Making the local map win instead would overwrite peers' work, and

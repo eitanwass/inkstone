@@ -1,13 +1,12 @@
 // ── Realtime collaboration ───────────────────────────────────────
 // Each session is a Durable Object room (see party/server.js) keyed by a
 // random id carried in the URL (?session=...). Every local
-// pushHistory()/undo()/redo() broadcasts the full elements array to the
-// room (registered via setHistoryListener — see history.js for why that's
-// a callback, not a direct import); an incoming snapshot from a peer
-// overwrites local state the same way. This is last-write-wins: edits to
-// different elements never collide, but two people editing the *same*
-// element at the same instant just have one of them win. No per-action
-// merge logic is worth the complexity for a hand-drawn map.
+// pushHistory()/undo()/redo() sends the room what changed since the last
+// time we and the room agreed (registered via setHistoryListener — see
+// history.ts for why that's a callback, not a direct import; the changes
+// are in changes.ts, the messages we get back in protocol.ts). Each element
+// has an id, so edits to different elements never collide; two people editing
+// the *same* element at the same instant just have one of them win.
 //
 // A room is only ever created when the user clicks "Share" — opening the
 // app cold never talks to the relay. "Join" lets a user key in another
@@ -22,11 +21,13 @@
 import PartySocket from 'partysocket';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
-import { parseSnapshot } from '../core/validate';
-import { applyRemoteSnapshot, setHistoryListener } from '../input/history';
+import type { BoardElement } from '../core/types';
+import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
+import { applyChanges, diff, ensureIds } from './changes';
+import { parseMessage } from './protocol';
 import { resolveRelayHost } from './relay-host';
 
 // Null in a production build that wasn't given a relay (see relay-host.ts):
@@ -53,16 +54,29 @@ let socket: PartySocket | null = null;
 
 // True when an edit was made while the connection was down, so it never
 // reached the room. (PartySocket reconnects by itself; the relay then sends
-// its copy of the map and applyRemoteSnapshot makes that the local map.)
+// its copy of the map and applyRemoteDocument makes that the local map.)
 let unsentEdits = false;
+
+// What we believe the room holds: the base each change is measured from. Only set once the room has
+// told us (or accepted from us) the whole map, and nothing is sent before then, so a joiner's old
+// local map can't leak into a room it has not caught up with.
+let synced: { elements: BoardElement[]; name: string } | null = null;
+
+const remember = () => {
+  synced = { elements: structuredClone(state.elements), name: state.mapName };
+};
 
 function broadcastState() {
   if (!socket) return;
-  if (socket.readyState !== WebSocket.OPEN) {
+  if (socket.readyState !== WebSocket.OPEN || !synced) {
     unsentEdits = true;
     return;
   }
-  socket.send(JSON.stringify({ name: state.mapName, elements: state.elements }));
+  ensureIds(state.elements);
+  const changes = diff(synced.elements, state.elements, synced.name, state.mapName);
+  if (!changes.length) return;
+  socket.send(JSON.stringify({ type: 'changes', changes }));
+  remember();
 }
 
 setHistoryListener(broadcastState);
@@ -88,17 +102,15 @@ function setStatus(status: keyof typeof STATUS_TEXT | null): void {
 
 const UNREACHABLE_AFTER_MS = 8000;
 
-// `seed` is only true when *creating* a brand-new session: that client's
-// current board becomes the room's starting state, on the first connection
-// only. Joining an existing session must NOT seed — it would race the
-// server's reply with the room's actual current state and could stomp it with
-// a stale/empty local board. The same goes for reconnecting: once a client
-// has been away, the room's copy is the truth.
-function connect(sessionId: string, { seed = false } = {}): void {
+// On connecting the relay sends the whole map. A room nobody has used yet (a new one, or one that
+// expired) is marked `fresh`, and then our own map becomes the room's; otherwise the room's map is
+// the truth and replaces ours, which is also what happens on every reconnect.
+function connect(sessionId: string): void {
   if (!RELAY_HOST) return;
   if (socket) socket.close();
   const current = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket = current;
+  synced = null;
   unsentEdits = false;
   let everOpened = false;
   let live = false;
@@ -115,7 +127,6 @@ function connect(sessionId: string, { seed = false } = {}): void {
     setStatus('live');
     if (!everOpened) {
       showToast('Connected — this map is now shared live');
-      if (seed) broadcastState();
     } else if (unsentEdits) {
       showToast('Reconnected — changes you made while offline were replaced by the shared map');
     } else {
@@ -125,9 +136,24 @@ function connect(sessionId: string, { seed = false } = {}): void {
     unsentEdits = false;
   });
   current.addEventListener('message', (evt) => {
-    const snapshot = parseSnapshot(parseJson(evt.data));
-    if (!snapshot) return;
-    applyRemoteSnapshot(snapshot);
+    const message = parseMessage(parseJson(evt.data));
+    if (!message) return;
+    if (message.type === 'doc') {
+      if (message.fresh) {
+        ensureIds(state.elements);
+        current.send(JSON.stringify({ type: 'doc', name: state.mapName, elements: state.elements }));
+      } else {
+        applyRemoteDocument(message.name, message.elements);
+      }
+      remember();
+    } else if (synced) {
+      applyRemoteChanges(message.changes);
+      const rename = message.changes.findLast((c) => c.t === 'name');
+      synced = {
+        elements: applyChanges(synced.elements, structuredClone(message.changes)),
+        name: rename?.t === 'name' ? rename.name : synced.name,
+      };
+    }
     refreshMapName();
   });
   current.addEventListener('close', () => {
@@ -136,6 +162,7 @@ function connect(sessionId: string, { seed = false } = {}): void {
     // Each failed retry also fires 'close'; only announce the drop once.
     if (live) showToast('Connection lost — reconnecting…');
     live = false;
+    synced = null;
   });
 }
 
@@ -164,7 +191,7 @@ function openSharePopover() {
   if (!sessionId) {
     sessionId = crypto.randomUUID();
     setUrlSessionId(sessionId);
-    connect(sessionId, { seed: true });
+    connect(sessionId);
   }
   shareCodeInput.value = sessionId;
   hideJoinPopover();

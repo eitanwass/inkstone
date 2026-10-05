@@ -5,8 +5,7 @@
 // elements have the shape in types.ts.
 
 import { parseConditions } from '../conditions';
-import { normalizeMapName } from '../ui/map-name-text';
-import type { BoardElement, BoardSnapshot, ElementType } from './types';
+import type { BoardElement, ElementType } from './types';
 
 type Raw = Record<string, unknown>;
 
@@ -34,6 +33,7 @@ function isElement(value: unknown): value is BoardElement {
   return (
     !!check &&
     check(e) &&
+    optional(e.id, isStr) &&
     optional(e.strokeColor, isStr) &&
     optional(e.fillColor, isStr) &&
     optional(e.strokeWidth, isNum)
@@ -68,15 +68,4 @@ function tidy(el: BoardElement): BoardElement {
 // version doesn't know.
 export function parseElements(data: unknown): BoardElement[] | null {
   return Array.isArray(data) ? data.filter(isElement).map(tidy) : null;
-}
-
-// What a collaborator's message holds: an object with the elements and the map's name. A name
-// that isn't text is ignored (no name is returned) rather than rejecting the whole message.
-// Null if there is no usable list of elements at all.
-export function parseSnapshot(data: unknown): BoardSnapshot | null {
-  if (typeof data !== 'object' || data === null) return null;
-  const { elements, name } = data as Raw;
-  const parsed = parseElements(elements);
-  if (!parsed) return null;
-  return typeof name === 'string' ? { elements: parsed, name: normalizeMapName(name) } : { elements: parsed };
 }
