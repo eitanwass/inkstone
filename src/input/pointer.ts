@@ -96,7 +96,7 @@ function onPointerMove(e: PointerEvent): void {
   }
 
   if (state.elementDrag) {
-    applyElementDrag(world);
+    applyElementDrag(world, e.shiftKey);
     drawMain();
     return;
   }
@@ -198,7 +198,7 @@ function onPointerDown(e: PointerEvent): void {
       const idx = hitTest(world.x, world.y);
 
       if (idx !== null) {
-        if (e.shiftKey) {
+        if (e.shiftKey && !state.adjustingBackground) {
           const pos = state.selected.indexOf(idx);
           state.selected = pos === -1 ? [...state.selected, idx] : state.selected.filter((s) => s !== idx);
         } else {

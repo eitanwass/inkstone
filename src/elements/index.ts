@@ -43,8 +43,9 @@ import type {
   Handle,
   Point,
 } from '../core/types';
+import { background } from './background';
 import { label } from './label';
-import { isInteractive } from './layer';
+import { isInteractive, isReachable } from './layer';
 import { rect } from './rect';
 import { token } from './token';
 import { wall } from './wall';
@@ -54,6 +55,7 @@ const ELEMENT_TYPES: { [K in ElementType]: ElementBehavior<Extract<BoardElement,
   wall,
   token,
   label,
+  background,
 };
 
 // Undefined for a type this version doesn't know (e.g. from a newer save), so
@@ -67,6 +69,7 @@ export function drawElementShape(ctx: CanvasRenderingContext2D, el: BoardElement
 }
 
 export function getElementBounds(el: BoardElement): Bounds | null {
+  if (el.type === 'background' && !el.image) return null; // a colour alone has no extent
   return typeOf(el)?.bounds(el) ?? null;
 }
 
@@ -92,7 +95,7 @@ export function hitTest(wx: number, wy: number): number | null {
 // a locked element is still there to be pointed at.
 export function hitTestAny(wx: number, wy: number): number | null {
   for (let i = state.elements.length - 1; i >= 0; i--) {
-    if (hitElement(state.elements[i], wx, wy)) return i;
+    if (isReachable(state.elements[i]) && hitElement(state.elements[i], wx, wy)) return i;
   }
   return null;
 }

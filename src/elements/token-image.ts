@@ -5,8 +5,9 @@
 // which keeps each picture once and sends it to whoever asks (see collab/collab.ts). Pictures are
 // cropped to a square and shrunk on the way in so they stay small.
 
-import { hashImage, isImageData } from '../core/image-data';
+import { hashImage, isImageData, MAX_IMAGE_LENGTH } from '../core/image-data';
 import { storageGet, storageSet } from '../core/storage';
+import type { BoardElement } from '../core/types';
 
 const SIZE = 128;
 const STORE_KEY = 'inkstone-images';
@@ -27,7 +28,19 @@ if (typeof saved === 'object' && saved !== null) {
   }
 }
 
-const save = () => storageSet(STORE_KEY, JSON.stringify(Object.fromEntries(store)));
+let lastSaveWorked = true;
+const save = () => {
+  lastSaveWorked = storageSet(STORE_KEY, JSON.stringify(Object.fromEntries(store)));
+};
+
+// Whether the last picture added could be kept in this browser (its storage may be full: a big picture
+// on the map takes much more room than a token's).
+export const imagesSaved = (): boolean => lastSaveWorked;
+
+// The id of the picture an element shows, if it has one (a token's disc, or a picture on the map).
+export function pictureOf(el: BoardElement): string | undefined {
+  return el.type === 'token' || el.type === 'background' ? el.image : undefined;
+}
 
 // Puts a picture in the store and returns its id (the same one if it was already there).
 export function addImage(data: string): string {
@@ -89,4 +102,35 @@ export async function shrinkImage(file: File): Promise<string> {
   bitmap.close();
   const webp = canvas.toDataURL('image/webp', 0.85);
   return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.85); // Safari has no webp
+}
+
+// A picture for the map, as a data URL that fits the limit: the file at up to MAP_PICTURE_SIDE px on its long
+// side, as webp (jpeg where the browser has no webp), made smaller in quality and then in size until it
+// fits. Also its size in pixels, so it can be placed in proportion. Rejects if the browser can't read the
+// file as a picture, or it can't be made small enough.
+const MAP_PICTURE_SIDE = 2048;
+const MAP_PICTURE_TARGET = MAX_IMAGE_LENGTH - 100_000; // some room under the limit
+
+export async function shrinkPicture(file: File): Promise<{ data: string; width: number; height: number }> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    let scale = Math.min(1, MAP_PICTURE_SIDE / Math.max(bitmap.width, bitmap.height));
+    for (let round = 0; round < 8; round++) {
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')?.drawImage(bitmap, 0, 0, width, height);
+      for (const quality of [0.85, 0.7, 0.55]) {
+        const webp = canvas.toDataURL('image/webp', quality);
+        const data = webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', quality);
+        if (data.length <= MAP_PICTURE_TARGET) return { data, width, height };
+      }
+      scale *= 0.75;
+    }
+    throw new Error('picture too large');
+  } finally {
+    bitmap.close();
+  }
 }

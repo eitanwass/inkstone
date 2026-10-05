@@ -80,7 +80,25 @@ export interface LabelElement extends ElementStyle, TextStyled {
   fontSize?: number;
 }
 
-export type BoardElement = RectElement | WallElement | TokenElement | LabelElement;
+// The map's background: a colour and/or a picture (a scanned or downloaded map) behind the grid dots, and only
+// ever one. It is an element so that it is saved, shared and undone like the rest of the map, but it is never
+// pointed at while drawing (see elements/layer.ts); the picture is moved and resized only while "adjusting" it.
+// Like a token's picture it holds only an id into the image store (core/image-data.ts,
+// elements/token-image.ts). A background with only a colour has no size: x, y, w and h are 0.
+export interface BackgroundElement extends ElementStyle {
+  type: 'background';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  image?: string;
+  // How strongly the picture shows, above 0 up to 1. Left off at 1.
+  opacity?: number;
+  // The colour of the map itself, #rrggbb. Left off for the default parchment.
+  color?: string;
+}
+
+export type BoardElement = RectElement | WallElement | TokenElement | LabelElement | BackgroundElement;
 export type ElementType = BoardElement['type'];
 
 // An element's own position, captured at drag start so deltas apply cleanly.
@@ -155,7 +173,13 @@ export type HandleDrag =
       startCoords: Coords;
       displayDeg?: number; // shown in the readout while rotating
     })
-  | (HandleDragBase & { kind: 'resize'; corner: Corner; rotation: number; anchorWorld: Point })
+  | (HandleDragBase & {
+      kind: 'resize';
+      corner: Corner;
+      rotation: number;
+      anchorWorld: Point;
+      aspect: number;
+    })
   | (HandleDragBase & { kind: 'endpoint'; which: string })
   | (HandleDragBase & { kind: 'resize-radius' });
 

@@ -12,6 +12,7 @@ type Raw = Record<string, unknown>;
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const isStr = (v: unknown): v is string => typeof v === 'string';
+const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const optional = (v: unknown, check: (v: unknown) => boolean) => v === undefined || check(v);
 
 // Per type: are the fields this type needs present and the right kind?
@@ -24,6 +25,18 @@ const TYPE_CHECKS: Record<ElementType, (e: Raw) => boolean> = {
     optional(e.radius, isNum) &&
     optional(e.name, isStr) &&
     optional(e.color, isStr),
+  // The map's background: a colour and/or a picture. The picture's size is bounded so one bad element can't
+  // make a huge box, and its id and the colour are checked here. With no picture the size is 0.
+  background: (e) =>
+    isNum(e.x) &&
+    isNum(e.y) &&
+    isNum(e.w) &&
+    isNum(e.h) &&
+    optional(e.opacity, isNum) &&
+    optional(e.color, (c) => isStr(c) && COLOR_RE.test(c)) &&
+    (e.image === undefined
+      ? e.color !== undefined
+      : isStr(e.image) && ID_RE.test(e.image) && e.w > 0 && e.h > 0 && e.w <= 100_000 && e.h <= 100_000),
   label: (e) => isNum(e.x) && isNum(e.y) && isStr(e.text) && optional(e.fontSize, isNum),
 };
 
@@ -55,11 +68,19 @@ function withLayerFlags<T extends BoardElement>(el: T): T {
   return clean;
 }
 
+// A picture's opacity is kept only if it is a usable one (above 0, up to 1; 1 is left off).
+function withOpacity<T extends { opacity?: number }>(el: T): T {
+  const { opacity, ...rest } = el;
+  const usable = typeof opacity === 'number' && opacity > 0 && opacity < 1;
+  return (usable ? { ...rest, opacity } : rest) as T;
+}
+
 // A valid element with anything inside it that isn't valid taken out, rather than the element
 // dropped: a token's bad conditions are cleaned (see parseConditions) and a picture id that isn't one removed,
 // and the token stays.
 function tidy(input: BoardElement): BoardElement {
   const el = withLayerFlags(input);
+  if (el.type === 'background') return withOpacity(el);
   if (el.type === 'label') return withStyleFlags(el);
   if (el.type !== 'token') return el;
   const { conditions: raw, image: rawImage, ...rest } = withStyleFlags(el);

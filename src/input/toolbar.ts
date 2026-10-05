@@ -19,7 +19,9 @@ export function setTool(name: Tool): void {
   state.eraseHover = null;
   state.ruler = null;
   state.isMeasuring = false;
-  document.querySelectorAll<HTMLElement>('.tool-btn').forEach((b) => {
+  state.adjustingBackground = false;
+  document.documentElement.classList.remove('adjusting-background');
+  document.querySelectorAll<HTMLElement>('.tool-btn[data-tool]').forEach((b) => {
     b.classList.toggle('active', b.dataset.tool === name);
     b.setAttribute('aria-pressed', String(b.dataset.tool === name));
   });
@@ -60,7 +62,7 @@ export function updateStylePanel() {
   }
 }
 
-document.querySelectorAll<HTMLElement>('.tool-btn').forEach((btn) => {
+document.querySelectorAll<HTMLElement>('.tool-btn[data-tool]').forEach((btn) => {
   btn.addEventListener('click', () => {
     setTool(btn.dataset.tool as Tool);
   });

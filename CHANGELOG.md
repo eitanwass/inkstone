@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 - 2026-10-05
+
+- Give your map a background: right-click the empty map and choose "Add image…" to put a
+  scanned or downloaded map behind the grid, or pick a background color. A new image opens
+  an Adjust image panel to drag it into place, resize it from its corners, set its opacity
+  and type how many squares wide it is. Hold Shift while dragging to snap to the grid, and
+  use the arrow keys to nudge it a pixel at a time.
+- The background stays out of your way while you draw: you can't select, move or erase it by
+  accident. Right-click the map to replace, adjust or remove the image.
+- Everyone in a shared map sees the background, and it is saved with the map and in map files.
+
 ## 0.7.1 - 2026-10-05
 
 - Choose your name before joining a shared map: a window asks "Who's at the table?" with a

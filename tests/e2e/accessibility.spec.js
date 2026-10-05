@@ -120,6 +120,28 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with the map menu open (background image and colours), and the Adjust image panel', async ({
+    page,
+  }) => {
+    await page.mouse.click(600, 450, { button: 'right' });
+    await expect(page.locator('#canvas-context-menu')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+    const base64 = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 300;
+      canvas.getContext('2d').fillRect(0, 0, 400, 300);
+      return canvas.toDataURL('image/png').split(',')[1];
+    });
+    await page.setInputFiles('#bg-file', {
+      name: 'm.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(base64, 'base64'),
+    });
+    await expect(page.locator('#adjust-panel')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with the settings open and a size that cannot be used typed in', async ({ page }) => {
     await page.click('#btn-settings');
     await page.fill('#board-per-cell', '0');

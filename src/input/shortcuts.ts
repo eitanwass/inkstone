@@ -4,7 +4,7 @@
 // Modifier+letter never falls through to the bare tool-shortcut map (so
 // Ctrl+V doesn't also switch to the Select tool via the 'v' shortcut).
 
-import { state } from '../core/state';
+import { GRID, state } from '../core/state';
 import type { Tool } from '../core/types';
 import { showConfirm } from '../ui/modal';
 import {
@@ -97,7 +97,9 @@ document.addEventListener('keydown', (e) => {
 
   const arrow = ARROWS[key];
   if (arrow && !mod && state.selected.length) {
-    nudgeSelected(arrow[0], arrow[1]);
+    // The background picture is nudged a pixel at a time (ten with Shift), to line it up with the grid.
+    const step = state.adjustingBackground ? (e.shiftKey ? 10 : 1) / GRID : 1;
+    nudgeSelected(arrow[0] * step, arrow[1] * step);
     e.preventDefault();
   }
 

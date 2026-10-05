@@ -410,7 +410,7 @@ describe('token pictures', () => {
     const { room } = await seeded([rect('a')]);
     const a = join(room, { cid: 'a' });
     a.say(image('svg', 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='));
-    a.say(image('big', `data:image/png;base64,${'A'.repeat(100_000)}`));
+    a.say(image('big', `data:image/png;base64,${'A'.repeat(800_000)}`));
     a.say(image('no spaces'));
     a.say({ type: 'getimages', ids: ['svg', 'big'] });
     expect(a.last().type).not.toBe('image');
@@ -612,5 +612,25 @@ describe('parseMessage rename', () => {
       name: 'Gilded Fox',
     });
     expect(parseMessage(JSON.stringify({ type: 'rename', name: '' }))).toBeNull();
+  });
+});
+
+describe('pictures on the map', () => {
+  const image = (id: string, data: string) => ({ type: 'image', id, data });
+  it('keeps a background element, and a picture of up to 800,000 characters', async () => {
+    const { room } = await seeded([]);
+    const a = join(room, { cid: 'a' });
+    a.say({
+      type: 'changes',
+      base: 0,
+      changes: [
+        { t: 'set', el: { type: 'background', id: 'p1', x: 0, y: 0, w: 400, h: 300, image: 'pic1' } },
+      ],
+    });
+    expect(a.last().rev).toBe(1);
+    const big = `data:image/png;base64,${'A'.repeat(700_000)}`;
+    a.say(image('pic1', big));
+    a.say({ type: 'getimages', ids: ['pic1'] });
+    expect(a.last().data).toBe(big);
   });
 });

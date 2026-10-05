@@ -188,3 +188,39 @@ describe('the locked flag', () => {
       expect(parseElements([rect({ locked })])).toEqual([rect({})]);
   });
 });
+
+describe('the map background', () => {
+  const picture = { type: 'background', x: 0, y: 0, w: 400, h: 300, image: 'abc123' };
+  const colour = { type: 'background', x: 0, y: 0, w: 0, h: 0, color: '#1c1f26' };
+
+  it('is accepted with a picture, a colour, or both, and kept as it is', () => {
+    for (const el of [picture, colour, { ...picture, color: '#a9c0d6' }, { ...picture, locked: true }]) {
+      expect(parseElements([el])).toEqual([el]);
+    }
+  });
+
+  it('needs a picture or a colour, a colour that is #rrggbb, and a picture size that is usable', () => {
+    for (const bad of [
+      { type: 'background', x: 0, y: 0, w: 0, h: 0 },
+      { ...colour, color: 'red' },
+      { ...colour, color: '#fff' },
+      { ...colour, color: 5 },
+      { ...picture, w: 0 },
+      { ...picture, h: -5 },
+      { ...picture, w: 1e6 },
+      { ...picture, image: 'no spaces' },
+      { ...picture, image: 42 },
+      { type: 'background', x: 0, y: 0, image: 'abc' },
+    ]) {
+      expect(parseElements([bad])).toEqual([]);
+    }
+  });
+
+  it('keeps an opacity that is usable, and leaves off full or unusable ones', () => {
+    const opacityOf = (opacity: unknown) =>
+      (parseElements([{ ...picture, opacity }]) as { opacity?: number }[])[0].opacity;
+    expect(opacityOf(0.5)).toBe(0.5);
+    for (const none of [1, 0, -1, 2]) expect(opacityOf(none)).toBeUndefined();
+    expect(parseElements([{ ...picture, opacity: 'half' }])).toEqual([]); // wrongly typed: dropped, as elsewhere
+  });
+});

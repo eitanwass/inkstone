@@ -6,12 +6,19 @@
 //
 // Pure (no DOM), so it is unit tested.
 
+import { state } from '../core/state';
 import type { BoardElement } from '../core/types';
 
 export const isLocked = (el: BoardElement): boolean => el.locked === true;
 
-// Whether a click, a box, the eraser or Select All can touch it: not if it is locked.
-export const isInteractive = (el: BoardElement): boolean => !isLocked(el);
+// The map's background picture is not part of the drawing: it is behind the grid and is never pointed at...
+export const isBackdrop = (el: BoardElement): boolean => el.type === 'background';
+
+// ...except while it is being adjusted, when it is the only thing that can be.
+export const isReachable = (el: BoardElement): boolean => isBackdrop(el) === state.adjustingBackground;
+
+// Whether a click, a box, the eraser or Select All can touch it: not if it is locked or out of reach.
+export const isInteractive = (el: BoardElement): boolean => isReachable(el) && !isLocked(el);
 
 // Locks or unlocks, leaving the flag off the element rather than set to false (so an element that isn't
 // locked saves, and syncs, exactly as it did before there was locking).

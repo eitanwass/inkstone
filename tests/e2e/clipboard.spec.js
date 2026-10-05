@@ -60,12 +60,15 @@ test('right-click context menu: Copy, Duplicate, and Delete show their shortcuts
   await expect(page.locator('#ctx-delete .ctx-shortcut')).toHaveText('Del');
 });
 
-test('right-clicking empty canvas only offers Paste once something is copied', async ({ page }) => {
+test('right-clicking empty canvas offers Paste only once something is copied', async ({ page }) => {
   const toScreen = await worldToScreenFn(page);
   let p = toScreen(900, 700);
 
   await page.mouse.click(p.x, p.y, { button: 'right' });
-  await expect(page.locator('#canvas-context-menu')).toBeHidden();
+  await expect(page.locator('#canvas-context-menu')).toBeVisible(); // the background's options are always there
+  await expect(page.locator('#ctx-paste')).toBeHidden(); // but not Paste
+  await page.keyboard.press('Escape');
+  await page.mouse.click(5, 5); // closes the menu
 
   await placeRoom(page, toScreen, 160, 160, 320, 280);
   await page.click('#tool-select');
@@ -75,7 +78,7 @@ test('right-clicking empty canvas only offers Paste once something is copied', a
 
   p = toScreen(900, 700);
   await page.mouse.click(p.x, p.y, { button: 'right' });
-  await expect(page.locator('#canvas-context-menu')).toBeVisible();
+  await expect(page.locator('#ctx-paste')).toBeVisible();
   await page.click('#ctx-paste');
   expect(await boardElements(page)).toHaveLength(2);
 });

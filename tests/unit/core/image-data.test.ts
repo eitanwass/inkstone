@@ -17,7 +17,7 @@ describe('isImageData', () => {
       'data:image/png,notbase64',
       'https://example.com/a.png',
       'javascript:alert(1)',
-      `data:image/png;base64,${'A'.repeat(100_000)}`, // too big
+      `data:image/png;base64,${'A'.repeat(800_000)}`, // too big
       '',
       42,
       null,

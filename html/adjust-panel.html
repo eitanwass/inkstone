@@ -1,0 +1,33 @@
+  <!-- Shown while the background picture is being adjusted, in place of the tool dock (see src/ui/background.ts) -->
+  <div id="adjust-panel" class="floating-panel hidden" role="region" aria-label="Adjust image">
+    <div class="adj-head">
+      <h2 class="adj-title">Adjust image</h2>
+      <ul class="adj-hints" aria-label="How to adjust it">
+        <li><kbd>Drag</kbd> to move</li>
+        <li><kbd>Corner</kbd> to resize</li>
+        <li><kbd>Shift</kbd> snaps to the grid</li>
+        <li><kbd>Arrows</kbd> nudge (<kbd>Shift</kbd> ×10)</li>
+      </ul>
+    </div>
+    <div class="adj-controls">
+      <div class="adj-field">
+        <label for="adjust-opacity">Opacity</label>
+        <div class="adj-row">
+          <input type="range" id="adjust-opacity" class="slider" min="5" max="100" step="5" value="100" />
+          <span id="adjust-opacity-text" class="adj-value" aria-hidden="true">100%</span>
+        </div>
+      </div>
+      <div class="adj-field">
+        <label for="adjust-squares">Width in squares</label>
+        <div class="adj-row">
+          <input type="number" id="adjust-squares" min="0.5" max="2000" step="0.1" inputmode="decimal" aria-describedby="adjust-size" />
+          <span id="adjust-size" class="adj-value"></span>
+        </div>
+      </div>
+    </div>
+    <div class="adj-actions">
+      <button type="button" class="btn-secondary" id="adjust-replace">Replace…</button>
+      <button type="button" class="btn-secondary" id="adjust-remove">Remove</button>
+      <button type="button" class="btn-primary" id="adjust-done">Done</button>
+    </div>
+  </div>

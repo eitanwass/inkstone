@@ -110,3 +110,57 @@
   border-top: 1px solid var(--border);
   margin: 3px 0;
 }
+
+/* The map background's colours, in the empty-canvas menu: a row of swatches, then any colour. */
+.ctx-colors-label {
+  padding: 5px 14px 2px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-label);
+}
+.ctx-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 190px;
+  padding: 6px 14px 8px;
+}
+.ctx-swatch {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.ctx-swatch:hover {
+  transform: scale(1.12);
+}
+.ctx-swatch[aria-pressed="true"],
+.ctx-swatch-custom.selected {
+  box-shadow:
+    0 0 0 2px #1e1b17,
+    0 0 0 4px var(--accent);
+}
+.ctx-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ctx-swatch-custom {
+  background: conic-gradient(#e05c5c, #e0a85c, #c8e05c, #5cba6a, #5ce0d4, #5c8ae0, #9a5ce0, #e05caa, #e05c5c);
+}
+.ctx-swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}

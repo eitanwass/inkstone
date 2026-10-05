@@ -44,6 +44,9 @@ interface AppState {
   altHeld: boolean;
   isDragging: boolean;
   dragStart: Point | null;
+  // Moving and resizing the map's background picture (see ui/background.ts): while on, it is the only thing
+  // that can be pointed at, and the rest of the map can't be.
+  adjustingBackground: boolean;
   // Selection: array of indices into elements[]
   selected: number[];
   hoveredToken: number | null; // index
@@ -90,6 +93,7 @@ export const state: AppState = {
   dragStart: null,
   selected: [],
   hoveredToken: null,
+  adjustingBackground: false,
   isBoxSelecting: false,
   selectBox: null,
   selectionBoxAdditive: false,

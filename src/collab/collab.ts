@@ -26,7 +26,7 @@ import PartySocket from 'partysocket';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
 import type { BoardElement } from '../core/types';
-import { getImageData, receiveImage } from '../elements/token-image';
+import { getImageData, pictureOf, receiveImage } from '../elements/token-image';
 import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
 import { ensureName } from '../ui/name-dialog';
@@ -89,7 +89,10 @@ const uploadedImages = new Set<string>();
 const requestedImages = new Set<string>();
 
 const imageIds = (elements: BoardElement[]): string[] =>
-  elements.flatMap((el) => (el.type === 'token' && el.image ? [el.image] : []));
+  elements.flatMap((el) => {
+    const id = pictureOf(el);
+    return id ? [id] : [];
+  });
 
 // Sends the room the pictures these elements use, if it hasn't had them from us.
 function uploadImages(sock: PartySocket, elements: BoardElement[]): void {

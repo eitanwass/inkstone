@@ -31,6 +31,25 @@
       <span class="ctx-label"><span class="ctx-icon">❏</span> Paste</span>
       <span class="ctx-shortcut">Ctrl+V</span>
     </div>
+    <div class="ctx-divider" id="ctx-paste-divider"></div>
+    <!-- The map's background: a picture and a colour (see src/ui/background.ts) -->
+    <div class="ctx-item" id="ctx-bg-add">
+      <span class="ctx-label"><span class="ctx-icon"><svg width="14" height="14" aria-hidden="true"><use href="/icons.svg#icon-image"></use></svg></span> <span class="ctx-text">Add image…</span></span>
+    </div>
+    <div class="ctx-item" id="ctx-bg-adjust">
+      <span class="ctx-label"><span class="ctx-icon">⤢</span> Adjust image</span>
+    </div>
+    <div class="ctx-item" id="ctx-bg-remove">
+      <span class="ctx-label"><span class="ctx-icon">⌫</span> Remove image</span>
+    </div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-colors-label" id="ctx-bg-colors-label">Background color</div>
+    <div class="ctx-colors" id="ctx-bg-colors" role="group" aria-labelledby="ctx-bg-colors-label">
+      <label class="ctx-swatch ctx-swatch-custom" title="Custom color">
+        <input type="color" id="ctx-bg-color-custom" aria-label="Custom background color" />
+      </label>
+    </div>
+    <input type="file" id="bg-file" accept="image/png,image/jpeg,image/webp" hidden />
   </div>
 
   <!-- The token menu's "Conditions" submenu: every condition, ticked if the token has it (built in src/ui/context-menu.ts) -->

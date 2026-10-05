@@ -11,7 +11,7 @@ import { state } from '../core/state';
 import type { BoardElement, Bounds, Dimension, Ruler } from '../core/types';
 import { drawElementShape, getElementBounds, getElementDimensions } from '../elements';
 import { updateFirstVisitHint } from '../ui/hint';
-import { drawGrid } from './grid';
+import { drawGrid, redrawGridIfBackgroundChanged } from './grid';
 import { getHandles, HANDLE_RADIUS_PX, hasHandles } from './handles';
 
 // Sets the viewport transform and redraws. The one place that keeps the zoom
@@ -34,6 +34,7 @@ export function onMainDrawn(fn: () => void): void {
 }
 
 export function drawMain() {
+  redrawGridIfBackgroundChanged();
   mCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
   mCtx.save();

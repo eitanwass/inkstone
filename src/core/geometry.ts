@@ -3,7 +3,7 @@
 // element-type knowledge — just numbers in, numbers out.
 
 import { GRID, MAX_ZOOM, MIN_ZOOM, state } from './state';
-import type { Bounds, Corner, Point, RectElement } from './types';
+import type { Bounds, Corner, Point } from './types';
 
 export function screenToWorld(sx: number, sy: number): Point {
   return {
@@ -58,7 +58,7 @@ export function rotateVector(x: number, y: number, angle: number): Point {
   return { x: x * cos - y * sin, y: x * sin + y * cos };
 }
 
-export function rectCornerLocal(el: RectElement, id: Corner): Point {
+export function rectCornerLocal(el: Bounds, id: Corner): Point {
   const map = {
     nw: { x: el.x, y: el.y },
     ne: { x: el.x + el.w, y: el.y },

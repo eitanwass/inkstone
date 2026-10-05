@@ -130,17 +130,30 @@ export function startElementDrag(world: Point): void {
   };
 }
 
-export function applyElementDrag(world: Point): void {
+// `snap` (Shift) puts the background picture's top left corner on a grid line; otherwise it moves to the pixel.
+export function applyElementDrag(world: Point, snap = false): void {
   const drag = state.elementDrag;
   if (!drag) return;
   drag.moved = true;
   const { origin, snapshot } = drag;
-  const dx = snapToGrid(world.x - origin.x);
-  const dy = snapToGrid(world.y - origin.y);
+  // The background picture moves to the pixel, everything else a cell at a time.
+  const free = snapshot.every(({ i }) => state.elements[i]?.type === 'background');
+  const step = free ? Math.round : snapToGrid;
+  const dx = step(world.x - origin.x);
+  const dy = step(world.y - origin.y);
   snapshot.forEach(({ i, coords }) => {
     const el = state.elements[i];
     if (!el) return;
-    translateElement(el, dx, dy, coords);
+    if (free && snap && 'x' in coords) {
+      translateElement(
+        el,
+        snapToGrid(coords.x + dx) - coords.x,
+        snapToGrid(coords.y + dy) - coords.y,
+        coords,
+      );
+    } else {
+      translateElement(el, dx, dy, coords);
+    }
   });
 }
 

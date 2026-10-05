@@ -5,9 +5,9 @@ import { mainCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
 import { parseMapFile, serializeMap } from '../core/map-file';
 import { state } from '../core/state';
-import { drawGridDots } from '../draw/grid';
+import { dotColorFor, drawBackground, drawGridDots, mapColor } from '../draw/grid';
 import { drawElement, drawMain } from '../draw/render';
-import { getImageData, receiveImage } from '../elements/token-image';
+import { getImageData, pictureOf, receiveImage } from '../elements/token-image';
 import { resetView } from '../input/controls';
 import { persistMapName, pushHistory, showUndoToast } from '../input/history';
 import { mapFileName, refreshMapName } from './map-name';
@@ -38,8 +38,9 @@ function download(blob: Blob, name: string): void {
 byId('btn-save-file').addEventListener('click', () => {
   const images: Record<string, string> = {};
   for (const el of state.elements) {
-    const data = el.type === 'token' && el.image ? getImageData(el.image) : undefined;
-    if (data && el.type === 'token' && el.image) images[el.image] = data;
+    const id = pictureOf(el);
+    const data = id ? getImageData(id) : undefined;
+    if (id && data) images[id] = data;
   }
   const text = serializeMap({ name: state.mapName, elements: state.elements, images });
   download(new Blob([text], { type: 'application/json' }), `${mapFileSlug(state.mapName)}.inkstone.json`);
@@ -79,13 +80,18 @@ byId('btn-export').addEventListener('click', () => {
   if (!ctx) return;
 
   // Background
-  ctx.fillStyle = '#e9e4da';
+  ctx.fillStyle = mapColor();
   ctx.fillRect(0, 0, off.width, off.height);
 
   // Grid
   ctx.save();
   ctx.scale(2, 2);
-  drawGridDots(ctx, W, H, 'rgba(180,170,155,0.45)');
+  ctx.save();
+  ctx.translate(state.panX, state.panY);
+  ctx.scale(state.zoom, state.zoom);
+  drawBackground(ctx); // behind the dots, as on the screen
+  ctx.restore();
+  drawGridDots(ctx, W, H, dotColorFor(mapColor(), 'rgba(180,170,155,0.45)'));
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
   for (const el of state.elements) drawElement(ctx, el, false);

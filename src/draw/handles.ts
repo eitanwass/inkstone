@@ -6,6 +6,7 @@
 import { dist, rectCornerLocal, rotatePoint, rotateVector, snapToGrid } from '../core/geometry';
 import { GRID, MAX_TOKEN_RADIUS, MIN_SHAPE_SIZE, state } from '../core/state';
 import type {
+  BackgroundElement,
   BoardElement,
   Corner,
   Handle,
@@ -62,7 +63,7 @@ type DragFields<K extends HandleKind> = Omit<DragOf<K>, 'kind' | 'idx' | 'moved'
 // kind on an element of the matching type.
 interface HandleElements {
   rotate: RectElement | WallElement;
-  resize: RectElement;
+  resize: RectElement | BackgroundElement;
   endpoint: WallElement;
   'resize-radius': TokenElement;
 }
@@ -97,20 +98,24 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
   // what stops a rotated rect drifting as it's resized.
   resize: {
     start(el, handle) {
-      const rotation = el.rotation || 0;
+      const rotation = 'rotation' in el ? el.rotation || 0 : 0;
       const anchorId = ({ nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' } as Record<Corner, Corner>)[
         handle.id as Corner
       ];
       const anchorWorld = rotatePoint(rectCornerLocal(el, anchorId), elementCenter(el), rotation);
-      return { corner: handle.id as Corner, rotation, anchorWorld };
+      return { corner: handle.id as Corner, rotation, anchorWorld, aspect: el.w / el.h };
     },
-    apply(el, drag, world) {
-      const { corner, rotation, anchorWorld } = drag;
+    apply(el, drag, world, precise) {
+      const { corner, rotation, anchorWorld, aspect } = drag;
       // De-rotate the mouse position around the (fixed) anchor corner to get
       // its position in the box's local, unrotated frame.
       const local = rotatePoint(world, anchorWorld, -rotation);
-      const dx = snapToGrid(local.x - anchorWorld.x);
-      const dy = snapToGrid(local.y - anchorWorld.y);
+      // A picture is sized to the pixel, not to the grid: its own squares have to be lined up with ours. With
+      // Shift (`precise`) its dragged corner goes on a grid line instead.
+      const pictureShift = el.type === 'background' && precise;
+      const snap = el.type === 'background' ? Math.round : snapToGrid;
+      const dx = pictureShift ? snapToGrid(local.x) - anchorWorld.x : snap(local.x - anchorWorld.x);
+      const dy = pictureShift ? snapToGrid(local.y) - anchorWorld.y : snap(local.y - anchorWorld.y);
 
       const signs = {
         se: { sx: 1, sy: 1 },
@@ -118,8 +123,13 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
         ne: { sx: 1, sy: -1 },
         sw: { sx: -1, sy: 1 },
       }[corner];
-      const w = Math.max(MIN_SHAPE_SIZE, dx * signs.sx);
-      const h = Math.max(MIN_SHAPE_SIZE, dy * signs.sy);
+      let w = Math.max(MIN_SHAPE_SIZE, dx * signs.sx);
+      let h = Math.max(MIN_SHAPE_SIZE, dy * signs.sy);
+      // A picture keeps its proportions: the width decides, the height follows.
+      if (el.type === 'background') {
+        w = Math.max(MIN_SHAPE_SIZE * aspect, w);
+        h = w / aspect;
+      }
 
       // Offset of the (fixed) anchor corner from the box center, in local axes.
       const anchorOffset = {

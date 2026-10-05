@@ -5,9 +5,10 @@
 //
 // Pure, so it is unit tested. The relay keeps its own copy of the check.
 
-// A picture must be a small raster data URL. Anyone in a session can send one, so SVG (which can
-// carry script) and anything large are refused.
-export const MAX_IMAGE_LENGTH = 100_000;
+// A picture must be a raster data URL of a limited size (a token's is about 10,000 characters; a map to draw
+// over, shrunk to fit, up to this). Anyone in a session can send one, so SVG (which can carry script) and
+// anything larger are refused. Under the relay's 1 MiB per message (party/server.js keeps its own copy).
+export const MAX_IMAGE_LENGTH = 800_000;
 
 export const isImageData = (v: unknown): v is string =>
   typeof v === 'string' &&

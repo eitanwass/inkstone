@@ -45,15 +45,15 @@ const MAX_ELEMENTS = 2000;
 const MAX_TOTAL_LENGTH = 900_000;
 const MAX_NAME_LENGTH = 200;
 const MAX_PLAYER_NAME_LENGTH = 40;
-const MAX_IMAGE_LENGTH = 100_000; // the same raster-only check as src/core/image-data.ts
+const MAX_IMAGE_LENGTH = 800_000; // the same raster-only check as src/core/image-data.ts
 const MAX_IMAGES = 100;
-const MAX_IMAGES_TOTAL_LENGTH = 1_500_000;
+const MAX_IMAGES_TOTAL_LENGTH = 6_000_000; // a few pictures on the map, and every token's
 const MAX_IMAGES_PER_REQUEST = 50;
 const MAX_PLAYERS_LISTED = 50; // the count is always the true one; only the list is cut
 
 // Kept in step by hand with src/collab/changes.ts, which this file can't import.
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
-const TYPES = ['rect', 'wall', 'token', 'label'];
+const TYPES = ['rect', 'wall', 'token', 'label', 'background'];
 
 const isImageData = (v) =>
   typeof v === 'string' &&

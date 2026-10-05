@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { state } from '../../../src/core/state';
 import type { BoardElement } from '../../../src/core/types';
-import { isInteractive, isLocked, setLocked } from '../../../src/elements/layer';
+import { isBackdrop, isInteractive, isLocked, isReachable, setLocked } from '../../../src/elements/layer';
 
 const room = (): BoardElement => ({ type: 'rect', id: 'a', x: 0, y: 0, w: 40, h: 40 });
 
@@ -28,5 +29,37 @@ describe('locking', () => {
     const el = room();
     setLocked(el, false);
     expect(el).toEqual(room());
+  });
+});
+
+describe('the map background', () => {
+  const picture = (): BoardElement => ({
+    type: 'background',
+    id: 'bg',
+    x: 0,
+    y: 0,
+    w: 400,
+    h: 300,
+    image: 'abc',
+  });
+
+  it('is out of reach while drawing, and everything else is', () => {
+    state.adjustingBackground = false;
+    expect([isBackdrop(picture()), isReachable(picture()), isInteractive(picture())]).toEqual([
+      true,
+      false,
+      false,
+    ]);
+    expect([isReachable(room()), isInteractive(room())]).toEqual([true, true]);
+  });
+
+  it('is the only thing in reach while it is being adjusted', () => {
+    state.adjustingBackground = true;
+    try {
+      expect([isReachable(picture()), isInteractive(picture())]).toEqual([true, true]);
+      expect([isReachable(room()), isInteractive(room())]).toEqual([false, false]);
+    } finally {
+      state.adjustingBackground = false;
+    }
   });
 });
