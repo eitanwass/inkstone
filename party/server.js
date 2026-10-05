@@ -11,6 +11,10 @@
 // revision it has, and is sent the room's current version of whatever was touched since (or the
 // whole map, if the log doesn't reach back that far).
 //
+// Token pictures are not part of the map: a token holds the id of one, and each picture is kept once
+// (`img:<id>`), sent by a client when it first uses it and handed to any client that asks for it.
+// First one wins: a picture's id is made from its content, so it never needs to change.
+//
 // The map is kept in the object's storage (one row per element, so an edit writes one row, not the
 // whole map), so someone opening the link after everyone has left finds it as it was. A room is
 // deleted a week after its last visit (an alarm), so abandoned rooms don't fill the free plan's
@@ -34,16 +38,24 @@ const LOG_LIMIT = 100; // revisions kept: how far back a client can be caught up
 
 // The limits keep one room's size, and the message that carries it to someone joining, under
 // Cloudflare's 1 MiB per message. A change that would go over is refused like a conflict.
-const MAX_ELEMENT_LENGTH = 150_000;
+const MAX_ELEMENT_LENGTH = 20_000;
 const MAX_ELEMENTS = 2000;
 const MAX_TOTAL_LENGTH = 900_000;
 const MAX_NAME_LENGTH = 200;
 const MAX_AUTHOR_NAME_LENGTH = 40;
+const MAX_IMAGE_LENGTH = 100_000; // the same raster-only check as src/core/image-data.ts
+const MAX_IMAGES = 100;
+const MAX_IMAGES_TOTAL_LENGTH = 1_500_000;
+const MAX_IMAGES_PER_REQUEST = 50;
 
 // Kept in step by hand with src/collab/changes.ts, which this file can't import.
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const TYPES = ['rect', 'wall', 'token', 'label'];
 
+const isImageData = (v) =>
+  typeof v === 'string' &&
+  v.length <= MAX_IMAGE_LENGTH &&
+  /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(v);
 const isObject = (v) => typeof v === 'object' && v !== null;
 const isId = (v) => typeof v === 'string' && ID_RE.test(v); // test() alone would turn 42 into "42"
 const isRev = (v) => Number.isInteger(v) && v >= 0;
@@ -64,6 +76,8 @@ function elementJson(el) {
 //        this room before, the room's epoch and the last revision it has
 //   { type: 'doc', name, elements }       a map to give a fresh room
 //   { type: 'changes', base, changes }    changes made on top of revision `base`
+//   { type: 'image', id, data }           a token picture, which the room keeps if it hasn't got it
+//   { type: 'getimages', ids }            asks for pictures, each answered with an `image` message
 export function parseMessage(text) {
   if (typeof text !== 'string' || text.length > MAX_TOTAL_LENGTH) return null;
   let data;
@@ -79,6 +93,13 @@ export function parseMessage(text) {
     if (typeof author.name !== 'string' || author.name.length > MAX_AUTHOR_NAME_LENGTH) return null;
     if ((epoch !== undefined && !isId(epoch)) || (since !== undefined && !isRev(since))) return null;
     return { type: 'hello', cid, author: { id: author.id, name: author.name }, epoch, since };
+  }
+  if (data.type === 'image') {
+    return isId(data.id) && isImageData(data.data) ? { type: 'image', id: data.id, data: data.data } : null;
+  }
+  if (data.type === 'getimages') {
+    const ok = Array.isArray(data.ids) && data.ids.length <= MAX_IMAGES_PER_REQUEST && data.ids.every(isId);
+    return ok ? { type: 'getimages', ids: data.ids } : null;
   }
   if (data.type === 'doc') {
     if (!Array.isArray(data.elements) || data.elements.length > MAX_ELEMENTS) return null;
@@ -122,6 +143,9 @@ export class InkstoneRoom {
     this.epoch = ''; // names this life of the room, so a client can tell if it was deleted and remade
     this.rev = 0;
     this.log = []; // { rev, cid, by: { id, name }, at, ids, order, name }, the last LOG_LIMIT
+    this.images = new Map(); // id -> the picture's data URL
+    this.imagesTotal = 0;
+    this.imageWrites = new Set(); // picture ids to write at the next save
     this.dirty = new Set(); // ids to write (or delete) at the next save
     this.logWrites = new Set(); // revisions to write
     this.logDeletes = new Set(); // revisions to delete
@@ -140,6 +164,9 @@ export class InkstoneRoom {
     this.rev = meta?.rev ?? 0;
     for (const id of stored.get('order') ?? []) this.keep(id, stored.get(`el:${id}`));
     for (const [key, json] of stored) if (key.startsWith('el:')) this.keep(key.slice(3), json);
+    for (const [key, data] of stored) {
+      if (key.startsWith('img:') && isImageData(data)) this.addImage(key.slice(4), data);
+    }
     this.log = [...stored]
       .filter(([key]) => key.startsWith('log:'))
       .map(([, entry]) => entry)
@@ -154,6 +181,15 @@ export class InkstoneRoom {
     if (this.total - (old?.length ?? 0) + json.length > MAX_TOTAL_LENGTH) return false;
     this.total += json.length - (old?.length ?? 0);
     this.elements.set(id, json);
+    return true;
+  }
+
+  // Keeps a picture the room hasn't got; false if it has it or it doesn't fit.
+  addImage(id, data) {
+    if (this.images.has(id) || this.images.size >= MAX_IMAGES) return false;
+    if (this.imagesTotal + data.length > MAX_IMAGES_TOTAL_LENGTH) return false;
+    this.images.set(id, data);
+    this.imagesTotal += data.length;
     return true;
   }
 
@@ -308,6 +344,7 @@ export class InkstoneRoom {
       if (json === undefined) deletes.push(`el:${id}`);
       else writes.push([`el:${id}`, json]);
     }
+    for (const id of this.imageWrites) writes.push([`img:${id}`, this.images.get(id)]);
     for (const rev of this.logWrites) {
       const entry = this.log.find((e) => e.rev === rev);
       if (entry) writes.push([`log:${rev}`, entry]);
@@ -316,6 +353,7 @@ export class InkstoneRoom {
     if (this.orderDirty) writes.push(['order', [...this.elements.keys()]]);
     if (this.metaDirty) writes.push(['meta', { name: this.name, epoch: this.epoch, rev: this.rev }]);
     this.dirty = new Set();
+    this.imageWrites = new Set();
     this.logWrites = new Set();
     this.logDeletes = new Set();
     this.orderDirty = this.metaDirty = false;
@@ -338,6 +376,9 @@ export class InkstoneRoom {
     this.epoch = '';
     this.rev = 0;
     this.log = [];
+    this.images.clear();
+    this.imagesTotal = 0;
+    this.imageWrites = new Set();
     this.dirty = new Set();
     this.logWrites = new Set();
     this.logDeletes = new Set();
@@ -369,7 +410,17 @@ export class InkstoneRoom {
         return;
       }
       if (!this.sessions.has(ws)) return; // nothing is taken from a client that hasn't said hello
-      if (message.type === 'doc') {
+      if (message.type === 'getimages') {
+        for (const id of message.ids) {
+          const data = this.images.get(id);
+          if (data) ws.send(JSON.stringify({ type: 'image', id, data }));
+        }
+        return;
+      }
+      if (message.type === 'image') {
+        if (!this.addImage(message.id, message.data)) return;
+        this.imageWrites.add(message.id);
+      } else if (message.type === 'doc') {
         if (this.initialized) {
           ws.send(this.documentMessage()); // too late to give the room a map: here is its map
           return;

@@ -14,9 +14,10 @@
 // Pure (no DOM), so it is unit tested; the relay (party/server.js) applies the same changes to its
 // own copy and keeps its own copy of ID_RE and the rest, since it can't import this file.
 
+import { ID_RE } from '../core/ids';
 import type { BoardElement } from '../core/types';
 
-export const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+export { ID_RE };
 
 export type Change =
   | { t: 'set'; el: BoardElement }

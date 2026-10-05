@@ -131,7 +131,7 @@ describe('parseMessage', () => {
       doc([{ type: 'hologram', id: 'a' }]),
       doc([rect('no spaces')]),
       doc([rect('a')], 'x'.repeat(201)),
-      doc([{ ...rect('a'), pad: 'x'.repeat(150_000) }]),
+      doc([{ ...rect('a'), pad: 'x'.repeat(20_000) }]),
       JSON.stringify({ type: 'changes', changes: [del('a')] }), // no base
       changes([del('a')], -1),
       changes([del('a'), { t: 'explode' }]), // one bad change spoils the message
@@ -375,6 +375,84 @@ describe('catching a client up', () => {
     for (let i = 1; i <= 105; i++) w.say({ type: 'changes', base: i - 1, changes: [set(rect('a', i))] });
     expect(join(room, { cid: 'x', since: 4, epoch }).last().type).toBe('doc'); // the log starts at 6
     expect(join(room, { cid: 'x', since: 5, epoch }).last().type).toBe('catchup');
+  });
+});
+
+describe('token pictures', () => {
+  const PNG = 'data:image/png;base64,iVBORw0KGgo=';
+  const WEBP = 'data:image/webp;base64,UklGRg==';
+  const image = (id: string, data = PNG) => ({ type: 'image', id, data });
+
+  it('keeps a picture once, and sends it to a client that asks, and only that client', async () => {
+    const { room } = await seeded([rect('a')]);
+    const [a, b, c] = [join(room, { cid: 'a' }), join(room, { cid: 'b' }), join(room, { cid: 'c' })];
+    a.say(image('pic1'));
+    const [heardB, heardC] = [b.sent.length, c.sent.length];
+    b.say({ type: 'getimages', ids: ['pic1', 'nope'] });
+    expect(b.last()).toEqual({ type: 'image', id: 'pic1', data: PNG });
+    expect(b.sent.length).toBe(heardB + 1); // nothing for the one it hasn't got
+    expect(c.sent.length).toBe(heardC); // not pushed to others, and not a revision
+    expect(mapOf(room).rev).toBe(0);
+  });
+
+  it('keeps the first picture for an id, which never needs to change', async () => {
+    const { room } = await seeded([rect('a')]);
+    const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
+    a.say(image('pic1'));
+    a.say(image('pic1', WEBP));
+    b.say({ type: 'getimages', ids: ['pic1'] });
+    expect(b.last().data).toBe(PNG);
+  });
+
+  it('refuses a picture that is not a small raster data URL, or has a bad id', async () => {
+    const { room } = await seeded([rect('a')]);
+    const a = join(room, { cid: 'a' });
+    a.say(image('svg', 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='));
+    a.say(image('big', `data:image/png;base64,${'A'.repeat(100_000)}`));
+    a.say(image('no spaces'));
+    a.say({ type: 'getimages', ids: ['svg', 'big'] });
+    expect(a.last().type).not.toBe('image');
+  });
+
+  it('refuses a request for too many at once', () => {
+    const many = Array.from({ length: 51 }, (_, i) => `p${i}`);
+    expect(parseMessage(JSON.stringify({ type: 'getimages', ids: many }))).toBeNull();
+    expect(parseMessage(JSON.stringify({ type: 'getimages', ids: many.slice(1) }))).not.toBeNull();
+  });
+
+  it('stops keeping pictures past its limit', async () => {
+    const { room } = await seeded([rect('a')]);
+    const a = join(room, { cid: 'a' });
+    for (let i = 0; i < 105; i++) a.say(image(`p${i}`));
+    a.say({ type: 'getimages', ids: ['p99', 'p100'] });
+    expect(a.sent.slice(-1).map((m) => JSON.parse(m).id)).toEqual(['p99']);
+  });
+
+  it('takes nothing from a client that has not said hello', async () => {
+    const { room } = await seeded([rect('a')]);
+    const ws = fakeSocket();
+    room.handleSession(ws);
+    ws.say(image('pic1'));
+    const b = join(room, { cid: 'b' });
+    b.say({ type: 'getimages', ids: ['pic1'] });
+    expect(b.last().type).not.toBe('image');
+  });
+
+  it('is saved with the room, survives a restart, and goes when the room does', async () => {
+    const { room } = await seeded([rect('a')]);
+    join(room, { cid: 'a' }).say(image('pic1'));
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(state.data.get('img:pic1')).toBe(PNG);
+
+    const b = join(await openRoom(), { cid: 'b' });
+    b.say({ type: 'getimages', ids: ['pic1'] });
+    expect(b.last()).toEqual({ type: 'image', id: 'pic1', data: PNG });
+
+    await room.alarm();
+    expect(state.data.size).toBe(0);
+    const c = join(room, { cid: 'c' });
+    c.say({ type: 'getimages', ids: ['pic1'] });
+    expect(c.last().type).toBe('doc'); // nothing to send
   });
 });
 

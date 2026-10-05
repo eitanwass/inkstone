@@ -18,7 +18,7 @@ import type { Point, TokenElement } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
 import { PALETTE } from '../elements/token';
-import { shrinkImage } from '../elements/token-image';
+import { addImage, getImageData, shrinkImage } from '../elements/token-image';
 import { pushHistory } from '../input/history';
 import { setTool } from '../input/toolbar';
 import { showToast } from './toast';
@@ -106,15 +106,17 @@ const imageRemove = byId<HTMLButtonElement>('token-image-remove');
 const imagePreview = byId<HTMLImageElement>('token-image-preview');
 
 function showImage(token: TokenElement): void {
-  imagePreview.hidden = imageRemove.hidden = !token.image;
-  imagePick.classList.toggle('has-image', !!token.image);
-  imagePick.setAttribute('aria-label', token.image ? 'Change image' : 'Add image');
-  if (token.image && imagePreview.getAttribute('src') !== token.image) imagePreview.src = token.image;
+  // A picture that hasn't reached us yet (it is being fetched from the room) isn't shown.
+  const data = token.image ? getImageData(token.image) : undefined;
+  imagePreview.hidden = imageRemove.hidden = !data;
+  imagePick.classList.toggle('has-image', !!data);
+  imagePick.setAttribute('aria-label', data ? 'Change image' : 'Add image');
+  if (data && imagePreview.getAttribute('src') !== data) imagePreview.src = data;
 }
 
-function setImage(token: TokenElement, image: string | undefined): void {
+function setImage(token: TokenElement, data: string | undefined): void {
   if (!state.elements.includes(token)) return; // gone while the file was being read
-  token.image = image;
+  token.image = data && addImage(data);
   drawMain();
   pushHistory();
 }

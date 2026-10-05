@@ -7,11 +7,13 @@
 
 import { applyChanges, type Change, ensureIds } from '../collab/changes';
 import { byId } from '../core/dom';
+import { isImageData } from '../core/image-data';
 import { state } from '../core/state';
 import { storageGet, storageRemove, storageSet } from '../core/storage';
 import type { BoardElement } from '../core/types';
 import { parseElements } from '../core/validate';
 import { drawMain } from '../draw/render';
+import { addImage } from '../elements/token-image';
 import { normalizeMapName } from '../ui/map-name-text';
 import { showToast } from '../ui/toast';
 
@@ -78,7 +80,12 @@ export function loadPersistedBoard(): BoardElement[] | null {
   const saved = storageGet(STORAGE_KEY);
   if (!saved) return null;
   try {
-    return parseElements(JSON.parse(saved));
+    const raw = JSON.parse(saved);
+    // A board saved when pictures were kept inside the token: move them to the image store.
+    if (Array.isArray(raw)) {
+      for (const el of raw) if (el?.type === 'token' && isImageData(el.image)) el.image = addImage(el.image);
+    }
+    return parseElements(raw);
   } catch {
     return null;
   }

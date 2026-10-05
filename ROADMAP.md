@@ -40,8 +40,7 @@ Each item is meant to ship on its own.
 - **Token polish** (M)
   - ~~Place tokens without a name dialog: a plain disc straight away.~~
   - ~~A card above the selected token, with a name field (`src/ui/token-card.ts`).~~
-  - Image on the token. Store each image once, downscaled, and let tokens point at it,
-    so whole-map sync and saving don't carry copies; offer images already used.
+  - ~~Image on the token. Each picture is stored once, downscaled, and tokens point at it by id, so moving a token or saving the map never carries it; in a live session it goes over once.~~ (Still to do: offer pictures already used when choosing one.)
   - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
   - ~~Conditions (dead, prone, ...): badges on the token, set from its card or a right-click submenu, with your own in Settings.~~

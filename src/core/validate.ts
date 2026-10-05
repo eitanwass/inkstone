@@ -5,6 +5,7 @@
 // elements have the shape in types.ts.
 
 import { parseConditions } from '../conditions';
+import { ID_RE } from './ids';
 import type { BoardElement, ElementType } from './types';
 
 type Raw = Record<string, unknown>;
@@ -40,16 +41,8 @@ function isElement(value: unknown): value is BoardElement {
   );
 }
 
-// A token's picture must be a small raster data URL. Anyone in a session can send one, so SVG (which
-// can carry script) and anything large are refused.
-const MAX_IMAGE_LENGTH = 100_000;
-export const isTokenImage = (v: unknown): v is string =>
-  isStr(v) &&
-  v.length <= MAX_IMAGE_LENGTH &&
-  /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(v);
-
 // A valid element with anything inside it that isn't valid taken out, rather than the element
-// dropped: a token's bad conditions are cleaned (see parseConditions) and a bad picture removed,
+// dropped: a token's bad conditions are cleaned (see parseConditions) and a picture id that isn't one removed,
 // and the token stays.
 function tidy(el: BoardElement): BoardElement {
   if (el.type !== 'token') return el;
@@ -58,7 +51,7 @@ function tidy(el: BoardElement): BoardElement {
   return {
     ...rest,
     ...(conditions.length ? { conditions } : {}),
-    ...(isTokenImage(rawImage) ? { image: rawImage } : {}),
+    ...(isStr(rawImage) && ID_RE.test(rawImage) ? { image: rawImage } : {}),
   };
 }
 

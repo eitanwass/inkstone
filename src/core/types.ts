@@ -55,7 +55,8 @@ export interface TokenElement extends ElementStyle {
   // What it is under (Prone, Poisoned, a custom one...), whole objects rather than names: see
   // conditions/. None when there are none (the field is left off, not an empty list).
   conditions?: Condition[];
-  // A small picture in the disc, as a data URL (see isTokenImage in validate.ts).
+  // The id of a small picture in the disc, kept once in the image store (see core/image-data.ts and
+  // elements/token-image.ts), so the token never carries the picture itself.
   image?: string;
 }
 

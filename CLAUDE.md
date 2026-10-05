@@ -250,7 +250,7 @@ chain, so there are no circular imports to reason about.
 | `conditions/tokens.ts` | Putting conditions on tokens and taking them off (`toggleCondition`, one undo step each; at most 12 per token), and `refreshCondition`, which brings the copies on tokens up to date when a custom condition is edited. |
 | `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a person or someone in their session typed. |
 | `settings/conditions.ts` | The Conditions panel in Settings: your own conditions (add, edit, delete) with a live preview, a color and icon picker, and the defaults listed for reference. |
-| `elements/token-image.ts` | A token's picture: `shrinkImage` (center-crop to a 128px square, webp or jpeg data URL) and `imageFor` (decoded-image cache; `main.ts` registers the repaint). Stored as `image` on the token, so it saves, undoes and syncs with the map (one more reason snapshots grow; the relay's 1 MiB message limit is the ceiling). `isTokenImage` (validate.ts) only accepts small png/jpeg/webp data URLs from storage or a session, and a bad one is removed while the token stays. With a picture the token's color is the outline. |
+| `elements/token-image.ts` | The image store and a token's picture. A picture is a small data URL (`shrinkImage`: center-crop to a 128px square, webp or jpeg) kept **once**, here, in this browser (`inkstone-images`, newest 100) under an id made from its content (`hashImage` in `core/image-data.ts`, so the same picture is the same id everywhere); a token holds only that id in `image`. `addImage` stores one, `receiveImage` takes one from the room (kept only if its hash is its id), `imageFor` decodes and caches it for drawing (a missing one draws as a plain disc; `main.ts` registers the repaint). So moving, copying, undoing, saving and syncing a token never carries the picture. `isImageData` (core/image-data.ts) only accepts small png/jpeg/webp data URLs, and a token's `image` must be an id (validate.ts), so a picture can't be smuggled inside a token. A board saved by 0.6.8, with the picture inside the token, is moved to the store on load (`loadPersistedBoard`). With a picture the token's color is the outline. |
 | `ui/token-card.ts` | The card above a selected token (its name, color, image and conditions for now; HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `input/toolbar.ts` | Tool switching + the contextual style panel. |
 | `ui/color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
@@ -521,6 +521,17 @@ anyway) and `name`. So undo stays whole-snapshot (see below) while the traffic i
 difference, and two people editing *different* elements never collide. Token images no longer
 travel on every edit.
 
+**Pictures are not changes.** A token's `image` is an id (see `elements/token-image.ts`); the picture itself
+goes over the wire once, as its own message, never as part of the map. When a batch contains a token
+whose picture the room hasn't had from us, `uploadImages` first sends `{ type: 'image', id, data }`
+(`uploadedImages` remembers what was sent, and is emptied when the room's epoch changes). The relay keeps
+each picture once (`img:<id>`, first one wins, at most 100 and 1,500,000 characters a room, raster data
+URLs only) and does not forward it. A client that has a token whose picture it lacks (from `doc`,
+`catchup`, `changes`, or an `ack` fix) asks `{ type: 'getimages', ids }` and the relay answers
+with `image` messages; `receiveImage` keeps one only if its hash is the id it came under, and the map
+repaints. Requests are made again after a reconnect. Nothing needs to be asked for or sent when a
+token merely moves.
+
 **Revisions: the room is the source of truth.** The relay numbers every accepted batch of
 changes (`rev`) and keeps a log of the last 100 (`LOG_LIMIT` in party/server.js), one small
 entry each: `{ rev, cid, by: { id, name }, at, ids, order, name }`, which says who sent it and
@@ -573,8 +584,8 @@ changed (once per burst of edits, and at once when the last person leaves). Whoe
 link later, even after everyone has left, gets the map as it was. A room (and its log) is deleted a week
 after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms
 don't fill the free plan. The relay drops any message that isn't well formed (an element
-needs an id of letters, digits, `_` and `-` and a known type) or is over its limits (150,000
-characters an element, 2,000 elements, 900,000 in all, kept under Cloudflare's 1 MiB per
+needs an id of letters, digits, `_` and `-` and a known type) or is over its limits (20,000
+characters an element (they no longer carry pictures), 2,000 elements, 900,000 in all, kept under Cloudflare's 1 MiB per
 message), since what it stores lasts. It can't import `changes.ts`, so its checks are kept in
 step by hand. Tested in `tests/unit/party/`.
 

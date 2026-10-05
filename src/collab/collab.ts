@@ -27,6 +27,7 @@ import { byId } from '../core/dom';
 import { state } from '../core/state';
 import { storageGet, storageSet } from '../core/storage';
 import type { BoardElement } from '../core/types';
+import { getImageData, receiveImage } from '../elements/token-image';
 import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
 import { closePopover, positionPopover } from '../ui/popover';
@@ -99,6 +100,37 @@ let room = { epoch: '', rev: 0 };
 // the room ignores a client it has not met, and what we sent would count as sent.
 let caughtUp = false;
 
+// Pictures are not part of the map: a token holds the id of one, and each picture goes over the wire
+// once, as its own message. `uploadedImages` are the ones the room has from us (so moving a token never
+// sends its picture again), `requestedImages` the ones we have asked the room for.
+const uploadedImages = new Set<string>();
+const requestedImages = new Set<string>();
+
+const imageIds = (elements: BoardElement[]): string[] =>
+  elements.flatMap((el) => (el.type === 'token' && el.image ? [el.image] : []));
+
+// Sends the room the pictures these elements use, if it hasn't had them from us.
+function uploadImages(sock: PartySocket, elements: BoardElement[]): void {
+  for (const id of imageIds(elements)) {
+    const data = getImageData(id);
+    if (data && !uploadedImages.has(id)) {
+      sock.send(JSON.stringify({ type: 'image', id, data }));
+      uploadedImages.add(id);
+    }
+  }
+}
+
+// Asks the room for the pictures the map uses that we don't have (a token that came from someone else).
+function requestMissingImages(sock: PartySocket): void {
+  const ids = [...new Set(imageIds(state.elements))].filter(
+    (id) => !getImageData(id) && !requestedImages.has(id),
+  );
+  for (let i = 0; i < ids.length; i += 50) {
+    sock.send(JSON.stringify({ type: 'getimages', ids: ids.slice(i, i + 50) }));
+  }
+  for (const id of ids) requestedImages.add(id);
+}
+
 const remember = () => {
   synced = { elements: structuredClone(state.elements), name: state.mapName };
 };
@@ -112,6 +144,10 @@ function broadcastState() {
   ensureIds(state.elements);
   const changes = diff(synced.elements, state.elements, synced.name, state.mapName);
   if (!changes.length) return;
+  uploadImages(
+    socket,
+    changes.flatMap((c) => (c.t === 'set' ? [c.el] : [])),
+  );
   socket.send(JSON.stringify({ type: 'changes', base: room.rev, changes }));
   remember();
 }
@@ -162,6 +198,8 @@ function onMessage(sock: PartySocket, message: Message): void {
       if (message.fresh) {
         // A room nobody has used yet (a new one, or one that expired): our map becomes the room's.
         ensureIds(state.elements);
+        uploadedImages.clear();
+        uploadImages(sock, state.elements);
         sock.send(JSON.stringify({ type: 'doc', name: state.mapName, elements: state.elements }));
         remember();
         room = { epoch: '', rev: 0 }; // the ack brings the epoch
@@ -171,6 +209,7 @@ function onMessage(sock: PartySocket, message: Message): void {
         if (wasInRoom && unsentEdits) {
           showToast('Reconnected — changes you made while offline were replaced by the shared map');
         }
+        if (message.epoch !== room.epoch) uploadedImages.clear(); // a new life of the room has none of ours
         applyRemoteDocument(message.name, message.elements);
         remember();
         room = { epoch: message.epoch, rev: message.rev };
@@ -191,6 +230,10 @@ function onMessage(sock: PartySocket, message: Message): void {
       caughtUp = true;
       unsentEdits = false;
       if (ours.length) {
+        uploadImages(
+          sock,
+          ours.flatMap((c) => (c.t === 'set' ? [c.el] : [])),
+        );
         sock.send(JSON.stringify({ type: 'changes', base, changes: ours }));
         remember();
         showToast('Reconnected — your changes while offline were added to the shared map');
@@ -216,7 +259,12 @@ function onMessage(sock: PartySocket, message: Message): void {
         showToast('Someone else changed that first, so their version was kept');
       }
       break;
+    case 'image':
+      requestedImages.delete(message.id);
+      receiveImage(message.id, message.data);
+      return;
   }
+  requestMissingImages(sock);
   refreshMapName();
 }
 
@@ -247,6 +295,7 @@ function connect(sessionId: string): void {
     showToast(everOpened ? 'Reconnected' : 'Connected — this map is now shared live');
     everOpened = true;
     caughtUp = false;
+    requestedImages.clear(); // a request made on the old connection may never have arrived
     sendHello(current);
   });
   current.addEventListener('message', (evt) => {

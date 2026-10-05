@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.10 - 2026-10-05
+
+- Token pictures are lighter. A picture is now stored once, however many tokens use
+  it, so moving, copying and undoing a token no longer carries it around, and the
+  map saves and shares faster.
+- In a live session each picture is sent once, and anyone who joins asks for the
+  ones they are missing. Maps saved with pictures in an earlier version are
+  converted when they load.
+
 ## 0.6.9 - 2026-10-05
 
 - Shared maps are kept for a week after the last person leaves, so you can open the

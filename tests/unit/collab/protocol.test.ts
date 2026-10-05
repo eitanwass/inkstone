@@ -119,6 +119,22 @@ describe('an ack message', () => {
   });
 });
 
+describe('an image message', () => {
+  it('has the picture id and its data', () => {
+    expect(parseMessage({ type: 'image', id: 'abc123', data: 'data:image/png;base64,AAAA' })).toEqual({
+      type: 'image',
+      id: 'abc123',
+      data: 'data:image/png;base64,AAAA',
+    });
+  });
+
+  it('is null without a valid id or data (what the data is is checked when it is stored)', () => {
+    expect(parseMessage({ type: 'image', id: 'no spaces', data: 'x' })).toBeNull();
+    expect(parseMessage({ type: 'image', id: 'abc', data: 5 })).toBeNull();
+    expect(parseMessage({ type: 'image', data: 'x' })).toBeNull();
+  });
+});
+
 describe('anything else', () => {
   it('is not a message', () => {
     for (const data of [

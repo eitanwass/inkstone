@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { boardElements, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
+import { boardElements, placeRoom, placeToken, resetBoard, worldToScreenFn } from './helpers.js';
 
 // Loads the app with a fake clock (so the socket's reconnect delay can be
 // stepped through deterministically) and a stand-in for the relay. The relay
@@ -139,6 +139,89 @@ test('a reconnect never re-seeds the room with the creator’s local board', asy
   await expect(page.locator('#collab-status')).toHaveText('Live');
   // it only says hello: nothing to seed, and nothing changed while it was away
   expect(sent.filter((s) => s.connection === 1).map((s) => s.type)).toEqual(['hello']);
+});
+
+// A token with a picture in a live session: the picture goes over once, on its own, and is asked for by
+// whoever needs it. (Placing the token and choosing the file are the same steps as in token-image.spec.js.)
+test('a picture is sent once, before the token that uses it, and never again when the token moves', async ({
+  page,
+}) => {
+  const sent = [];
+  await loadWithMockRelay(page, { onMessage: (_connection, message) => sent.push(message) });
+  await page.click('#btn-share');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+  const toScreen = await worldToScreenFn(page);
+  await placeToken(page, toScreen, 160, 160);
+  await page.click('#tool-select');
+  await page.mouse.click(toScreen(180, 180).x, toScreen(180, 180).y);
+  await page.setInputFiles('#token-image-file', {
+    name: 'face.png',
+    mimeType: 'image/png',
+    buffer: await page
+      .evaluate(() => {
+        const c = document.createElement('canvas');
+        c.width = c.height = 4;
+        return Array.from(atob(c.toDataURL('image/png').split(',')[1]), (ch) => ch.charCodeAt(0));
+      })
+      .then((bytes) => Buffer.from(bytes)),
+  });
+  await expect(page.locator('#token-image-preview')).toBeVisible();
+
+  // move it, then move it again
+  for (const dx of [80, 80]) {
+    const at = (await boardElements(page))[0];
+    const from = toScreen(at.x, at.y);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + dx, from.y, { steps: 5 });
+    await page.mouse.up();
+  }
+
+  const types = sent.map((m) => m.type);
+  expect(types.filter((t) => t === 'image')).toHaveLength(1);
+  const image = sent.find((m) => m.type === 'image');
+  expect(image.data).toMatch(/^data:image\/(webp|jpeg);base64,/);
+  // it went before the first change that used it, and no change carries it
+  const firstUse = sent.findIndex((m) => m.type === 'changes' && JSON.stringify(m).includes(image.id));
+  expect(sent.findIndex((m) => m.type === 'image')).toBeLessThan(firstUse);
+  expect(JSON.stringify(sent.filter((m) => m.type === 'changes'))).not.toContain('data:image');
+});
+
+test('a token that arrives with a picture we do not have asks for it, and keeps it when it comes', async ({
+  page,
+}) => {
+  const asked = [];
+  const connections = await loadWithMockRelay(page, {
+    onMessage: (_connection, message) => asked.push(message),
+  });
+  const data = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 4;
+    return c.toDataURL('image/png');
+  });
+  // its id is the picture's hash, which the app itself says
+  const id = await page.evaluate(
+    async (data) => (await import('/src/core/image-data.ts')).hashImage(data),
+    data,
+  );
+  await page.click('#btn-share');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+
+  const token = (image) => ({ type: 'token', id: 't1', x: 180, y: 180, image });
+  connections[0].send(JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'set', el: token(id) }] }));
+  await expect.poll(() => asked.find((m) => m.type === 'getimages')?.ids).toEqual([id]);
+  expect(await page.evaluate(() => localStorage.getItem('inkstone-images'))).toBeNull();
+
+  // a picture that isn't what its id says is refused, and then the real one is kept
+  connections[0].send(JSON.stringify({ type: 'image', id, data: 'data:image/png;base64,AAAA' }));
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => localStorage.getItem('inkstone-images'))).toBeNull();
+  connections[0].send(JSON.stringify({ type: 'image', id, data }));
+  await expect
+    .poll(async () =>
+      Object.keys(await page.evaluate(() => JSON.parse(localStorage.getItem('inkstone-images')))),
+    )
+    .toEqual([id]);
 });
 
 test('the red live indicator appears under the action cluster only while the map is shared', async ({

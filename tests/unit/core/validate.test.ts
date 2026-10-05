@@ -123,26 +123,27 @@ describe("a token's conditions", () => {
 });
 
 describe('token images', () => {
-  const PNG = 'data:image/png;base64,iVBORw0KGgo=';
   const withImage = (image: unknown) => ({ type: 'token', x: 0, y: 0, image });
   const imageOf = (image: unknown) => (parseElements([withImage(image)]) as { image?: string }[])[0].image;
 
-  it('keeps a small raster picture', () => {
-    expect(imageOf(PNG)).toBe(PNG);
-    expect(imageOf('data:image/webp;base64,AAAA')).toBeDefined();
+  it('keeps a picture id', () => {
+    expect(imageOf('1a2b3c4d5e6f7')).toBe('1a2b3c4d5e6f7');
+    expect(imageOf('abc_DEF-1')).toBe('abc_DEF-1');
   });
 
-  it('removes anything else, but keeps the token', () => {
+  it('removes anything that is not an id, picture data included, but keeps the token', () => {
     const bad = [
-      'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+      'data:image/png;base64,iVBORw0KGgo=', // a picture is never kept inside a token
       'https://example.com/a.png',
       'javascript:alert(1)',
-      `data:image/png;base64,${'A'.repeat(100_000)}`,
+      'has spaces',
+      '',
+      'x'.repeat(65),
       42,
     ];
     for (const image of bad) {
       expect(parseElements([withImage(image)])).toHaveLength(1);
-      expect(imageOf(image)).toBeUndefined();
+      expect(imageOf(image), String(image).slice(0, 30)).toBeUndefined();
     }
   });
 });
