@@ -1,8 +1,7 @@
 // ── Tool selection & the contextual style panel ────────────────
 // setTool() resets interaction state and toggles which style controls are
-// visible — not every tool uses stroke/fill/width the same way (wall has
-// no fill, labels have no fill or width), and labels repurpose the "Size"
-// slider to mean font size instead of stroke width.
+// visible — not every tool uses stroke/fill/width the same way (a wall has
+// no fill). The text tool has no panel: a label's size and colour are set in its own card.
 
 import { iCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
@@ -34,21 +33,14 @@ interface StylePanelRule {
   stroke: boolean;
   width: boolean;
   fill: boolean;
-  preview: boolean;
 }
 
 const STYLE_PANEL_RULES: Partial<Record<Tool, StylePanelRule>> = {
-  rect: { stroke: true, width: true, fill: true, preview: false },
-  wall: { stroke: true, width: true, fill: false, preview: false },
-  text: { stroke: true, width: true, fill: false, preview: true },
+  rect: { stroke: true, width: true, fill: true },
+  wall: { stroke: true, width: true, fill: false },
 };
 
-// The "Size" slider is shared: it controls stroke width for shapes, but
-// font size for labels — same control, different unit, depending on tool.
-const SIZE_SLIDER_RANGES: Record<string, { min: number; max: number }> = {
-  default: { min: 1, max: 20 },
-  text: { min: 10, max: 32 },
-};
+const WIDTH_RANGE = { min: 1, max: 20 }; // the "Size" slider is the stroke width
 
 export function updateStylePanel() {
   const rule = STYLE_PANEL_RULES[state.tool];
@@ -59,25 +51,13 @@ export function updateStylePanel() {
   byId('style-divider-width').classList.toggle('hidden', !rule.width);
   byId('style-group-fill').classList.toggle('hidden', !rule.fill);
   byId('style-divider-fill').classList.toggle('hidden', !rule.fill);
-  byId('style-group-preview').classList.toggle('hidden', !rule.preview);
-  byId('style-divider-preview').classList.toggle('hidden', !rule.preview);
 
   if (rule.width) {
-    const range = SIZE_SLIDER_RANGES[state.tool] || SIZE_SLIDER_RANGES.default;
-    const value = state.tool === 'text' ? state.fontSize : state.strokeWidth;
-    widthSlider.min = String(range.min);
-    widthSlider.max = String(range.max);
-    widthSlider.value = String(value);
-    byId('stroke-width-val').textContent = String(value);
+    widthSlider.min = String(WIDTH_RANGE.min);
+    widthSlider.max = String(WIDTH_RANGE.max);
+    widthSlider.value = String(state.strokeWidth);
+    byId('stroke-width-val').textContent = String(state.strokeWidth);
   }
-
-  updateLabelPreview();
-}
-
-export function updateLabelPreview() {
-  const preview = byId('label-preview-text');
-  preview.style.color = state.strokeColor;
-  preview.style.fontSize = `${state.fontSize}px`;
 }
 
 document.querySelectorAll<HTMLElement>('.tool-btn').forEach((btn) => {
@@ -88,9 +68,6 @@ document.querySelectorAll<HTMLElement>('.tool-btn').forEach((btn) => {
 
 const widthSlider = byId<HTMLInputElement>('stroke-width');
 widthSlider.addEventListener('input', () => {
-  const value = parseInt(widthSlider.value, 10);
-  if (state.tool === 'text') state.fontSize = value;
-  else state.strokeWidth = value;
+  state.strokeWidth = parseInt(widthSlider.value, 10);
   byId('stroke-width-val').textContent = widthSlider.value;
-  updateLabelPreview();
 });

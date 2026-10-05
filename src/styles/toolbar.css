@@ -37,12 +37,6 @@
   text-transform: uppercase;
 }
 
-#label-preview-text {
-  font-family: "Inter Variable", system-ui, sans-serif;
-  line-height: 1;
-  white-space: nowrap;
-}
-
 /* ── Icon buttons (action cluster) ───────────────────────────── */
 .icon-btn {
   width: 34px;

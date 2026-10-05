@@ -45,8 +45,9 @@ Each item is meant to ship on its own.
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
   - ~~Conditions (dead, prone, ...): badges on the token, set from its card or a right-click submenu, with your own in Settings.~~
   - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~ (Ctrl+D, or Duplicate in the token's menu.)
-- **Text and label styling**: bold/size presets and a background plate so labels
-  read over busy maps. (S)
+- **Text and label styling** (S)
+  - ~~Edit a label in place, and set its size and colour in a card beside it; the text tool places and opens a label in one click.~~
+  - Font family, bold, and a background plate so labels read over busy maps.
 - **Layer controls**: lock an element, send to back, hide/show a group, so a
   background room isn't dragged by accident. (M)
 - **Right-click and long-press menus reachable by keyboard** (known a11y gap). (M)

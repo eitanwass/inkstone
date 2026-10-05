@@ -9,7 +9,7 @@ import type { Tool } from '../core/types';
 import { showConfirm } from '../ui/modal';
 import {
   closeShortcutsHelp,
-  editTokenName,
+  editSelectedText,
   fitMapToScreen,
   nudgeSelected,
   resetView,
@@ -75,11 +75,13 @@ document.addEventListener('keydown', (e) => {
 
   if (!mod && key === 'f') fitMapToScreen();
 
-  // Enter types a name into the selected token. Only from the map itself: on a focused button, Enter
-  // must still press it.
+  // Enter edits the text of the selected token (its name) or label. Only from the map itself: on a
+  // focused button, Enter must still press it.
   if (!mod && key === 'enter' && ['BODY', 'CANVAS'].includes((e.target as HTMLElement).tagName)) {
-    editTokenName();
-    if (document.activeElement?.id === 'token-name-field') e.preventDefault(); // not typed into the field as it opens
+    editSelectedText();
+    // not typed into the field it opens
+    if (['token-name-field', 'text-label-input'].includes(document.activeElement?.id ?? ''))
+      e.preventDefault();
   }
   if (key === '?') toggleShortcutsHelp();
   if (key === 'escape') closeShortcutsHelp();

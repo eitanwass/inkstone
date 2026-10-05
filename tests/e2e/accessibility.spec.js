@@ -234,17 +234,3 @@ test('the confirm dialog focuses Cancel, keeps Tab inside, and restores focus on
   await expect(page.locator('#modal-overlay')).toBeHidden();
   await expect(page.locator('#btn-clear')).toBeFocused();
 });
-
-test('a text dialog traps focus and returns it to where it came from', async ({ page }) => {
-  await page.click('#tool-text');
-  const toScreen = await worldToScreenFn(page);
-  const p = toScreen(160, 160);
-  await page.mouse.click(p.x, p.y);
-  await expect(page.locator('#text-label-overlay')).toBeVisible();
-  await expect(page.locator('#text-label-input')).toBeFocused();
-
-  await page.keyboard.press('Shift+Tab'); // from the first field it wraps to the last button
-  await expect(page.locator('#text-label-confirm')).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(page.locator('#text-label-input')).toBeFocused();
-});

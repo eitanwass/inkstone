@@ -184,7 +184,7 @@ function reads, including those of its dependencies, must be in `includeFiles`.
   swatches use `aria-pressed`, popover buttons use `aria-expanded` (kept in
   sync by `positionPopover` / `closePopover` in `popover.ts`) — update them in
   the same place the visual `active` class changes.
-- Modals (`showConfirm`, `setupInputDialog` in `dialogs.ts`, and the "What's
+- Modals (`showConfirm` in `modal.ts`, and the "What's
   new" modal) trap focus, move focus in, and give it back on close. A modal's
   backdrop should *fade* in (never scale, or it briefly stops covering the
   screen); only the box itself scales.
@@ -243,7 +243,9 @@ chain, so there are no circular imports to reason about.
 | `ui/focus.ts` | `trapFocus` / `restoreFocus` for modals. |
 | `ui/modal.ts` | The generic confirm dialog. |
 | `ui/context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
-| `ui/dialogs.ts` | The text-label placement dialog. |
+| `ui/label-editor.ts` | Editing a label's text in place: a field (`#label-editor`) laid over the label on the map, at its own size and colour, growing as it is typed into and following pan and zoom (positioned from `onMainDrawn`, which now holds a list of hooks). Reached by double-click, Enter (`editSelectedText` in controls.ts, which also names a selected token) or "Edit Text" in the label's right-click menu, and **by the text tool** (`textToolClick`): a click on a label opens it, like double-clicking it with the select tool; a **drag** marks out an area for a new label (`textToolArea`, a rubber-band box shown while dragging; a drag under 5px is still a click): the label goes at the area's top left and its font size is the area's height, clamped to 8–72 (a label is one line, so the width is the text's own, and a drag-sized label doesn't change what the next one starts as); a click anywhere else (placed when the pointer is released, so the browser moving focus as the press ends can't take it from the new field) puts a new, empty label there (`placeLabel`), selects it and opens it, with its card; there is no dialog. A new label is on the map for the field and card to work on but is *pending* (`isPendingLabel`): it joins the saved map, the undo history and a live session only when it has text, as one step with whatever size and colour it was given; blank or Escape and it was never there. Going to the card to style it doesn't end the edit (nor lose a label with no text yet); leaving both does. Enter or clicking away keeps the text (one undo step; blank or unchanged is none), Escape puts the old text back. `state.editingLabel` keeps the canvas from drawing the label's own text under the field. |
+| `ui/label-card.ts` | The card next to a selected label (markup `#label-card`; the label's counterpart of the token card): a size slider (8 to 72) and its colour (the `LABEL_COLORS` swatches from `elements/label.ts`, which are the style panel's stroke colours, plus a ring for any colour). It shows for a single selected label with the select *or text* tool, and what is set there becomes what the next new label starts as (`state.labelStyle`, for this visit only). A change shows on the map as it is made and is one undo step (the slider when it is let go, a swatch when clicked, the ring's picker when it closes). The card is lined up with the label's left edge, not its middle, and is held still while the slider is dragged, because the label grows under it and a card that tried to stay centred slid about under the pointer. Font family and the like are meant to join it. |
+| `ui/card-placement.ts` | Pure: `cardPosition`, where a floating card goes next to what is selected (above it, below if the top of the screen is in the way, kept on screen). Used by the token card and the label card. |
 | `elements/token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
 | `conditions/index.ts` | Pure: what a condition is (`{ id, name, color, icon }`), the icon library (`ICONS`, built from the standalone SVG files in `src/conditions/icons/`, one per icon and named for it: a 24-unit box with one `<path>`, line styling on the `<svg>`, `stroke-dasharray` on the path for a dashed one. They are read at build time with `import.meta.glob` and `parseIconSvg` takes the path out, which is drawn on the canvas as a `Path2D` and in the page as an `<svg>` path. To add an icon, add a file there: it appears in the Settings icon picker, and a test checks each file is a clean single-path SVG), the sixteen `DEFAULT_CONDITIONS` (the 5e conditions plus Dead), and the checks (`isCondition`, `parseConditions`) used for anything read from storage or from a session. |
 | `conditions/library.ts` | The conditions a person can choose from: the defaults plus their own custom ones, kept in this browser under `inkstone-conditions` (ids start `custom-`, so nothing can pose as a default). `draftProblem` says in words why a draft can't be used (name missing or taken, any capitals, defaults included). |
@@ -470,10 +472,9 @@ instead of outlining it.
 canvas (no sidebar) — the brand mark (top-left) and HUD readout (bottom-right:
 cursor coords + zoom on one line, app version on the line below) are
 non-interactive (`pointer-events: none`) and faded; the tool dock, style
-panel, and action cluster are opaque. The style panel's "Size" slider is
-shared and repurposed per tool (`SIZE_SLIDER_RANGES`): stroke width for
-rect/wall, font size for labels — same control, different unit, only one
-of which is ever active at a time via `state.tool`.
+panel, and action cluster are opaque. The style panel (stroke, fill and the "Size"
+slider, which is the stroke width) is for the rect and wall tools; the text tool has none, because a
+label's size and colour are set in its own card (`label-card.ts`).
 
 **Toolbar/menu icons** are `<symbol>`s in `public/icons.svg`, referenced via
 `<svg><use href="/icons.svg#icon-name"></use></svg>` rather than inline SVG

@@ -45,8 +45,9 @@ test('text drawn on the map uses the same font as the UI', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('#tool-rect');
   await page.waitForFunction(() => document.fonts.check('14px "Inter Variable"'));
-  // The label tool's live preview is real text in the canvas's font stack.
+  // The field a label is typed into is real text in the canvas's font stack.
   await page.click('#tool-text');
-  const family = await page.locator('#label-preview-text').evaluate((el) => getComputedStyle(el).fontFamily);
+  await page.mouse.click(500, 400);
+  const family = await page.locator('#label-editor').evaluate((el) => getComputedStyle(el).fontFamily);
   expect(family).toMatch(/^"?Inter Variable"?/);
 });

@@ -11,6 +11,7 @@ import { GRID, state } from '../core/state';
 import type { Bounds } from '../core/types';
 import { drawMain, setView } from '../draw/render';
 import { getElementBounds, translateElement } from '../elements';
+import { editLabel } from '../ui/label-editor';
 import { closePopover } from '../ui/popover';
 import { focusTokenName } from '../ui/token-card';
 import { pushHistory } from './history';
@@ -97,10 +98,14 @@ document.addEventListener('click', (e) => {
   if (!shortcutsPopover.contains(e.target as Node)) closeShortcutsHelp();
 });
 
-// ── Token ──────────────────────────────────────────────────────
-// Puts the cursor in the name field of the selected token's card (Enter, or a double-click).
-export function editTokenName(): void {
-  focusTokenName();
+// ── Text ───────────────────────────────────────────────────────
+// Edits the text of the one selected token or label (Enter, or a double-click): a token's name in
+// its card, a label's text in a field laid over it on the map.
+export function editSelectedText(): void {
+  if (state.selected.length !== 1) return;
+  const el = state.elements[state.selected[0]];
+  if (el?.type === 'token') focusTokenName();
+  else if (el?.type === 'label') editLabel(el);
 }
 
 // ── Selection ──────────────────────────────────────────────────
