@@ -70,13 +70,10 @@ export function parseElements(data: unknown): BoardElement[] | null {
   return Array.isArray(data) ? data.filter(isElement).map(tidy) : null;
 }
 
-// What a collaborator's message holds: either the current format, an object with
-// the elements and the map's name, or the older one, just the list of elements
-// (which says nothing about the name, so no name is returned for it). A name that
-// isn't text is ignored rather than rejecting the whole message. Null if there
-// is no usable list of elements at all.
+// What a collaborator's message holds: an object with the elements and the map's name. A name
+// that isn't text is ignored (no name is returned) rather than rejecting the whole message.
+// Null if there is no usable list of elements at all.
 export function parseSnapshot(data: unknown): BoardSnapshot | null {
-  if (Array.isArray(data)) return { elements: data.filter(isElement).map(tidy) };
   if (typeof data !== 'object' || data === null) return null;
   const { elements, name } = data as Raw;
   const parsed = parseElements(elements);

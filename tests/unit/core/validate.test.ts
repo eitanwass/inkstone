@@ -86,8 +86,8 @@ describe('parseSnapshot', () => {
     });
   });
 
-  it("reads an older client's message, a bare list of elements, with no name", () => {
-    expect(parseSnapshot([room])).toEqual({ elements: [room] });
+  it('is null for a bare list of elements (not a message)', () => {
+    expect(parseSnapshot([room])).toBeNull();
   });
 
   it('keeps an empty name, which means the map is unnamed', () => {
@@ -105,10 +105,9 @@ describe('parseSnapshot', () => {
     }
   });
 
-  it('drops invalid elements inside either format', () => {
+  it('drops invalid elements', () => {
     const bad = { type: 'hologram', x: 0, y: 0 };
     expect(parseSnapshot({ name: 'A', elements: [room, bad] })).toEqual({ name: 'A', elements: [room] });
-    expect(parseSnapshot([room, bad])).toEqual({ elements: [room] });
   });
 
   it('is null when there is no usable list of elements', () => {
@@ -157,10 +156,9 @@ describe("a token's conditions", () => {
     expect(parseElements([token([evil, prone])])).toEqual([token([prone])]);
   });
 
-  it("are cleaned for a collaborator's message too, in either format", () => {
+  it("are cleaned for a collaborator's message too", () => {
     const dirty = [token([prone, { nope: 1 }])];
     expect(parseSnapshot({ name: 'Map', elements: dirty })?.elements).toEqual([token([prone])]);
-    expect(parseSnapshot(dirty)?.elements).toEqual([token([prone])]);
   });
 
   it('are limited to what a token can carry', () => {

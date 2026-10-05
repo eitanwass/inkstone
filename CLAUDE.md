@@ -130,9 +130,9 @@ Deliberate design points:
   next, a rename sends the whole snapshot via `broadcastDocument()` (history.ts)
   without recording a history step, not a name-only message.
 - **Wire format.** `collab.ts` sends `{ name, elements }`. `parseSnapshot`
-  (validate.ts) also accepts the older bare array of elements (no name: the local
-  name is left alone), and ignores a name that isn't text while still applying the
-  elements. The relay itself is unchanged: it passes strings through.
+  (validate.ts) ignores a name that isn't text (the local name is left alone) while
+  still applying the elements; a bare array of elements is not a message. The relay
+  only checks that it is a snapshot (see "The room is kept").
 - **A peer's rename never overwrites what you're typing**: `refreshMapName()`
   leaves the field alone while it has focus, and it shows the shared name when you
   finish (or press Escape). Offline renames follow the same rule as offline edits:
@@ -540,6 +540,8 @@ notify it of changes without creating a cycle. Instead `history.ts` exposes
 `setHistoryListener(fn)`, and `collab.ts` registers its own broadcast
 function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
+
+**The room is kept.** The relay stores the latest snapshot in the Durable Object's storage (written once per burst of edits, and at once when the last person leaves), so whoever opens the link later, even after everyone has left, gets the map as it was. A room is deleted a week after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms don't fill the free plan. The relay drops any message that isn't a map snapshot or is over 1,000,000 characters (`isSnapshot`), since what it stores lasts. Tested in `tests/unit/party/`.
 
 Only the session **creator** seeds the room with their current board (on
 the **first** `open` event only, gated by a `seed` flag passed to

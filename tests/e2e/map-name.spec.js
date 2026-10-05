@@ -199,11 +199,11 @@ test.describe('the name in a shared session', () => {
     await expect(page.locator('#btn-undo')).toBeDisabled();
   });
 
-  test('messages from older clients, with no name, leave the name alone', async ({ page }) => {
+  test('a message with no name leaves the name alone', async ({ page }) => {
     const { connections } = await loadWithRelay(page);
     await rename(page, 'Mine');
 
-    connections[0].send(JSON.stringify([{ type: 'rect', x: 0, y: 0, w: 80, h: 80 }]));
+    connections[0].send(JSON.stringify({ elements: [{ type: 'rect', x: 0, y: 0, w: 80, h: 80 }] }));
     await expect.poll(() => boardElements(page)).toHaveLength(1);
     await expect(page.locator('#map-name')).toHaveValue('Mine');
   });

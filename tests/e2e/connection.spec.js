@@ -49,7 +49,7 @@ test('the status follows the connection: live, reconnecting, live again', async 
 });
 
 test('edits made while offline are replaced by the shared map, and the user is told', async ({ page }) => {
-  const connections = await loadWithMockRelay(page, { roomState: [] });
+  const connections = await loadWithMockRelay(page, { roomState: { elements: [] } });
   await page.click('#btn-share');
   await expect(page.locator('#collab-status')).toHaveText('Live');
 
