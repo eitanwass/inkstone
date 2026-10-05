@@ -209,6 +209,78 @@ test('a click on a room (not a label) with the text tool places a label on it', 
   expect((await boardElements(page)).map((e) => e.type)).toEqual(['rect', 'label']);
 });
 
+// Dragging with the text tool marks out the area for the text: its top left corner, and its height is
+// the font size (at the default zoom a world unit is a pixel on screen).
+const drag = async (page, from, to) => {
+  const a = toScreen(from[0], from[1]);
+  const b = toScreen(to[0], to[1]);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 6 });
+  await page.mouse.up();
+};
+
+test('dragging marks out the area for the text, and its height is the font size', async ({ page }) => {
+  await drag(page, [320, 320], [520, 360]); // 40 high
+  await expect(field(page)).toBeVisible();
+  await expect(field(page)).toBeFocused();
+  await expect(field(page)).toHaveCSS('font-size', '40px');
+  await expect(page.locator('#label-size')).toHaveValue('40');
+  const box = await field(page).boundingBox();
+  const at = toScreen(320, 320);
+  expect(Math.abs(box.x - at.x)).toBeLessThan(10);
+  expect(Math.abs(box.y - at.y)).toBeLessThan(10);
+
+  await page.keyboard.type('Great Hall');
+  await page.keyboard.press('Enter');
+  expect((await boardElements(page))[0]).toMatchObject({ text: 'Great Hall', fontSize: 40, x: 320, y: 320 });
+});
+
+test('the area can be dragged in any direction, and sets the label at its top left', async ({ page }) => {
+  await drag(page, [520, 400], [320, 360]); // up and to the left
+  await page.keyboard.type('Hall');
+  await page.keyboard.press('Enter');
+  expect((await boardElements(page))[0]).toMatchObject({ fontSize: 40, x: 320, y: 360 });
+});
+
+test('the size is kept between the smallest and the largest a label can be', async ({ page }) => {
+  await drag(page, [320, 320], [520, 322]); // nearly flat
+  await page.keyboard.type('Small');
+  await page.keyboard.press('Enter');
+  await page.mouse.click(900, 700);
+  await page.keyboard.press('Escape');
+  await drag(page, [320, 420], [520, 800]); // 380 high
+  await page.keyboard.type('Huge');
+  await page.keyboard.press('Enter');
+  expect((await boardElements(page)).map((e) => e.fontSize)).toEqual([8, 72]);
+});
+
+test('a drag sizes that label only: it is not what the next new label starts as', async ({ page }) => {
+  await drag(page, [320, 320], [520, 360]);
+  await page.keyboard.type('Big');
+  await page.keyboard.press('Enter');
+  await page.mouse.click(900, 700);
+  await page.keyboard.type('Plain');
+  await page.keyboard.press('Enter');
+  expect((await boardElements(page)).map((e) => e.fontSize)).toEqual([40, 14]);
+});
+
+test('a drag of a few pixels is still a click', async ({ page }) => {
+  const at = toScreen(320, 320);
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await page.mouse.move(at.x + 2, at.y + 2);
+  await page.mouse.up();
+  await expect(page.locator('#label-size')).toHaveValue('14'); // not the 2px it was dragged
+});
+
+test('dragging an area gives up nothing when the label is left blank', async ({ page }) => {
+  await drag(page, [320, 320], [520, 360]);
+  await page.keyboard.press('Enter');
+  expect(await boardElements(page)).toEqual([]);
+  await expect(page.locator('#btn-undo')).toBeDisabled();
+});
+
 test('a plain click while panning or with another tool places nothing', async ({ page }) => {
   await page.click('#tool-select');
   await clickAt(page, 320, 320);

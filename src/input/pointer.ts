@@ -21,7 +21,7 @@ import { drawMain, setView } from '../draw/render';
 import { hitTest } from '../elements';
 import { nextTokenColor } from '../elements/token';
 import { hideContextMenus } from '../ui/context-menu';
-import { textToolClick } from '../ui/label-editor';
+import { textToolArea, textToolClick } from '../ui/label-editor';
 import { hideConditionsTip, updateConditionsTip } from '../ui/token-card';
 import { editSelectedText, zoomAround } from './controls';
 import { eraseAtCell, updateEraseHover } from './erase';
@@ -76,6 +76,16 @@ function onPointerMove(e: PointerEvent): void {
 
   if (state.isPanning && state.panStart) {
     setView(e.clientX - state.panStart.x, e.clientY - state.panStart.y);
+    return;
+  }
+
+  if (pendingLabel) {
+    const { world: from, client } = pendingLabel;
+    if (Math.hypot(e.clientX - client.x, e.clientY - client.y) > TEXT_DRAG_PX) pendingLabel.dragged = true;
+    if (pendingLabel.dragged) {
+      state.selectBox = { x1: from.x, y1: from.y, x2: world.x, y2: world.y }; // the area, shown as it is marked out
+      drawMain();
+    }
     return;
   }
 
@@ -143,13 +153,15 @@ function onPointerMove(e: PointerEvent): void {
   if (e.pointerType === 'mouse') updateConditionsTip(world, e.clientX, e.clientY); // a fingertip doesn't hover
 }
 
-// Where the text tool was pressed: the label is placed when the pointer is released (and not on the
-// press, or the browser, moving focus as the press finishes, would take it from the field the new label
-// opens), if nothing turned the press into something else in between.
-let pendingLabelAt: Point | null = null;
+// The text tool's press: a click, or a drag that marks out the area for the text (its height is the font
+// size). It is carried out when the pointer is released (and not on the press, or the browser, moving
+// focus as the press finishes, would take it from the field the label opens), if nothing turned the press
+// into something else in between.
+const TEXT_DRAG_PX = 5; // less than this on screen is a click with a shaky hand, not a drag
+let pendingLabel: { world: Point; client: Point; dragged: boolean } | null = null;
 
 function onPointerDown(e: PointerEvent): void {
-  pendingLabelAt = null;
+  pendingLabel = null;
   hideConditionsTip(); // whatever happens next, the list it was showing is out of date
   if (onTouchDown(e)) return;
 
@@ -269,7 +281,7 @@ function onPointerDown(e: PointerEvent): void {
     }
 
     case 'text': {
-      pendingLabelAt = world;
+      pendingLabel = { world, client: { x: e.clientX, y: e.clientY }, dragged: false };
       break;
     }
   }
@@ -278,10 +290,14 @@ function onPointerDown(e: PointerEvent): void {
 function onPointerUp(e: PointerEvent): void {
   if (onTouchUp(e)) return;
 
-  if (pendingLabelAt) {
-    const at = pendingLabelAt;
-    pendingLabelAt = null;
-    if (state.tool === 'text') textToolClick(at.x, at.y);
+  if (pendingLabel) {
+    const { world, dragged } = pendingLabel;
+    pendingLabel = null;
+    state.selectBox = null;
+    if (state.tool !== 'text') return;
+    if (dragged) textToolArea(world, clientToWorld(e.clientX, e.clientY));
+    else textToolClick(world.x, world.y);
+    drawMain(); // without the box that marked out the area
     return;
   }
 
@@ -377,7 +393,8 @@ function onPointerUp(e: PointerEvent): void {
 }
 
 function onPointerCancel(e: PointerEvent): void {
-  pendingLabelAt = null;
+  pendingLabel = null;
+  state.selectBox = null;
   onTouchCancel(e);
   state.isPanning = false;
   cancelInProgressDrag();

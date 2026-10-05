@@ -4,9 +4,10 @@
 // Enter or clicking away keeps it (one undo step, sent to a live session once); Escape puts the old
 // text back. Blank or unchanged text is no edit: a label with no text would be invisible.
 //
-// The text tool uses the same field: a click on a label opens it, and a click anywhere else puts a new,
-// empty label there and opens that (textToolClick), with its card (label-card.ts) beside it. It joins the
-// map, and the undo history, only when it has text; blank, or Escape, and it was never there.
+// The text tool uses the same field: a click on a label opens it, a click anywhere else puts a new,
+// empty label there and opens that (textToolClick), and a drag marks out an area for a new one, whose
+// height is its size (textToolArea), with its card (label-card.ts) beside it. It joins the map, and the undo history, only
+// when it has text; blank, or Escape, and it was never there.
 //
 // The label itself isn't drawn by the canvas while it is edited (see state.editingLabel), and the
 // field follows it as the map is panned or zoomed. It is positioned from render.ts's onMainDrawn hook,
@@ -15,9 +16,10 @@
 import { iCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
 import { DEFAULT_FONT_SIZE, FONT_FAMILY, state } from '../core/state';
-import type { LabelElement } from '../core/types';
+import type { LabelElement, Point } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
+import { LABEL_SIZE } from '../elements/label';
 import { pushHistory } from '../input/history';
 
 const field = byId<HTMLInputElement>('label-editor');
@@ -66,15 +68,28 @@ export function textToolClick(x: number, y: number): void {
   }
 }
 
-// Puts a new, empty label where the text tool was clicked, selects it, and opens it to type into.
-function placeLabel(x: number, y: number): void {
+// What a drag with the text tool does: puts a new label in the area marked out, its top left corner at the
+// area's, and its size set by the area's height (a label is a single line, so the width is the text's own).
+export function textToolArea(a: Point, b: Point): void {
+  if (editing) commit();
+  const fontSize = Math.round(Math.abs(b.y - a.y));
+  placeLabel(
+    Math.min(a.x, b.x),
+    Math.min(a.y, b.y),
+    Math.min(LABEL_SIZE.max, Math.max(LABEL_SIZE.min, fontSize)),
+  );
+}
+
+// Puts a new, empty label where the text tool was clicked, selects it, and opens it to type into. Its
+// size is the last one set in a label's card unless it is given.
+function placeLabel(x: number, y: number, fontSize = state.labelStyle.fontSize): void {
   if (editing) commit();
   const label: LabelElement = {
     type: 'label',
     x,
     y,
     text: '',
-    fontSize: state.labelStyle.fontSize,
+    fontSize,
     strokeColor: state.labelStyle.color,
   };
   state.elements.push(label);

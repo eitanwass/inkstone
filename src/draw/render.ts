@@ -53,7 +53,7 @@ export function drawMain() {
   if (showsHandles && state.handleDrag?.kind === 'rotate') {
     drawRotationReadout(handleTarget, state.handleDrag.displayDeg ?? 0);
   }
-  if (state.isBoxSelecting && state.selectBox) drawSelectBox();
+  if ((state.isBoxSelecting || state.tool === 'text') && state.selectBox) drawSelectBox();
   if (state.tool === 'erase' && state.eraseHover) drawEraseHover();
   if (state.preview) drawElement(mCtx, state.preview, false, true);
 
