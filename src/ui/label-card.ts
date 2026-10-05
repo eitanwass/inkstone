@@ -1,5 +1,5 @@
 // ── The label card ──────────────────────────────────────────────
-// Click a label and a small card appears next to it with its details: its size and its colour for now,
+// Click a label and a small card appears next to it with its details: its size, text style (bold, italic, a plate) and colour for now,
 // and the font and the like are meant to join them. The card follows the label as the map is panned or
 // zoomed and goes while it is being dragged. It is the label's counterpart of the token card
 // (token-card.ts) and sits where it does, above, or below if the top of the screen is in the way.
@@ -15,9 +15,11 @@ import type { LabelElement } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { getElementBounds } from '../elements';
 import { fontSizeOf, LABEL_COLORS, LABEL_SIZE, labelColorOf } from '../elements/label';
+import { setTextStyle } from '../elements/text-style';
 import { pushHistory } from '../input/history';
 import { cardPosition } from './card-placement';
 import { isPendingLabel } from './label-editor';
+import { mountTextStyleToggles } from './text-style-toggles';
 
 const card = byId('label-card');
 
@@ -63,6 +65,21 @@ function finishSizing(): void {
 
 size.addEventListener('change', finishSizing);
 size.addEventListener('blur', finishSizing);
+
+// ── Bold, italic, plate ────────────────────────────────────────
+// The buttons are the ones the token card has too (text-style-toggles.ts). A change is one undo step, and
+// is what the next new label starts as.
+const textStyle = mountTextStyleToggles(byId('label-text-style'), {
+  get: cardLabel,
+  set(key, on) {
+    const label = cardLabel();
+    if (!label) return;
+    setTextStyle(label, key, on);
+    state.labelStyle[key] = on;
+    drawMain();
+    keep(label);
+  },
+});
 
 // ── Colour ─────────────────────────────────────────────────────
 // The swatches, then a ring that opens the browser's own picker for any colour. A swatch is kept at
@@ -162,6 +179,7 @@ function update(): void {
     sizeValue.textContent = size.value;
   }
   showColor(label);
+  textStyle.refresh();
   if (!sizing) place(label); // held still while the slider is dragged: the label grows under it
 }
 

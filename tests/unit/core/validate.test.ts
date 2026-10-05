@@ -147,3 +147,24 @@ describe('token images', () => {
     }
   });
 });
+
+describe('text style flags', () => {
+  const styled = (type: 'label' | 'token', flags: Record<string, unknown>) =>
+    type === 'label'
+      ? { type, x: 0, y: 0, text: 'Hall', ...flags }
+      : { type, x: 0, y: 0, name: 'Bob', ...flags };
+
+  it('are kept when exactly true, on a label and on a token', () => {
+    for (const type of ['label', 'token'] as const) {
+      const flags = { bold: true, italic: true, plate: true };
+      expect(parseElements([styled(type, flags)])).toEqual([styled(type, flags)]);
+    }
+  });
+
+  it('are left off when false or anything else, but the element stays', () => {
+    for (const type of ['label', 'token'] as const) {
+      const bad = { bold: false, italic: 'yes', plate: 1 };
+      expect(parseElements([styled(type, bad)])).toEqual([styled(type, {})]);
+    }
+  });
+});

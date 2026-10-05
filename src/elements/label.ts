@@ -1,9 +1,9 @@
 // ── Text label ────────────────────────────────────────────────
 
-import { mCtx } from '../core/canvas';
 import { cellOf } from '../core/geometry';
-import { DEFAULT_FONT_SIZE, FONT_FAMILY, state } from '../core/state';
+import { DEFAULT_FONT_SIZE, state } from '../core/state';
 import type { ElementBehavior, LabelElement } from '../core/types';
+import { drawText, plateRect, type TextSpec } from './text';
 
 const DEFAULT_COLOR = '#e8dcc8';
 
@@ -21,36 +21,40 @@ export const LABEL_SIZE = { min: 8, max: 72 }; // what the card's slider allows,
 export const labelColorOf = (el: LabelElement): string => (el.strokeColor || DEFAULT_COLOR).toLowerCase();
 export const fontSizeOf = (el: LabelElement) => el.fontSize || DEFAULT_FONT_SIZE;
 
-function textWidth(el: LabelElement): number {
-  mCtx.font = `${fontSizeOf(el)}px ${FONT_FAMILY}`;
-  return mCtx.measureText(el.text).width;
-}
+// Where a label's text goes: its top left corner is the label's x, y, so the text stays put when a plate is
+// switched on (the plate reaches out around it).
+const specOf = (el: LabelElement): TextSpec => ({
+  text: el.text,
+  x: el.x,
+  y: el.y,
+  size: fontSizeOf(el),
+  color: el.strokeColor || DEFAULT_COLOR,
+  style: el,
+  align: 'left',
+  baseline: 'top',
+});
 
 export const label: ElementBehavior<LabelElement> = {
   draw(ctx, el, isSelected) {
-    const size = fontSizeOf(el);
-    ctx.font = `${size}px ${FONT_FAMILY}`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+    const spec = specOf(el);
     if (isSelected) {
+      const { x, y, w, h } = plateRect(spec);
       ctx.save();
       ctx.fillStyle = 'rgba(201,168,76,0.15)';
-      ctx.fillRect(el.x - 2, el.y - 2, ctx.measureText(el.text).width + 4, size + 4);
+      ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
       ctx.restore();
     }
     if (el === state.editingLabel) return; // the field over it is its text
-    ctx.fillStyle = el.strokeColor || DEFAULT_COLOR;
-    ctx.fillText(el.text, el.x, el.y);
+    drawText(ctx, spec);
   },
 
   bounds(el) {
-    return { x: el.x, y: el.y, w: textWidth(el), h: fontSizeOf(el) };
+    return plateRect(specOf(el));
   },
 
   hit(el, wx, wy) {
-    const w = textWidth(el),
-      h = fontSizeOf(el);
-    return wx >= el.x - 2 && wx <= el.x + w + 2 && wy >= el.y - 2 && wy <= el.y + h + 2;
+    const { x, y, w, h } = plateRect(specOf(el));
+    return wx >= x - 2 && wx <= x + w + 2 && wy >= y - 2 && wy <= y + h + 2;
   },
 
   // Just the cell the label's anchor point sits in.

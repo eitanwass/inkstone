@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.12 - 2026-10-05
+
+- Bold, italic and a background plate for labels. Select a label and use the three
+  buttons in its card; the plate is dark behind light text and light behind dark
+  text, so a label reads over a busy map. The next label you place starts with the
+  style you last used.
+- Token names can be bold, italic or on a plate too, from the buttons in the token's
+  card.
+
 ## 0.6.11 - 2026-10-05
 
 - Labels are easier to work with. Double-click a label (or select it and press Enter, or

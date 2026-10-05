@@ -3,12 +3,12 @@
 // variable sizing have no radius, so every reader falls back to
 // DEFAULT_TOKEN_RADIUS.
 
-import { mCtx } from '../core/canvas';
 import { dist } from '../core/geometry';
 import { formatDistance } from '../core/measure';
 import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID, state } from '../core/state';
 import type { ElementBehavior, TokenElement } from '../core/types';
 import { crossOut, drawBadges, isDead } from './badges';
+import { drawText, plateRect, type TextSpec } from './text';
 import { imageFor } from './token-image';
 
 const DEFAULT_COLOR = '#e05c5c';
@@ -42,6 +42,19 @@ function lighten(hex: string, amount: number): string {
   const b = Math.min(255, (num & 0xff) + amount);
   return `rgb(${r},${g},${b})`;
 }
+
+// Where a token's name goes: centred under the disc, in white, styled as the token says.
+const nameSpec = (el: TokenElement, r: number): TextSpec => ({
+  text: el.name ?? '',
+  x: el.x,
+  y: el.y + r + 10,
+  size: nameFontSize(r),
+  color: '#fff',
+  style: el,
+  align: 'center',
+  baseline: 'middle',
+  outline: true,
+});
 
 export const token: ElementBehavior<TokenElement> = {
   // Its width, in whole squares (Medium is one square, 5 ft; Large two, and so on), as a ruler
@@ -103,14 +116,8 @@ export const token: ElementBehavior<TokenElement> = {
         ctx.fillText(el.name.slice(0, 2).toUpperCase(), el.x, el.y + 1);
       }
 
-      // Name below — outlined so it reads on the light canvas background
-      ctx.font = `${nameFontSize(r)}px ${FONT_FAMILY}`;
-      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-      ctx.lineWidth = 3;
-      ctx.lineJoin = 'round';
-      ctx.strokeText(el.name, el.x, el.y + r + 10);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(el.name, el.x, el.y + r + 10);
+      // Name below: outlined so it reads on the light canvas background, or on a plate if it has one
+      drawText(ctx, nameSpec(el, r));
     }
 
     // Dead is crossed out; anything else it is under shows as badges.
@@ -122,11 +129,10 @@ export const token: ElementBehavior<TokenElement> = {
     const drawR = radiusOf(el);
     const r = drawR + 2; // small pad beyond the visible circle
     if (!el.name) return { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
-    // Include the name label drawn below the token.
-    const fontSize = nameFontSize(drawR);
-    mCtx.font = `${fontSize}px ${FONT_FAMILY}`;
-    const halfW = Math.max(r, mCtx.measureText(el.name).width / 2);
-    const bottom = el.y + drawR + 10 + fontSize;
+    // Include the name label drawn below the token (and its plate).
+    const name = plateRect(nameSpec(el, drawR));
+    const halfW = Math.max(r, name.w / 2);
+    const bottom = Math.max(el.y + drawR + 10 + nameFontSize(drawR), name.y + name.h);
     return { x: el.x - halfW, y: el.y - r, w: halfW * 2, h: bottom - (el.y - r) };
   },
 

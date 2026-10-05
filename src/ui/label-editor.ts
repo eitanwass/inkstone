@@ -15,11 +15,12 @@
 
 import { iCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
-import { DEFAULT_FONT_SIZE, FONT_FAMILY, state } from '../core/state';
+import { DEFAULT_FONT_SIZE, state } from '../core/state';
 import type { LabelElement, Point } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
 import { LABEL_SIZE } from '../elements/label';
+import { fontString } from '../elements/text-style';
 import { pushHistory } from '../input/history';
 
 const field = byId<HTMLInputElement>('label-editor');
@@ -40,10 +41,12 @@ function place(): void {
     return;
   }
   const size = (label.fontSize || DEFAULT_FONT_SIZE) * state.zoom;
-  measure.font = `${size}px ${FONT_FAMILY}`;
+  measure.font = fontString(size, label);
   const screen = iCanvas.getBoundingClientRect();
   field.style.fontSize = `${size}px`;
   field.style.color = label.strokeColor || DEFAULT_COLOR;
+  field.style.fontWeight = label.bold ? '700' : '400';
+  field.style.fontStyle = label.italic ? 'italic' : 'normal';
   field.style.width = `${Math.ceil(measure.measureText(field.value || ' ').width) + 2 * PAD_PX + size}px`;
   field.style.left = `${screen.left + state.panX + label.x * state.zoom - PAD_PX - 1}px`;
   field.style.top = `${screen.top + state.panY + label.y * state.zoom - PAD_PX - 1}px`;
@@ -91,6 +94,9 @@ function placeLabel(x: number, y: number, fontSize = state.labelStyle.fontSize):
     text: '',
     fontSize,
     strokeColor: state.labelStyle.color,
+    ...(state.labelStyle.bold ? { bold: true } : {}),
+    ...(state.labelStyle.italic ? { italic: true } : {}),
+    ...(state.labelStyle.plate ? { plate: true } : {}),
   };
   state.elements.push(label);
   state.selected = [state.elements.length - 1];

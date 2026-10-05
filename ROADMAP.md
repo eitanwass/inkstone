@@ -44,10 +44,11 @@ Each item is meant to ship on its own.
   - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
   - ~~Conditions (dead, prone, ...): badges on the token, set from its card or a right-click submenu, with your own in Settings.~~
-  - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~ (Ctrl+D, or Duplicate in the token's menu.)
+  - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~
 - **Text and label styling** (S)
   - ~~Edit a label in place, and set its size and colour in a card beside it; the text tool places and opens a label in one click.~~
-  - Font family, bold, and a background plate so labels read over busy maps.
+  - ~~Bold, italic and a background plate for labels, and for token names too (shared text code, ready for any element's text).~~
+  - Font family. Text on any element (doors, and so on).
 - **Layer controls**: lock an element, send to back, hide/show a group, so a
   background room isn't dragged by accident. (M)
 - **Right-click and long-press menus reachable by keyboard** (known a11y gap). (M)

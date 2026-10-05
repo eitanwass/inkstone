@@ -2,6 +2,8 @@
        image and conditions so far; HP and AC are meant to go here too. -->
   <div id="token-card" class="hidden" role="group" aria-label="Token details">
     <input id="token-name-field" type="text" maxlength="20" placeholder="Name" aria-label="Token name" autocomplete="off" spellcheck="false" enterkeyhint="done" />
+    <!-- The name's style: bold, italic and a plate behind it (built in src/ui/text-style-toggles.ts, shared with the label card) -->
+    <div id="token-text-style" class="ts-toggles" role="group" aria-label="Name style"></div>
     <!-- Color: the token palette as swatches (built in src/ui/token-card.ts), then any color -->
     <div id="token-colors" role="group" aria-label="Token color">
       <label class="token-swatch token-swatch-custom" title="Custom color">

@@ -27,6 +27,14 @@ interface ElementStyle {
   strokeWidth?: number;
 }
 
+// How an element's text is styled: the flags are present only when on. A label has them, so does a
+// token (for its name), and so will the text any other element is given (see elements/text-style.ts).
+export interface TextStyled {
+  bold?: boolean;
+  italic?: boolean;
+  plate?: boolean; // a plate behind the text, so it reads over a busy map
+}
+
 export interface RectElement extends ElementStyle {
   type: 'rect';
   x: number;
@@ -44,7 +52,7 @@ export interface WallElement extends ElementStyle {
   y2: number;
 }
 
-export interface TokenElement extends ElementStyle {
+export interface TokenElement extends ElementStyle, TextStyled {
   type: 'token';
   x: number;
   y: number;
@@ -60,7 +68,7 @@ export interface TokenElement extends ElementStyle {
   image?: string;
 }
 
-export interface LabelElement extends ElementStyle {
+export interface LabelElement extends ElementStyle, TextStyled {
   type: 'label';
   x: number;
   y: number;

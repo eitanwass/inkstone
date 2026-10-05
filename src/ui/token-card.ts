@@ -17,11 +17,13 @@ import { DEFAULT_TOKEN_RADIUS, state } from '../core/state';
 import type { Point, TokenElement } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
+import { setTextStyle } from '../elements/text-style';
 import { PALETTE } from '../elements/token';
 import { addImage, getImageData, shrinkImage } from '../elements/token-image';
 import { pushHistory } from '../input/history';
 import { setTool } from '../input/toolbar';
 import { cardPosition } from './card-placement';
+import { mountTextStyleToggles } from './text-style-toggles';
 import { showToast } from './toast';
 
 const card = byId('token-card');
@@ -322,11 +324,25 @@ function update(): void {
   }
   if (editing && editing.token !== token) commit(); // another token was chosen: keep this one's name first
   if (!editing && document.activeElement !== nameField) nameField.value = token.name ?? '';
+  nameStyle.refresh();
   showColor(token);
   showImage(token);
   showConditions(token);
   place(token);
 }
+
+// ── The name's style ───────────────────────────────────────────
+// Bold, italic and a plate behind the name: the same buttons, drawn the same way, as a label's text.
+const nameStyle = mountTextStyleToggles(byId('token-text-style'), {
+  get: cardToken,
+  set(key, on) {
+    const token = cardToken();
+    if (!token) return;
+    setTextStyle(token, key, on);
+    drawMain();
+    pushHistory();
+  },
+});
 
 // ── Typing a name ──────────────────────────────────────────────
 nameField.addEventListener('focus', () => {

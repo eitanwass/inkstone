@@ -413,3 +413,57 @@
   gap: 6px;
   padding: 2px;
 }
+
+/* Bold, italic and plate: the buttons in a label's card and a token's. */
+.ts-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.ts-toggle {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ts-toggle:hover {
+  border-color: var(--accent-dim);
+}
+
+.ts-toggle[aria-pressed='true'] {
+  background: #3a3326;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ts-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ts-bold {
+  font-weight: 800;
+}
+
+.ts-italic {
+  font-style: italic;
+}
+
+/* The plate button is a letter on a small plate, which is what it gives. */
+.ts-plate span {
+  display: inline-block;
+  padding: 2px 5px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: #0f0d0b;
+  border-radius: 3px;
+}

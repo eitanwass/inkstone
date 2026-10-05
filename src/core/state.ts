@@ -12,6 +12,7 @@ import type {
   Point,
   Ruler,
   SelectBox,
+  TextStyled,
   Tool,
 } from './types';
 
@@ -68,9 +69,9 @@ interface AppState {
   isMeasuring: boolean;
   // Element under the eraser cursor, shown as a deletion preview
   eraseHover: EraseHover | null;
-  // What a new label starts as: the size and colour of the last one that was set in a label's card
-  // (kept for this visit only).
-  labelStyle: { fontSize: number; color: string };
+  // What a new label starts as: the size, colour and text style of the last one that was set in a label's
+  // card (kept for this visit only).
+  labelStyle: { fontSize: number; color: string } & Required<TextStyled>;
   // The label whose text is being edited in place: its field is on top of it, so it isn't drawn
   editingLabel: LabelElement | null;
 }
@@ -102,7 +103,7 @@ export const state: AppState = {
   ruler: null,
   isMeasuring: false,
   eraseHover: null,
-  labelStyle: { fontSize: DEFAULT_FONT_SIZE, color: '#e8dcc8' },
+  labelStyle: { fontSize: DEFAULT_FONT_SIZE, color: '#e8dcc8', bold: false, italic: false, plate: false },
   editingLabel: null,
 };
 

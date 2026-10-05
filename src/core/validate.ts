@@ -6,7 +6,7 @@
 
 import { parseConditions } from '../conditions';
 import { ID_RE } from './ids';
-import type { BoardElement, ElementType } from './types';
+import type { BoardElement, ElementType, TextStyled } from './types';
 
 type Raw = Record<string, unknown>;
 
@@ -41,12 +41,20 @@ function isElement(value: unknown): value is BoardElement {
   );
 }
 
+// Text style flags (bold, italic, plate) are kept only when they are exactly true, as they are saved.
+function withStyleFlags<T extends TextStyled>(el: T): T {
+  const clean = { ...el };
+  for (const key of ['bold', 'italic', 'plate'] as const) if (clean[key] !== true) delete clean[key];
+  return clean;
+}
+
 // A valid element with anything inside it that isn't valid taken out, rather than the element
 // dropped: a token's bad conditions are cleaned (see parseConditions) and a picture id that isn't one removed,
 // and the token stays.
 function tidy(el: BoardElement): BoardElement {
+  if (el.type === 'label') return withStyleFlags(el);
   if (el.type !== 'token') return el;
-  const { conditions: raw, image: rawImage, ...rest } = el;
+  const { conditions: raw, image: rawImage, ...rest } = withStyleFlags(el);
   const conditions = raw === undefined ? [] : parseConditions(raw);
   return {
     ...rest,
