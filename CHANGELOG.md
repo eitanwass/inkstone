@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 - 2026-10-05
+
+- Rotate a background image by 90 degrees when it is the wrong way round: the Adjust image
+  panel has new buttons for turning it left or right, about its middle.
+
 ## 0.8.0 - 2026-10-05
 
 - Give your map a background: right-click the empty map and choose "Add image…" to put a

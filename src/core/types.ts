@@ -92,6 +92,9 @@ export interface BackgroundElement extends ElementStyle {
   w: number;
   h: number;
   image?: string;
+  // The picture turned a quarter at a time, clockwise: 1, 2 or 3 (left off at 0). x, y, w and h are the box it
+  // fills as shown, so a quarter or three quarters turn has swapped the width and the height.
+  rotation?: number;
   // How strongly the picture shows, above 0 up to 1. Left off at 1.
   opacity?: number;
   // The colour of the map itself, #rrggbb. Left off for the default parchment.

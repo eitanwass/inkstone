@@ -146,6 +146,24 @@ export function keepBackground(): void {
   pushHistory();
 }
 
+// ── Turning the picture ────────────────────────────────────────
+// A quarter turn clockwise (`turns` 1) or back (-1) about the middle of its box, which swaps its width and height.
+// Nothing is re-encoded: the box is drawn turned (draw/grid.ts), so turning four times is exactly where it began.
+export function rotatePicture(turns: 1 | -1): void {
+  const bg = background();
+  if (!bg?.image) return;
+  const centerX = bg.x + bg.w / 2;
+  const centerY = bg.y + bg.h / 2;
+  [bg.w, bg.h] = [bg.h, bg.w];
+  bg.x = centerX - bg.w / 2;
+  bg.y = centerY - bg.h / 2;
+  const next = ((((bg.rotation ?? 0) + turns) % 4) + 4) % 4;
+  if (next) bg.rotation = next;
+  else delete bg.rotation;
+  drawMain();
+  pushHistory();
+}
+
 // ── Opacity and size of the picture ────────────────────────────
 // How strongly the picture shows, as it is dragged (`keepBackground` makes the undo step).
 function setOpacity(opacity: number): void {
@@ -214,6 +232,8 @@ export function stopAdjusting(): void {
 byId('adjust-done').addEventListener('click', stopAdjusting);
 byId('adjust-replace').addEventListener('click', chooseBackgroundPicture);
 byId('adjust-remove').addEventListener('click', removePicture);
+byId('adjust-rotate-left').addEventListener('click', () => rotatePicture(-1));
+byId('adjust-rotate-right').addEventListener('click', () => rotatePicture(1));
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && state.adjustingBackground) stopAdjusting();
 });

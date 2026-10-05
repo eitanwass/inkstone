@@ -10,18 +10,22 @@ test.beforeEach(async ({ page }) => {
 });
 
 // A PNG of this size, made in the page so the test needs no files.
-async function png(page, width, height) {
+async function png(page, width, height, halves = false) {
   const base64 = await page.evaluate(
-    ({ width, height }) => {
+    ({ width, height, halves }) => {
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#5b7fa6';
+      ctx.fillStyle = halves ? '#ff0000' : '#5b7fa6'; // halves: red on the left, blue on the right
       ctx.fillRect(0, 0, width, height);
+      if (halves) {
+        ctx.fillStyle = '#0000ff';
+        ctx.fillRect(width / 2, 0, width / 2, height);
+      }
       return canvas.toDataURL('image/png').split(',')[1];
     },
-    { width, height },
+    { width, height, halves },
   );
   return Buffer.from(base64, 'base64');
 }
@@ -35,10 +39,14 @@ const openMenu = async (page, x = 600, y = 450) => {
 };
 
 // Adds a picture the way a person does: right-click, Add image, choose a file. It then is being adjusted.
-async function addPicture(page, width = 800, height = 400) {
+async function addPicture(page, width = 800, height = 400, halves = false) {
   await openMenu(page);
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#ctx-bg-add')]);
-  await chooser.setFiles({ name: 'map.png', mimeType: 'image/png', buffer: await png(page, width, height) });
+  await chooser.setFiles({
+    name: 'map.png',
+    mimeType: 'image/png',
+    buffer: await png(page, width, height, halves),
+  });
   await expect.poll(async () => (await pictures(page)).length).toBe(1);
   await expect(page.locator('#adjust-panel')).toBeVisible();
 }
@@ -173,6 +181,49 @@ test('the panel: a typed width sets the size, keeps the proportions, and is one 
   await finish(page);
   await page.keyboard.press('Control+z');
   await expect.poll(async () => (await pictures(page))[0].w).toBe(before.w);
+});
+
+test('rotating by 90 degrees: the box turns about its middle, the picture turns with it, four turns is the start', async ({
+  page,
+}) => {
+  await addPicture(page, 800, 400, true);
+  const [start] = await pictures(page);
+  const toScreen = await worldToScreenFn(page);
+  const cx = start.x + start.w / 2;
+  const cy = start.y + start.h / 2;
+  const colourAt = async (wx, wy) => {
+    const p = toScreen(wx, wy);
+    const [r, g, b] = await pixelAt(page, 'grid-canvas', p.x, p.y);
+    // The picture is kept compressed, so a colour is only close to what was drawn.
+    return r > 200 && g < 60 && b < 60 ? 'red' : b > 200 && r < 60 && g < 60 ? 'blue' : [r, g, b];
+  };
+  // not turned: red on the left, blue on the right
+  await expect.poll(() => colourAt(cx - start.w / 4 + 7, cy + 7)).toBe('red');
+  await expect.poll(() => colourAt(cx + start.w / 4 + 7, cy + 7)).toBe('blue');
+
+  await page.click('#adjust-rotate-right'); // a quarter turn clockwise: the left edge is now the top
+  const [turned] = await pictures(page);
+  expect(turned.rotation).toBe(1);
+  expect([turned.w, turned.h]).toEqual([start.h, start.w]); // swapped
+  expect([turned.x + turned.w / 2, turned.y + turned.h / 2]).toEqual([cx, cy]); // about the middle
+  await expect.poll(() => colourAt(cx + 7, cy - turned.h / 4 + 7)).toBe('red');
+  await expect.poll(() => colourAt(cx + 7, cy + turned.h / 4 + 7)).toBe('blue');
+  await expect(page.locator('#adjust-size')).toHaveText(`× ${turned.h / 40} tall`);
+
+  await page.click('#adjust-rotate-left');
+  await page.click('#adjust-rotate-left'); // back, and a quarter turn the other way: the left edge is now the bottom
+  const [other] = await pictures(page);
+  expect(other.rotation).toBe(3);
+  await expect.poll(() => colourAt(cx + 7, cy + other.h / 4 + 7)).toBe('red');
+
+  await page.click('#adjust-rotate-right'); // three quarters and one more is the whole turn
+  const [again] = await pictures(page);
+  expect(again.rotation).toBeUndefined(); // no turn is left off
+  expect([again.x, again.y, again.w, again.h]).toEqual([start.x, start.y, start.w, start.h]);
+
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+z'); // each turn was an undo step
+  await expect.poll(async () => (await pictures(page))[0].rotation).toBe(3);
 });
 
 test('adjusting: drag to move, corner to resize, arrows nudge, Done finishes', async ({ page }) => {

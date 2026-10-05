@@ -65,13 +65,14 @@
   grid-area: controls;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 28px;
+  gap: 14px 22px;
 }
 .adj-field {
   display: grid;
   gap: 6px;
 }
-.adj-field label {
+.adj-field label,
+.adj-label {
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -85,7 +86,7 @@
   min-height: 32px;
 }
 .adj-row input[type="range"] {
-  width: 140px;
+  width: 110px;
 }
 .adj-value {
   min-width: 40px;
@@ -124,4 +125,23 @@
   .adj-actions {
     justify-content: flex-end;
   }
+}
+
+/* The two quarter-turn buttons. */
+.adj-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #2a2520;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.adj-icon-btn:hover {
+  background: #35302a;
+  color: var(--text-primary);
 }

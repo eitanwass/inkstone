@@ -33,6 +33,7 @@ const TYPE_CHECKS: Record<ElementType, (e: Raw) => boolean> = {
     isNum(e.w) &&
     isNum(e.h) &&
     optional(e.opacity, isNum) &&
+    optional(e.rotation, isNum) &&
     optional(e.color, (c) => isStr(c) && COLOR_RE.test(c)) &&
     (e.image === undefined
       ? e.color !== undefined
@@ -68,11 +69,15 @@ function withLayerFlags<T extends BoardElement>(el: T): T {
   return clean;
 }
 
-// A picture's opacity is kept only if it is a usable one (above 0, up to 1; 1 is left off).
-function withOpacity<T extends { opacity?: number }>(el: T): T {
-  const { opacity, ...rest } = el;
-  const usable = typeof opacity === 'number' && opacity > 0 && opacity < 1;
-  return (usable ? { ...rest, opacity } : rest) as T;
+// A background's opacity is kept only if it is a usable one (above 0, up to 1; 1 is left off), and its rotation
+// only if it is a quarter, a half or three quarters of a turn.
+function tidyBackground<T extends { opacity?: number; rotation?: number }>(el: T): T {
+  const { opacity, rotation, ...rest } = el;
+  return {
+    ...rest,
+    ...(typeof opacity === 'number' && opacity > 0 && opacity < 1 ? { opacity } : {}),
+    ...(rotation === 1 || rotation === 2 || rotation === 3 ? { rotation } : {}),
+  } as T;
 }
 
 // A valid element with anything inside it that isn't valid taken out, rather than the element
@@ -80,7 +85,7 @@ function withOpacity<T extends { opacity?: number }>(el: T): T {
 // and the token stays.
 function tidy(input: BoardElement): BoardElement {
   const el = withLayerFlags(input);
-  if (el.type === 'background') return withOpacity(el);
+  if (el.type === 'background') return tidyBackground(el);
   if (el.type === 'label') return withStyleFlags(el);
   if (el.type !== 'token') return el;
   const { conditions: raw, image: rawImage, ...rest } = withStyleFlags(el);

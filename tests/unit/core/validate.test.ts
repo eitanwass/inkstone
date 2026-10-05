@@ -199,6 +199,14 @@ describe('the map background', () => {
     }
   });
 
+  it('keeps a rotation of a quarter, a half or three quarters of a turn, and leaves off any other', () => {
+    const rotationOf = (rotation: unknown) =>
+      (parseElements([{ ...picture, rotation }]) as { rotation?: number }[])[0].rotation;
+    for (const turns of [1, 2, 3]) expect(rotationOf(turns)).toBe(turns);
+    for (const none of [0, 4, -1, 1.5]) expect(rotationOf(none)).toBeUndefined();
+    expect(parseElements([{ ...picture, rotation: 'left' }])).toEqual([]); // wrongly typed: dropped, as elsewhere
+  });
+
   it('needs a picture or a colour, a colour that is #rrggbb, and a picture size that is usable', () => {
     for (const bad of [
       { type: 'background', x: 0, y: 0, w: 0, h: 0 },

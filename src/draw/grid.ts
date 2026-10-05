@@ -39,7 +39,13 @@ export function drawBackground(ctx: CanvasRenderingContext2D): void {
   if (!bg || !picture) return;
   ctx.save();
   ctx.globalAlpha = bg.opacity ?? 1;
-  ctx.drawImage(picture, bg.x, bg.y, bg.w, bg.h);
+  // Turned about the middle of its box; on a quarter or three quarters turn the picture's own width runs
+  // along the box's height.
+  const turns = bg.rotation ?? 0;
+  const [w, h] = turns % 2 ? [bg.h, bg.w] : [bg.w, bg.h];
+  ctx.translate(bg.x + bg.w / 2, bg.y + bg.h / 2);
+  ctx.rotate((turns * Math.PI) / 2);
+  ctx.drawImage(picture, -w / 2, -h / 2, w, h);
   ctx.restore();
 }
 
@@ -50,7 +56,7 @@ let shownBackground = '';
 export function redrawGridIfBackgroundChanged(): void {
   const bg = backgroundOf(state.elements);
   const key = bg
-    ? `${bg.color ?? ''}|${bg.image ?? ''}|${bg.x}|${bg.y}|${bg.w}|${bg.h}|${bg.opacity ?? 1}|${bg.image && imageFor(bg.image) ? 1 : 0}`
+    ? `${bg.color ?? ''}|${bg.image ?? ''}|${bg.x}|${bg.y}|${bg.w}|${bg.h}|${bg.opacity ?? 1}|${bg.rotation ?? 0}|${bg.image && imageFor(bg.image) ? 1 : 0}`
     : '';
   if (key === shownBackground) return;
   shownBackground = key;
