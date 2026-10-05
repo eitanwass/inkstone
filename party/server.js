@@ -47,6 +47,7 @@ const MAX_IMAGE_LENGTH = 100_000; // the same raster-only check as src/core/imag
 const MAX_IMAGES = 100;
 const MAX_IMAGES_TOTAL_LENGTH = 1_500_000;
 const MAX_IMAGES_PER_REQUEST = 50;
+const MAX_PEOPLE_LISTED = 50; // the count is always the true one; only the list is cut
 
 // Kept in step by hand with src/collab/changes.ts, which this file can't import.
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -78,6 +79,8 @@ function elementJson(el) {
 //   { type: 'changes', base, changes }    changes made on top of revision `base`
 //   { type: 'image', id, data }           a token picture, which the room keeps if it hasn't got it
 //   { type: 'getimages', ids }            asks for pictures, each answered with an `image` message
+// and the room tells everyone `{ type: 'presence', count, people: [{ id, name }] }` when someone arrives
+// or leaves.
 export function parseMessage(text) {
   if (typeof text !== 'string' || text.length > MAX_TOTAL_LENGTH) return null;
   let data;
@@ -284,6 +287,24 @@ export class InkstoneRoom {
     ws.send(`{"type":"catchup","epoch":"${this.epoch}","rev":${this.rev},"changes":[${changes}]}`);
   }
 
+  // Who is here: one per person (the same person in two tabs is one), as the message every client
+  // gets when someone arrives or leaves. `count` is everyone; `people` is cut to a sensible length.
+  presenceMessage() {
+    const people = new Map();
+    for (const { author } of this.sessions.values())
+      people.set(author.id, { id: author.id, name: author.name });
+    return JSON.stringify({
+      type: 'presence',
+      count: people.size,
+      people: [...people.values()].slice(0, MAX_PEOPLE_LISTED),
+    });
+  }
+
+  sendPresence() {
+    const message = this.presenceMessage();
+    for (const [ws] of this.sessions) ws.send(message);
+  }
+
   // A batch of changes from a client, built on revision `base`. The room wins: a change to something
   // someone else's later revision touched is refused. (A client's own earlier batches don't count,
   // since it has not necessarily heard about them yet.) What is accepted becomes the next revision and
@@ -403,8 +424,10 @@ export class InkstoneRoom {
       const message = parseMessage(evt.data);
       if (!message) return;
       if (message.type === 'hello') {
+        const arrived = !this.sessions.has(ws);
         this.sessions.set(ws, { cid: message.cid, author: message.author });
         this.hello(ws, message);
+        if (arrived) this.sendPresence();
         // A visit keeps the room another week.
         if (this.initialized) this.state.storage.setAlarm(Date.now() + RETENTION_MS);
         return;
@@ -434,7 +457,7 @@ export class InkstoneRoom {
     });
 
     const leave = () => {
-      this.sessions.delete(ws);
+      if (this.sessions.delete(ws)) this.sendPresence();
       if (!this.sessions.size && this.saveTimer) this.save(); // the last one out: keep what they left
     };
     ws.addEventListener('close', leave);

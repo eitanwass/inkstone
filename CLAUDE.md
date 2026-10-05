@@ -135,7 +135,7 @@ Deliberate design points:
   leaves the field alone while it has focus, and it shows the shared name when you
   finish (or press Escape). Offline renames follow the same rule as offline edits:
   the shared map wins on reconnect.
-- **Layout.** Wide screens (over 1000px): centred in the top row. At 1000px and
+- **Layout.** Wide screens (over 1100px): centred in the top row. At 1100px and
   under there's no room beside both the brand mark and the right rail, so it moves
   to a row below them, left-aligned, leaving room for the "Live" pill (`body.is-sharing`
   is set while the pill shows). The toast sits below the name for the same reason.
@@ -270,6 +270,8 @@ chain, so there are no circular imports to reason about.
 | `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
 | `collab/collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
 | `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |
+| `core/identicon.ts` | Pure: a person's sigil from a seed (their author id): the logo's compass bezel with a tick per fold, a ring of two-tone nib-shaped petals turned 3 to 8 times, dots or strokes between them, a ring or dot at the centre, in one of the token colours. Returns shapes as path data with a role (light, dark, line, bezel); `ui/people.ts` draws them as SVG nodes. |
+| `ui/people.ts` | Who is connected: "· N" beside the Live pill and a column of sigils under it (`#people`, you first with a gold ring, then "+N" past 8). Fed by the relay's `presence` message (one per person, however many tabs; sent when someone arrives or leaves), cleared while disconnected. Names are still the "Guest 1234" placeholder. |
 | `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 

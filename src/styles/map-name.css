@@ -6,8 +6,8 @@
   transform: translateX(-50%);
   z-index: 100;
   display: inline-grid;
-  /* Stay clear of the brand mark (left) and the right rail: about 440px each side. */
-  max-width: max(140px, min(520px, calc(100vw - 880px)));
+  /* Stay clear of the brand mark (left) and the right rail: about 480px each side. */
+  max-width: max(140px, min(520px, calc(100vw - 960px)));
 }
 
 /* A hidden copy of the text and the input share one grid cell, so the box is as wide as the text. */

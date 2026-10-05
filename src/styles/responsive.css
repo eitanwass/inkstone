@@ -56,7 +56,7 @@ body.tool-ruler #interaction-canvas {
 /* ── Medium and narrow screens: there's no room for the map name beside both
    the brand mark and the right rail, so it moves to its own row beneath them,
    left-aligned, and leaves room on the right for the "Live" pill when sharing. */
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   #map-title {
     top: calc(76px + env(safe-area-inset-top, 0px));
     left: calc(24px + env(safe-area-inset-left, 0px));
@@ -178,7 +178,7 @@ body.tool-ruler #interaction-canvas {
 }
 
 /* Landscape phones: the right rail sits higher, so the name does too. */
-@media (max-height: 420px) and (max-width: 1000px) {
+@media (max-height: 420px) and (max-width: 1100px) {
   #map-title {
     top: calc(68px + env(safe-area-inset-top, 0px));
   }

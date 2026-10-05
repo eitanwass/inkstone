@@ -30,6 +30,7 @@ import type { BoardElement } from '../core/types';
 import { getImageData, receiveImage } from '../elements/token-image';
 import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
+import { showPeople } from '../ui/people';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
 import { applyChanges, type Change, diff, ensureIds, ID_RE } from './changes';
@@ -259,6 +260,9 @@ function onMessage(sock: PartySocket, message: Message): void {
         showToast('Someone else changed that first, so their version was kept');
       }
       break;
+    case 'presence':
+      showPeople(message, author.id);
+      return;
     case 'image':
       requestedImages.delete(message.id);
       receiveImage(message.id, message.data);
@@ -279,6 +283,7 @@ function connect(sessionId: string): void {
   room = { epoch: '', rev: 0 };
   caughtUp = false;
   unsentEdits = false;
+  showPeople(null, author.id);
   let everOpened = false;
   let live = false;
   setStatus('connecting');
@@ -305,6 +310,7 @@ function connect(sessionId: string): void {
   current.addEventListener('close', () => {
     if (socket !== current || !everOpened) return; // replaced by another session, or never connected
     setStatus('reconnecting');
+    showPeople(null, author.id); // the room tells us again once we are back
     // Each failed retry also fires 'close'; only announce the drop once.
     if (live) showToast('Connection lost — reconnecting…');
     live = false;

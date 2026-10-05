@@ -46,6 +46,7 @@
       <div id="collab-status" class="hidden" role="status" data-state="live">
         <span class="live-dot" aria-hidden="true"></span>
         <span id="collab-status-text">Live</span>
+        <span id="collab-count"></span>
       </div>
       <!-- Whether the map is saved in this browser (see showSaveStatus in src/input/history.ts) -->
       <span id="save-status" role="img" aria-label="Saved" title="Saved" data-state="saved">
@@ -54,4 +55,6 @@
         <svg class="save-icon save-failed" width="10" height="10" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </span>
     </div>
+    <!-- Everyone connected, one round identicon each (src/ui/people.ts) -->
+    <ul id="people" aria-label="People connected"></ul>
   </div>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.15 - 2026-10-05
+
+- In a shared map you can now see who is here: the "Live" pill shows how many people
+  are connected, and each person gets a round sigil under it (yours has a gold ring).
+  Hover one to see the name. If there are more than eight, the rest are counted as "+N".
+- The top panel is now wider, so on screens up to 1100px wide the map's name sits in
+  its own row below it instead of beside it.
+
 ## 0.6.14 - 2026-10-05
 
 - Save your map to a file and open it again: two new buttons in the top-right panel.

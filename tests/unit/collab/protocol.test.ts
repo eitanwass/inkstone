@@ -151,3 +151,21 @@ describe('anything else', () => {
     }
   });
 });
+
+describe('a presence message', () => {
+  it('has the count and the people, and drops a person without a valid id or name', () => {
+    expect(
+      parseMessage({
+        type: 'presence',
+        count: 3,
+        people: [{ id: 'a1', name: 'Guest 1' }, { id: 'no spaces', name: 'x' }, { id: 'b2' }, 7],
+      }),
+    ).toEqual({ type: 'presence', count: 3, people: [{ id: 'a1', name: 'Guest 1' }] });
+  });
+
+  it('is null without a count or a list', () => {
+    expect(parseMessage({ type: 'presence', people: [] })).toBeNull();
+    expect(parseMessage({ type: 'presence', count: -1, people: [] })).toBeNull();
+    expect(parseMessage({ type: 'presence', count: 1 })).toBeNull();
+  });
+});

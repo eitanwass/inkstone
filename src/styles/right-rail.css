@@ -115,3 +115,40 @@
     box-shadow: 0 0 0 0 rgba(229, 72, 77, 0);
   }
 }
+
+/* Who is connected: a column of round identicons under the Live pill. */
+#people {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#people:empty {
+  display: none;
+}
+.person {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  cursor: default;
+  user-select: none;
+}
+.person svg {
+  display: block;
+}
+.person.is-self {
+  border-color: var(--accent);
+}
+.person-more {
+  background: var(--bg-toolbar);
+  color: var(--text-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+}

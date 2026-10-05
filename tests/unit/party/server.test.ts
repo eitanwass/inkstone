@@ -33,10 +33,12 @@ type Room = InstanceType<typeof InkstoneRoom>;
 function fakeSocket() {
   const listeners: Record<string, (e: { data: string }) => void> = {};
   const sent: string[] = [];
+  const presence: string[] = []; // kept apart, so the tests about the map needn't step around it
   return {
     sent,
+    presence,
     accept() {},
-    send: (m: string) => void sent.push(m),
+    send: (m: string) => void (m.startsWith('{"type":"presence"') ? presence : sent).push(m),
     addEventListener: (type: string, fn: (e: { data: string }) => void) => {
       listeners[type] = fn;
     },
@@ -540,5 +542,34 @@ describe('saving', () => {
     await room.alarm();
     expect(state.data.size).toBe(0);
     expect(join(room, { cid: 'b' }).last()).toMatchObject({ type: 'doc', fresh: true, rev: 0, elements: [] });
+  });
+});
+
+describe('presence', () => {
+  const people = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
+
+  it('tells everyone who is here when someone arrives or leaves', async () => {
+    const room = await openRoom();
+    const a = join(room, { cid: 'a' });
+    expect(people(a).at(-1)).toMatchObject({ count: 1, people: [{ id: 'a-a', name: 'Guest a' }] });
+    const b = join(room, { cid: 'b' });
+    expect(people(a).at(-1).count).toBe(2);
+    expect(people(b).at(-1).count).toBe(2);
+    b.emit('close');
+    expect(people(a).at(-1).count).toBe(1);
+  });
+
+  it('counts the same person in two tabs once, and says nothing for a client that never said hello', async () => {
+    const room = await openRoom();
+    const a = join(room, { cid: 'a' });
+    const second = fakeSocket();
+    room.handleSession(second);
+    second.say({ type: 'hello', cid: 'a2', author: { id: 'a-a', name: 'Guest a' } });
+    expect(people(a).at(-1).count).toBe(1);
+    const silent = fakeSocket();
+    room.handleSession(silent);
+    const before = people(a).length;
+    silent.emit('close');
+    expect(people(a)).toHaveLength(before);
   });
 });

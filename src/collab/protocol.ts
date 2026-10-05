@@ -7,6 +7,7 @@
 //   catchup  the room's version of whatever changed while we were away
 //   changes  what someone else changed (see changes.ts), as revision `rev`
 //   image    a picture we asked for (see `getimages` in collab.ts), by its id
+//   presence who is connected: `count` people, `people` the first few ({ id, name })
 //   ack      our batch was received: the room is now at `rev`, and `fix` is the room's version of
 //            anything of ours that it refused (someone else changed it first)
 // A change that isn't valid is dropped on its own, so one bad element can't cost anyone the rest.
@@ -21,7 +22,10 @@ export type Message =
   | { type: 'catchup'; epoch: string; rev: number; changes: Change[] }
   | { type: 'changes'; rev: number; changes: Change[] }
   | { type: 'ack'; epoch: string; rev: number; fix: Change[] }
-  | { type: 'image'; id: string; data: string };
+  | { type: 'image'; id: string; data: string }
+  | { type: 'presence'; count: number; people: Person[] };
+
+export type Person = { id: string; name: string };
 
 type Raw = Record<string, unknown>;
 const isObject = (v: unknown): v is Raw => typeof v === 'object' && v !== null;
@@ -51,6 +55,15 @@ const parseChanges = (data: unknown): Change[] | null =>
   Array.isArray(data) ? data.flatMap((c) => parseChange(c) ?? []) : null;
 
 export function parseMessage(data: unknown): Message | null {
+  if (isObject(data) && data.type === 'presence') {
+    if (!isRev(data.count) || !Array.isArray(data.people)) return null;
+    const people = data.people.flatMap((p): Person[] =>
+      isObject(p) && isId(p.id) && typeof p.name === 'string'
+        ? [{ id: p.id, name: p.name.slice(0, 40) }]
+        : [],
+    );
+    return { type: 'presence', count: data.count, people };
+  }
   if (isObject(data) && data.type === 'image') {
     // What the picture is, and that it matches its id, is checked when it is stored (receiveImage).
     return isId(data.id) && typeof data.data === 'string'

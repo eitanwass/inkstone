@@ -253,3 +253,29 @@ test('the red live indicator appears under the action cluster only while the map
     'rgb(229, 72, 77)',
   );
 });
+
+test('the Live pill shows how many are connected, with an identicon for each, you first', async ({
+  page,
+}) => {
+  const connections = await loadWithMockRelay(page);
+  await page.click('#btn-share');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+  const me = await page.evaluate(() => JSON.parse(localStorage.getItem('inkstone-author')).id);
+
+  const presence = (people, count = people.length) =>
+    connections[0].send(JSON.stringify({ type: 'presence', count, people }));
+  presence([
+    { id: 'zed', name: 'Zed' },
+    { id: me, name: 'Guest' },
+  ]);
+  await expect(page.locator('#collab-status')).toContainText('2');
+  await expect(page.locator('#people .person')).toHaveCount(2);
+  await expect(page.locator('#people .person').first()).toHaveAttribute('aria-label', 'Guest (you)');
+  await expect(page.locator('#people .person svg').first()).toBeVisible();
+
+  presence([{ id: me, name: 'Guest' }], 12); // more than are listed
+  await expect(page.locator('#people .person-more')).toHaveText('+11');
+
+  connections[0].close();
+  await expect(page.locator('#people .person')).toHaveCount(0);
+});

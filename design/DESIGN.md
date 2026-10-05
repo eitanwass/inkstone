@@ -202,7 +202,7 @@ at the viewport.
 - **The map name** is plain text that becomes a field on hover and focus (a
   faint border and a small pencil appear; focus is a 2px ink outline, because gold
   fails on parchment). Unnamed, it reads "Untitled map" in a softer ink (4.9:1).
-  Above 1000px it is centred in the top row; at 1000px and under it moves to its
+  Above 1100px it is centred in the top row; at 1100px and under it moves to its
   own row beneath the brand mark and rail, left-aligned, and the toast moves below it.
 - **Breakpoints:** under 640px wide the brand mark and HUD are hidden, panels
   tighten, and the style panel scrolls sideways; under 420px tall the panels move
