@@ -51,8 +51,8 @@ Each item is meant to ship on its own.
   - Font family. Text on any element (doors, and so on).
 - **Layer controls** (M)
   - ~~Lock an element so a background room isn't dragged by accident: clicks pass through it, right-click it to unlock, a faded lock fades in on hover. From the right-click menus, for any selection.~~
-  - ~~Send to back~~ (already in the element menu).
-  - Not done: hiding elements (built, then taken out for now), named groups or layers, a lock shortcut.
+  - ~~Send to back~~
+  - Hiding elements, named groups or layers, a lock shortcut.
 - **Right-click and long-press menus reachable by keyboard** (known a11y gap). (M)
 - **More stock shapes**: doors and windows on walls, circles, stairs, and a line
   with an arrow. Rooms and walls cover dungeons; doors are what people draw next. (M)
@@ -63,8 +63,8 @@ Each item is meant to ship on its own.
 - **Several maps in the browser**: a map list with rename, duplicate, delete. This is
   the biggest everyday gap: today there is one map per browser. Local first,
   no account. (L)
-- **Save to / open from a file** (JSON). Backup, moving between devices, sharing a
-  map by email. Also the escape hatch for the no-account approach. (M)
+- ~~**Save to / open from a file** (JSON). Backup, moving between devices, sharing a
+  map by email. Also the escape hatch for the no-account approach.~~
 - **Import an image as a background** (a scanned or downloaded map to draw over). (L)
 - **Export options**: PNG with or without grid, transparent background, print
   layout at one-inch squares. (M)

@@ -220,6 +220,7 @@ chain, so there are no circular imports to reason about.
 | `core/state.ts` | The shared `state` object and the `GRID` constant. |
 | `core/types.ts` | Shared types: the `BoardElement` union, `ElementBehavior`, drag/hover shapes. |
 | `core/dom.ts` | `byId` / `qs`: typed element lookups that throw if the element is missing. |
+| `core/map-file.ts` | Pure: the `.inkstone.json` map file (`serializeMap`, `parseMapFile`: format tag + version, name, elements, and the token pictures by id). The Save/Open buttons in the action cluster are in `ui/view-actions.ts`; opening replaces the map as one undo step (with an Undo toast), goes through `parseElements`, and hands pictures to `receiveImage`, which checks their hashes. |
 | `core/validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements (and cleaning a token's bad conditions and picture). |
 | `core/canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
 | `core/geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |

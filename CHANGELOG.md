@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.14 - 2026-10-05
+
+- Save your map to a file and open it again: two new buttons in the top-right panel.
+  The file keeps the map's name, everything on it and token pictures, so you can back
+  a map up, move it to another device or send it to someone. Opening a file replaces
+  the map on screen, and Undo brings the old one back.
+
 ## 0.6.13 - 2026-10-05
 
 - Lock an element so it stays put: right-click it and choose Lock, and a background
