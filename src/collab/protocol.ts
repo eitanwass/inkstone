@@ -7,11 +7,12 @@
 //   catchup  the room's version of whatever changed while we were away
 //   changes  what someone else changed (see changes.ts), as revision `rev`
 //   image    a picture we asked for (see `getimages` in collab.ts), by its id
-//   presence who is connected: `count` people, `people` the first few ({ id, name })
+//   presence who is connected: `count` players, `players` the first few ({ id, name })
 //   ack      our batch was received: the room is now at `rev`, and `fix` is the room's version of
 //            anything of ours that it refused (someone else changed it first)
 // A change that isn't valid is dropped on its own, so one bad element can't cost anyone the rest.
 
+import type { Player } from '../core/player-name';
 import type { BoardElement } from '../core/types';
 import { parseElements } from '../core/validate';
 import { normalizeMapName } from '../ui/map-name-text';
@@ -23,9 +24,7 @@ export type Message =
   | { type: 'changes'; rev: number; changes: Change[] }
   | { type: 'ack'; epoch: string; rev: number; fix: Change[] }
   | { type: 'image'; id: string; data: string }
-  | { type: 'presence'; count: number; people: Person[] };
-
-export type Person = { id: string; name: string };
+  | { type: 'presence'; count: number; players: Player[] };
 
 type Raw = Record<string, unknown>;
 const isObject = (v: unknown): v is Raw => typeof v === 'object' && v !== null;
@@ -56,13 +55,13 @@ const parseChanges = (data: unknown): Change[] | null =>
 
 export function parseMessage(data: unknown): Message | null {
   if (isObject(data) && data.type === 'presence') {
-    if (!isRev(data.count) || !Array.isArray(data.people)) return null;
-    const people = data.people.flatMap((p): Person[] =>
+    if (!isRev(data.count) || !Array.isArray(data.players)) return null;
+    const players = data.players.flatMap((p): Player[] =>
       isObject(p) && isId(p.id) && typeof p.name === 'string'
         ? [{ id: p.id, name: p.name.slice(0, 40) }]
         : [],
     );
-    return { type: 'presence', count: data.count, people };
+    return { type: 'presence', count: data.count, players };
   }
   if (isObject(data) && data.type === 'image') {
     // What the picture is, and that it matches its id, is checked when it is stored (receiveImage).
@@ -96,7 +95,7 @@ export function parseMessage(data: unknown): Message | null {
 }
 
 // What the cursor relay sends (see party/cursors.js): where someone's pointer is, in world units, or that
-// it has gone. `cid` is their tab, `id` the person.
+// it has gone. `cid` is their tab, `id` the player.
 export type CursorMessage =
   | { type: 'cursor'; cid: string; id: string; x: number; y: number }
   | { type: 'gone'; cid: string };

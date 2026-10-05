@@ -61,7 +61,7 @@ test('it goes as soon as something is drawn, and stays gone', async ({ page }) =
   await placeRoom(page, toScreen, 160, 160, 320, 280);
   await expect(hint(page)).toBeHidden();
 
-  await page.click('#btn-undo'); // back to an empty map: the person has found their way
+  await page.click('#btn-undo'); // back to an empty map: the player has found their way
   expect(await boardElements(page)).toHaveLength(0);
   await expect(hint(page)).toBeHidden();
 

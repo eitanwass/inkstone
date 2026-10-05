@@ -1,6 +1,6 @@
 // ── Toast notifications ───────────────────────────────────────
 // A toast can carry one button (e.g. "Undo" after a delete). Such a toast stays longer
-// and goes away as soon as the user does anything else, so its button can't act on a
+// and goes away as soon as the player does anything else, so its button can't act on a
 // map that has since changed.
 
 import { byId } from '../core/dom';

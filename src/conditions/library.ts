@@ -1,4 +1,4 @@
-// ── The conditions a person can choose from ────────────────────
+// ── The conditions a player can choose from ────────────────────
 // The default ones, plus any they have made up in Settings. The custom ones are kept in this
 // browser (under `inkstone-conditions`), not in the map: a token carries its own copy of whatever
 // conditions it has (see index.ts), so a map shows right on anyone's screen.
@@ -35,7 +35,7 @@ function save(): void {
 export const customConditions = (): readonly Condition[] => custom;
 export const allConditions = (): Condition[] => [...DEFAULT_CONDITIONS, ...custom];
 
-// What a person fills in to make one.
+// What a player fills in to make one.
 export interface Draft {
   name: string;
   color: string;

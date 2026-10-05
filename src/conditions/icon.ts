@@ -1,7 +1,7 @@
 // ── A condition's badge in the page ────────────────────────────
 // The same round badge the canvas draws on a token (badges.ts), as an <svg> for the card, the menus
 // and Settings. Built from DOM nodes, not an HTML string: a condition's name and color are text a
-// person (or someone in their session) typed, so nothing of it is ever parsed as markup.
+// player (or someone in their session) typed, so nothing of it is ever parsed as markup.
 
 import { type Condition, ICONS } from './index';
 

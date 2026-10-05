@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CUSTOM_PREFIX, DEFAULT_CONDITIONS, MAX_CUSTOM } from '../../../src/conditions';
 
-// The library keeps a person's own conditions in localStorage, which Node doesn't have: a plain
+// The library keeps a player's own conditions in localStorage, which Node doesn't have: a plain
 // in-memory stand-in, installed before the module is loaded fresh for each test.
 let store: Map<string, string>;
 
@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 describe('the library of conditions', () => {
-  it("starts with the defaults and none of the person's own", async () => {
+  it("starts with the defaults and none of the player's own", async () => {
     const lib = await load();
     expect(lib.customConditions()).toEqual([]);
     expect(lib.allConditions()).toEqual([...DEFAULT_CONDITIONS]);

@@ -7,7 +7,7 @@
 // others when a cursor goes (the pointer left the map, or the client did).
 //
 // What a client may say, and is told (coordinates are in world units, as in the map):
-//   { type: 'hello', cid, id }       who this is: cid is this tab, id the person (their author id)
+//   { type: 'hello', cid, id }       who this is: cid is this tab, id the player (their id)
 //   { type: 'cursor', x, y }         where the pointer is
 //   { type: 'hide' }                 the pointer left the map
 // and the others are told { type: 'cursor', cid, id, x, y } or { type: 'gone', cid }.

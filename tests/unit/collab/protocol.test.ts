@@ -153,19 +153,19 @@ describe('anything else', () => {
 });
 
 describe('a presence message', () => {
-  it('has the count and the people, and drops a person without a valid id or name', () => {
+  it('has the count and the players, and drops a player without a valid id or name', () => {
     expect(
       parseMessage({
         type: 'presence',
         count: 3,
-        people: [{ id: 'a1', name: 'Guest 1' }, { id: 'no spaces', name: 'x' }, { id: 'b2' }, 7],
+        players: [{ id: 'a1', name: 'Quiet Heron' }, { id: 'no spaces', name: 'x' }, { id: 'b2' }, 7],
       }),
-    ).toEqual({ type: 'presence', count: 3, people: [{ id: 'a1', name: 'Guest 1' }] });
+    ).toEqual({ type: 'presence', count: 3, players: [{ id: 'a1', name: 'Quiet Heron' }] });
   });
 
   it('is null without a count or a list', () => {
-    expect(parseMessage({ type: 'presence', people: [] })).toBeNull();
-    expect(parseMessage({ type: 'presence', count: -1, people: [] })).toBeNull();
+    expect(parseMessage({ type: 'presence', players: [] })).toBeNull();
+    expect(parseMessage({ type: 'presence', count: -1, players: [] })).toBeNull();
     expect(parseMessage({ type: 'presence', count: 1 })).toBeNull();
   });
 });

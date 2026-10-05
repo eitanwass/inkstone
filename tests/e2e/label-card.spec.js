@@ -86,7 +86,7 @@ test.describe('size', () => {
     await select(page);
     const before = await card(page).boundingBox();
     const slider = await page.locator('#label-size').boundingBox();
-    // drag the slider by hand, as a person does, from one end to the other and back
+    // drag the slider by hand, as a player does, from one end to the other and back
     await page.mouse.move(slider.x + 4, slider.y + slider.height / 2);
     await page.mouse.down();
     for (const frac of [0.2, 0.5, 0.9, 0.3]) {

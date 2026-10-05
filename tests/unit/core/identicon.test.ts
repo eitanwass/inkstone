@@ -29,7 +29,7 @@ describe('identicon', () => {
     }
   });
 
-  it('gives different people different sigils', () => {
+  it('gives different players different sigils', () => {
     const looks = new Set(Array.from({ length: 50 }, (_, i) => JSON.stringify(identicon(`p${i}`).shapes)));
     expect(looks.size).toBe(50);
   });

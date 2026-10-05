@@ -25,7 +25,7 @@ const HISTORY_LIMIT = 100;
 // state to other connected clients) sits above history.js in the module
 // chain, so history.js can't import it without creating a cycle. Instead
 // collab.js registers itself here and gets called after every change that
-// should propagate to peers.
+// should propagate to other players.
 let historyListener: (() => void) | null = null;
 export function setHistoryListener(fn: () => void): void {
   historyListener = fn;
@@ -39,7 +39,7 @@ const STORAGE_KEY = 'inkstone-board';
 const NAME_STORAGE_KEY = 'inkstone-map-name';
 
 // Saving is a convenience, not a requirement, so a failed write never breaks
-// the app — but the first failure per page load tells the user, since their
+// the app — but the first failure per page load tells the player, since their
 // work won't survive a reload.
 let warnedSaveFailed = false;
 
@@ -94,7 +94,7 @@ export function loadPersistedBoard(): BoardElement[] | null {
 
 // The map's name is saved separately from the elements: it isn't part of the
 // undo history (renaming and undoing don't interact), so it has its own
-// chokepoint, called when a rename is committed or one arrives from a peer.
+// chokepoint, called when a rename is committed or one arrives from someone else.
 export function persistMapName(): void {
   if (!state.mapName) {
     storageRemove(NAME_STORAGE_KEY);
@@ -108,7 +108,7 @@ export function loadPersistedMapName(): string {
   return normalizeMapName(storageGet(NAME_STORAGE_KEY));
 }
 
-// Tells collaborators what changed without recording an undo step. Used when only the name
+// Tells other players what changed without recording an undo step. Used when only the name
 // changed: the change that goes out is just the new name, never the map.
 export function broadcastDocument(): void {
   if (historyListener) historyListener();

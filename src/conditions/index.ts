@@ -1,5 +1,5 @@
 // ── Conditions ─────────────────────────────────────────────────
-// A condition is something a creature is under: Prone, Poisoned, or one a person made up
+// A condition is something a creature is under: Prone, Poisoned, or one a player made up
 // ("Hexed"). It is an object, not a word: it has a name, a color and an icon. A token carries the
 // whole objects (see TokenElement.conditions), so a token is complete in itself: it saves, syncs to
 // the others in a session and duplicates with its conditions, whether or not they have the same
@@ -42,7 +42,7 @@ export function parseIconSvg(svg: string): IconSpec {
 
 // The icon library: one SVG file per icon in src/conditions/icons/, named for the icon (`moon.svg` is
 // `moon`). They are read when the app is built, so there is nothing to fetch while it runs. The
-// first sixteen are the default conditions', the rest are there for the ones people make.
+// first sixteen are the default conditions', the rest are there for the ones players make.
 const files = import.meta.glob<string>('./icons/*.svg', {
   query: '?raw',
   import: 'default',
@@ -112,12 +112,12 @@ export function isCondition(value: unknown): value is Condition {
   );
 }
 
-// How many custom conditions a person can define.
+// How many custom conditions a player can define.
 export const MAX_CUSTOM = 40;
 
 // The conditions in `value` that are valid, once each by id, at most `max` (a token's worth unless
 // said otherwise), as clean copies (only the four fields). Anything that isn't a list gives none.
-// Used for what comes from storage or from other people in a session, which can be anything.
+// Used for what comes from storage or from other players in a session, which can be anything.
 export function parseConditions(value: unknown, max = MAX_PER_TOKEN): Condition[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();

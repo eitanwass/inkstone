@@ -14,6 +14,7 @@ import { GRID } from '../core/state';
 import { storageGet, storageSet } from '../core/storage';
 import { drawMain } from '../draw/render';
 import { restoreFocus, trapFocus } from '../ui/focus';
+import { flashSaved } from './saved';
 
 const STORAGE_KEY = 'inkstone-board-settings';
 
@@ -29,6 +30,7 @@ function loadSaved(): void {
 
 function save(): void {
   storageSet(STORAGE_KEY, JSON.stringify(scale)); // if storage is unavailable, they just last this visit
+  flashSaved();
 }
 
 // ── The Board panel ────────────────────────────────────────────

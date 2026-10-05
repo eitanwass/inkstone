@@ -1,7 +1,7 @@
 // ── Token images ───────────────────────────────────────────────
 // A token's picture is a small data URL kept once in the image store, here, under an id made from its
 // content (see core/image-data.ts); the token holds only the id. The store lives in this browser
-// (`inkstone-images`) and fills from files the person chooses and, in a live session, from the room,
+// (`inkstone-images`) and fills from files the player chooses and, in a live session, from the room,
 // which keeps each picture once and sends it to whoever asks (see collab/collab.ts). Pictures are
 // cropped to a square and shrunk on the way in so they stay small.
 

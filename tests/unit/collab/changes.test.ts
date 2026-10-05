@@ -83,7 +83,7 @@ describe('applyChanges', () => {
   it("keeps someone else's edit to another element when applying yours", () => {
     const start = [room('a'), room('b')];
     const mine = diff(start, [room('a', 40), room('b')], '', '');
-    const theirsAlready = [room('a'), room('b', 80)]; // what the room holds after a peer moved b
+    const theirsAlready = [room('a'), room('b', 80)]; // what the room holds after someone else moved b
     expect(applyChanges(theirsAlready, mine)).toEqual([room('a', 40), room('b', 80)]);
   });
 

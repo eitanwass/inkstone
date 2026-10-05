@@ -68,7 +68,7 @@ function join(
 ) {
   const ws = fakeSocket();
   room.handleSession(ws);
-  ws.say({ type: 'hello', cid, author: { id: `a-${cid}`, name: `Guest ${cid}` }, since, epoch });
+  ws.say({ type: 'hello', cid, player: { id: `a-${cid}`, name: `Player ${cid}` }, since, epoch });
   return ws;
 }
 
@@ -92,7 +92,7 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe('parseMessage', () => {
-  const hello = { type: 'hello', cid: 'c1', author: { id: 'a1', name: 'Guest 1' } };
+  const hello = { type: 'hello', cid: 'c1', player: { id: 'a1', name: 'Player 1' } };
 
   it('accepts hello, doc, and changes', () => {
     expect(parseMessage(JSON.stringify(hello))).toMatchObject({ type: 'hello', cid: 'c1' });
@@ -124,8 +124,8 @@ describe('parseMessage', () => {
       null,
       '{"type":"snapshot","elements":[]}',
       JSON.stringify({ ...hello, cid: 'no spaces' }),
-      JSON.stringify({ ...hello, author: { id: 'a1', name: 'x'.repeat(41) } }),
-      JSON.stringify({ ...hello, author: 'me' }),
+      JSON.stringify({ ...hello, player: { id: 'a1', name: 'x'.repeat(41) } }),
+      JSON.stringify({ ...hello, player: 'me' }),
       JSON.stringify({ ...hello, since: -1 }),
       JSON.stringify({ ...hello, since: 1.5 }),
       JSON.stringify({ ...hello, epoch: 42 }),
@@ -192,7 +192,7 @@ describe('changes', () => {
     expect(mapOf(room)).toMatchObject({ rev: 1, elements: [rect('b', 80), rect('c')] });
   });
 
-  it("keeps two people's edits to different elements", async () => {
+  it("keeps two players' edits to different elements", async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
     a.say({ type: 'changes', base: 0, changes: [set(rect('a', 40))] });
@@ -220,7 +220,7 @@ describe('changes', () => {
   });
 });
 
-describe('when two people change the same thing, the room wins', () => {
+describe('when two players change the same thing, the room wins', () => {
   it('refuses an edit to an element someone else changed after the revision it was built on', async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
     const [a, b, c] = [join(room, { cid: 'a' }), join(room, { cid: 'b' }), join(room, { cid: 'c' })];
@@ -477,7 +477,7 @@ describe('saving', () => {
     expect(state.data.get('log:5')).toMatchObject({
       rev: 5,
       cid: 'a',
-      by: { id: 'a-a', name: 'Guest a' },
+      by: { id: 'a-a', name: 'Player a' },
       ids: ['a'],
       order: false,
       name: false,
@@ -546,30 +546,71 @@ describe('saving', () => {
 });
 
 describe('presence', () => {
-  const people = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
+  const players = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
 
   it('tells everyone who is here when someone arrives or leaves', async () => {
     const room = await openRoom();
     const a = join(room, { cid: 'a' });
-    expect(people(a).at(-1)).toMatchObject({ count: 1, people: [{ id: 'a-a', name: 'Guest a' }] });
+    expect(players(a).at(-1)).toMatchObject({ count: 1, players: [{ id: 'a-a', name: 'Player a' }] });
     const b = join(room, { cid: 'b' });
-    expect(people(a).at(-1).count).toBe(2);
-    expect(people(b).at(-1).count).toBe(2);
+    expect(players(a).at(-1).count).toBe(2);
+    expect(players(b).at(-1).count).toBe(2);
     b.emit('close');
-    expect(people(a).at(-1).count).toBe(1);
+    expect(players(a).at(-1).count).toBe(1);
   });
 
-  it('counts the same person in two tabs once, and says nothing for a client that never said hello', async () => {
+  it('counts the same player in two tabs once, and says nothing for a client that never said hello', async () => {
     const room = await openRoom();
     const a = join(room, { cid: 'a' });
     const second = fakeSocket();
     room.handleSession(second);
-    second.say({ type: 'hello', cid: 'a2', author: { id: 'a-a', name: 'Guest a' } });
-    expect(people(a).at(-1).count).toBe(1);
+    second.say({ type: 'hello', cid: 'a2', player: { id: 'a-a', name: 'Player a' } });
+    expect(players(a).at(-1).count).toBe(1);
     const silent = fakeSocket();
     room.handleSession(silent);
-    const before = people(a).length;
+    const before = players(a).length;
     silent.emit('close');
-    expect(people(a)).toHaveLength(before);
+    expect(players(a)).toHaveLength(before);
+  });
+});
+
+describe('renaming', () => {
+  const players = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
+
+  it('tells everyone the new name', async () => {
+    const room = await openRoom();
+    const a = join(room, { cid: 'a' });
+    const b = join(room, { cid: 'b' });
+    a.say({ type: 'rename', name: 'Gilded Fox' });
+    for (const ws of [a, b]) {
+      expect(players(ws).at(-1)).toMatchObject({
+        count: 2,
+        players: expect.arrayContaining([
+          { id: 'a-a', name: 'Gilded Fox' },
+          { id: 'a-b', name: 'Player b' },
+        ]),
+      });
+    }
+  });
+
+  it('ignores a name that is empty, too long or not text, and a client that has not said hello', async () => {
+    const room = await openRoom();
+    const a = join(room, { cid: 'a' });
+    const before = players(a).length;
+    for (const name of ['', 'x'.repeat(41), 7, null]) a.say({ type: 'rename', name });
+    const silent = fakeSocket();
+    room.handleSession(silent);
+    silent.say({ type: 'rename', name: 'Sneaky' });
+    expect(players(a)).toHaveLength(before);
+  });
+});
+
+describe('parseMessage rename', () => {
+  it('accepts a name up to the limit', () => {
+    expect(parseMessage(JSON.stringify({ type: 'rename', name: 'Gilded Fox' }))).toEqual({
+      type: 'rename',
+      name: 'Gilded Fox',
+    });
+    expect(parseMessage(JSON.stringify({ type: 'rename', name: '' }))).toBeNull();
   });
 });

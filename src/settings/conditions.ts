@@ -1,5 +1,5 @@
 // ── Settings: the Conditions panel ─────────────────────────────
-// Where a person makes their own conditions (a name, a color, an icon) to use alongside the default
+// Where a player makes their own conditions (a name, a color, an icon) to use alongside the default
 // ones, and edits or removes them. The default ones are listed for reference and can't be changed.
 // What is made is kept in this browser (conditions/library.ts). Editing one brings the copy on every
 // token that has it up to date; removing one only takes it off the list to choose from.
@@ -10,6 +10,7 @@ import { addCustom, customConditions, draftProblem, removeCustom, updateCustom }
 import { refreshCondition } from '../conditions/tokens';
 import { byId } from '../core/dom';
 import { showToast } from '../ui/toast';
+import { flashSaved } from './saved';
 
 // A choice of colors that read well behind a white icon, plus any color of their own.
 const COLORS = [
@@ -182,6 +183,7 @@ function startEditing(condition: Condition): void {
 
 function remove(condition: Condition): void {
   removeCustom(condition.id);
+  flashSaved();
   if (editingId === condition.id) resetForm();
   renderLists();
   showToast('Removed. Tokens that already have it keep it.');
@@ -202,6 +204,7 @@ form.addEventListener('submit', (e) => {
   } else {
     addCustom(draft);
   }
+  flashSaved();
   renderLists();
   resetForm();
 });

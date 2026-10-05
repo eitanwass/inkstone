@@ -71,3 +71,70 @@
 .btn-danger:hover {
   background: #501c1c;
 }
+
+/* "Who's at the table?": asked before joining, with no way to skip it. */
+#name-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+#name-dialog {
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  width: min(380px, calc(100vw - 32px));
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+#name-dialog h2 {
+  margin: 0 0 8px;
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--text-primary);
+}
+
+#name-dialog p {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* A name field with its shuffle button on the right (here and in Settings, Profile). */
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.name-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+.name-row input:focus {
+  border-color: var(--accent);
+}
+
+#settings-panel-profile .name-row {
+  margin-bottom: 0;
+  max-width: 320px;
+}
+
+#name-join:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

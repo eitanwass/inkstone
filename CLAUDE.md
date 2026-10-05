@@ -13,6 +13,14 @@ the root is the page shell, and a small Vite plugin in `vite.config.ts` pastes e
 (`@import`s; keep `responsive.css` last so it wins the cascade). All behavior lives in [src/](src/) as
 small single-purpose modules (see Module layout below).
 
+## Words we use
+
+Anyone using the editor or in a shared map, you included, is a **player** (plural **players**): in code
+(`Player`, `me`, `players`), UI text, comments and docs, the GM too. Don't write "user", "person", "peer",
+"collaborator", "guest" or "author". "Someone else" is the other side of "you". When roles arrive (a GM and
+everyone else) they are *roles* a player has, not another word for the player. A **session** is a shared
+map's room and everyone connected to it.
+
 ## Running it
 
 `npm run dev` (Vite dev server), `npm run typecheck` (`tsc --noEmit`, strict),
@@ -61,7 +69,7 @@ runs this suite on every push/PR to `main`.
 
 Live collaboration (see Collaboration below) needs a second process. **`npm run dev:live`
 (`scripts/dev-live.mjs`) starts both** (the app with `--host`, and the relay), prefixing each
-line, and Ctrl+C stops both. A browser keeps a map and a person per origin, so to be two people
+line, and Ctrl+C stops both. A browser keeps a map and a player per origin, so to be two players
 open `localhost:5173` and `127.0.0.1:5173` (or a private window), not two tabs of one. On its own,
 `npm run party:dev` runs the relay locally via `wrangler dev` on port 8787
 (the client defaults to `localhost:8787` via `VITE_RELAY_HOST` — see
@@ -77,7 +85,7 @@ deployed host before running `npm run build`.
 The site only redeploys when the version changes. To release: bump the version
 (`npm version patch|minor --no-git-tag-version`), add a matching
 `## <version> - <date>` section at the top of [CHANGELOG.md](CHANGELOG.md)
-(written for people using the editor, not for developers), and push. CI runs
+(written for players using the editor, not for developers), and push. CI runs
 `npm run check:changelog`, which fails if the top entry doesn't match
 package.json. The app's "What's new" modal renders that same file.
 
@@ -134,7 +142,7 @@ Deliberate design points:
   recording a history step.
 - **Wire format.** A name that isn't text is dropped from a message (the local name is
   left alone) while the rest of it is applied (`protocol.ts`).
-- **A peer's rename never overwrites what you're typing**: `refreshMapName()`
+- **Someone else's rename never overwrites what you're typing**: `refreshMapName()`
   leaves the field alone while it has focus, and it shows the shared name when you
   finish (or press Escape). Offline renames follow the same rule as offline edits:
   the shared map wins on reconnect.
@@ -200,7 +208,7 @@ function reads, including those of its dependencies, must be in `includeFiles`.
   and dialogs open, and must stay clean. It runs with reduced motion on, so
   axe doesn't sample the popovers mid fade-in.
 - Never call `localStorage` directly; use `storage.ts`, because it throws when
-  storage is blocked or full. Persisting the board warns the user once per page
+  storage is blocked or full. Persisting the board warns the player once per page
   load when it fails (`persistBoard`). Saved custom colors live under
   `inkstone-custom-*`; the old `tavernmap-custom-*` keys are migrated on load.
 
@@ -251,14 +259,14 @@ chain, so there are no circular imports to reason about.
 | `ui/label-card.ts` | The card next to a selected label (markup `#label-card`; the label's counterpart of the token card): a size slider (8 to 72), the bold / italic / plate buttons (`text-style-toggles.ts`) and its colour (the `LABEL_COLORS` swatches from `elements/label.ts`, which are the style panel's stroke colours, plus a ring for any colour). It shows for a single selected label with the select *or text* tool, and what is set there (size, colour and the text style flags) becomes what the next new label starts as (`state.labelStyle`, for this visit only). A change shows on the map as it is made and is one undo step (the slider when it is let go, a swatch when clicked, the ring's picker when it closes). The card is lined up with the label's left edge, not its middle, and is held still while the slider is dragged, because the label grows under it and a card that tried to stay centred slid about under the pointer. Font family and the like are meant to join it. |
 | `ui/card-placement.ts` | Pure: `cardPosition`, where a floating card goes next to what is selected (above it, below if the top of the screen is in the way, kept on screen). Used by the token card and the label card. |
 | `ui/text-style-toggles.ts` | The bold, italic and plate buttons, built once and mounted in both the label card (`#label-text-style`) and the token card (`#token-text-style`, for its name), and in the card of any element that is given text later. A card passes `mountTextStyleToggles` its element and what a change does (set the flag, redraw, keep an undo step); `refresh` marks the flags that are on. |
-| `elements/layer.ts` | Pure: locking. `locked` is an optional flag any element can carry (present only when on, like the text style flags; `validate.ts` keeps only exact `true`; `setLocked` deletes it rather than setting false). `isInteractive` (not locked) is what `hitTest`, `eraseTarget`, Select All, box select and a peer's change to your selection all use, so a **locked** element is a background that left-clicks, drags, the eraser and selection pass through. It can still be right-clicked (to unlock) and is shown a faded lock on hover, both through `hitTestAny` (elements/index.ts: the topmost element at a point, locked or not). There is no hide yet (it was built and taken out for now: an element that can't be clicked needs a list to be found in, and locked ones are right-clicked instead). |
+| `elements/layer.ts` | Pure: locking. `locked` is an optional flag any element can carry (present only when on, like the text style flags; `validate.ts` keeps only exact `true`; `setLocked` deletes it rather than setting false). `isInteractive` (not locked) is what `hitTest`, `eraseTarget`, Select All, box select and someone else's change to your selection all use, so a **locked** element is a background that left-clicks, drags, the eraser and selection pass through. It can still be right-clicked (to unlock) and is shown a faded lock on hover, both through `hitTestAny` (elements/index.ts: the topmost element at a point, locked or not). There is no hide yet (it was built and taken out for now: an element that can't be clicked needs a list to be found in, and locked ones are right-clicked instead). |
 | `input/layers.ts` | `lockElements(indices, locked)`: what the right-click menus do. Locks or unlocks some elements as one undo step (it lets go of what it locks, and shows an Undo toast saying how to undo it: right-click it to unlock). |
 | `ui/context-menu.ts` (locking) | Right-clicking a locked element gives the usual menu for it (the element menu, or the token menu), with every item faded out (`.ctx-item.disabled`, `aria-disabled`, no pointer events) but the lock row, which becomes Unlock (`showLockState` and `lockedTarget`). Lock and Unlock use the icon set's `icon-lock` and `icon-unlock`, not emoji. A faded lock **fades in** on the corner of a locked element the pointer is over: it is a small element laid over the map (`#lock-hint`, `ui/lock-hint.ts` follows the mouse itself (idle, with the select tool, `hitTestAny`) and is positioned again after every redraw through `onMainDrawn`, so it stays on its element as the map is panned or zoomed under a still mouse; no shared hover state), not drawn on the canvas, so the fade is a CSS `transition: opacity` (`styles/lock-hint.css`, which `prefers-reduced-motion` already switches off) and the browser does the animation. On a small element such as a token or label it sits just outside the corner so it doesn't cover it. |
 | `elements/token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
 | `conditions/index.ts` | Pure: what a condition is (`{ id, name, color, icon }`), the icon library (`ICONS`, built from the standalone SVG files in `src/conditions/icons/`, one per icon and named for it: a 24-unit box with one `<path>`, line styling on the `<svg>`, `stroke-dasharray` on the path for a dashed one. They are read at build time with `import.meta.glob` and `parseIconSvg` takes the path out, which is drawn on the canvas as a `Path2D` and in the page as an `<svg>` path. To add an icon, add a file there: it appears in the Settings icon picker, and a test checks each file is a clean single-path SVG), the sixteen `DEFAULT_CONDITIONS` (the 5e conditions plus Dead), and the checks (`isCondition`, `parseConditions`) used for anything read from storage or from a session. |
-| `conditions/library.ts` | The conditions a person can choose from: the defaults plus their own custom ones, kept in this browser under `inkstone-conditions` (ids start `custom-`, so nothing can pose as a default). `draftProblem` says in words why a draft can't be used (name missing or taken, any capitals, defaults included). |
+| `conditions/library.ts` | The conditions a player can choose from: the defaults plus their own custom ones, kept in this browser under `inkstone-conditions` (ids start `custom-`, so nothing can pose as a default). `draftProblem` says in words why a draft can't be used (name missing or taken, any capitals, defaults included). |
 | `conditions/tokens.ts` | Putting conditions on tokens and taking them off (`toggleCondition`, one undo step each; at most 12 per token), and `refreshCondition`, which brings the copies on tokens up to date when a custom condition is edited. |
-| `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a person or someone in their session typed. |
+| `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a player or someone in their session typed. |
 | `settings/conditions.ts` | The Conditions panel in Settings: your own conditions (add, edit, delete) with a live preview, a color and icon picker, and the defaults listed for reference. |
 | `elements/text-style.ts` | Pure: what an element's text can be styled with, shared by labels, token names and (next) the text of any element. `TextStyled` (`bold`, `italic`, `plate`, in core/types.ts) are optional flags that are present only when on (`setTextStyle` deletes a flag rather than setting it false, so unstyled elements save and sync as they always did); `fontString` (canvas font; Inter has no italic face, so italics are the browser's slanted upright); `plateColorFor` (a dark plate behind light text, a light plate behind dark text, by luminance; `PLATE_PAD` is how far a plate reaches past the text). |
 | `elements/text.ts` | The one place that draws and measures an element's text: `drawText` (a plate behind it, or a dark outline for text with no plate), `textRect` and `plateRect` (the box the text, and its plate, cover: used for bounds and hit-testing). An element's file only says where its text goes and what it looks like by default (a `TextSpec`): `elements/label.ts` anchors at its top left, so a plate reaches out around it and the text doesn't move when it is switched on; `elements/token.ts` centres the name under the disc. **To give another element text** (a door's, say): add a text field and the `TextStyled` mixin to its type, write its `TextSpec`, draw and size it with `drawText` / `plateRect`, and mount `text-style-toggles.ts` in its card. |
@@ -266,17 +274,22 @@ chain, so there are no circular imports to reason about.
 | `ui/token-card.ts` | The card above a selected token (its name, color, image and conditions for now; HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `input/toolbar.ts` | Tool switching + the contextual style panel. |
 | `ui/color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
-| `input/controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
+| `input/controls.ts` | The commands a player gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
 | `ui/view-actions.ts` | Reset View button, Clear All, Export PNG. |
 | `input/shortcuts.ts` | Global keyboard shortcuts (bindings only; the commands they run are in `controls.ts` and `selection.ts`). |
 | `ui/hint.ts` | The first-visit welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; hides for good (`inkstone-hint-seen`) once anything is drawn. It is `pointer-events: none`, so it never blocks drawing. |
-| `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
-| `collab/collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
+| `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the player's next click or key press, so Undo can never act on a map that has since changed. |
+| `collab/collab.ts` | Live sync between players over a Durable Object room (see Collaboration below). |
 | `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |
-| `core/identicon.ts` | Pure: a person's sigil from a seed (their author id): the logo's compass bezel with a tick per fold, a ring of two-tone nib-shaped petals turned 3 to 8 times, dots or strokes between them, a ring or dot at the centre, in one of the token colours. Returns shapes as path data with a role (light, dark, line, bezel); `ui/people.ts` draws them as SVG nodes. |
-| `ui/people.ts` | Who is connected: "· N" beside the Live pill and a column of sigils under it (`#people`, you first with a gold ring, then "+N" past 8). Fed by the relay's `presence` message (one per person, however many tabs; sent when someone arrives or leaves), cleared while disconnected. Names are still the "Guest 1234" placeholder. |
+| `core/identicon.ts` | Pure: a player's sigil from a seed (their id): the logo's compass bezel with a tick per fold, a ring of two-tone nib-shaped petals turned 3 to 8 times, dots or strokes between them, a ring or dot at the centre, in one of the token colours. Returns shapes as path data with a role (light, dark, line, bezel); `ui/players.ts` draws them as SVG nodes. |
+| `ui/players.ts` | Who is connected: "· N" beside the Live pill and a column of sigils under it (`#players`, you first with a gold ring, then "+N" past 8). Fed by the relay's `presence` message (one per player, however many tabs; sent when someone arrives or leaves), cleared while disconnected. Hovering an icon shows the player's name beside it (a `.player-name` pill, so it needn't wait for the browser's tooltip). |
+| `core/player-name.ts` | Pure: what a player is called in a shared map. `randomPlayerName` (one word from each of two lists of fantasy words, "Crimson Owl", never the name it is asked to avoid) and `normalizePlayerName` (control characters out, whitespace collapsed, trimmed, at most 40, the relay's limit). |
+| `collab/player.ts` | Who you are: a random id kept in this browser (`inkstone-player`) and the name you chose, empty until you have. `me` is the live `Player` (collab.ts sends it in `hello`), `setName` keeps a tidied name and tells `onNameChanged` listeners. |
+| `ui/name-dialog.ts` | "Who's at the table?": `ensureName(then)` runs `then` at once if there is a name, else asks first: a suggested fantasy name, a shuffle button on the right, a Continue button, **no skip, no Escape, no backdrop dismiss**. collab.ts wraps Share, Join and opening an invite link in it, so nothing connects (and no popover opens) until a name exists. Someone who already has a name is never asked. |
+| `settings/saved.ts` | The "Saved" mark at the top right of the Settings modal (`#settings-saved`, a status region): `flashSaved()` shows a green check and "Saved" for two seconds. Called by each panel whenever a change is kept (a Board setting, a condition added, edited or removed, a name changed), because settings apply as they are changed and nothing else says so. A panel that keeps something new should call it. |
+| `settings/profile.ts` | Settings, Profile (the last tab): the name field (Enter or clicking away keeps it, empty puts the old one back) and the shuffle button. Changing it while connected sends `{ type: 'rename', name }`; the relay updates the player's entry and sends everyone fresh presence, so the list and cursor labels follow. |
 | `collab/cursors.ts` | The cursors socket: a **second WebSocket** per session, to `/cursors/<room>` and its own Durable Object (`CursorRoom`, `party/cursors.js`), so pointers never share a connection with the map. Sends our pointer (world units) at most every 50ms (the latest position, so it ends where it stopped), drops positions instead of queueing them when the socket is backed up, sends `hide` when the pointer leaves the map, and never shows an error. Started from `connect()` in collab.ts. |
-| `ui/cursors.ts` | Other people's pointers: DOM elements in `#cursors` (an arrow in the person's sigil colour and their name from the presence list), kept in world units and placed again after every redraw, with a CSS glide between positions. Not drawn on the canvas, so a moving pointer never redraws the map. |
+| `ui/cursors.ts` | Other players' pointers: DOM elements in `#cursors` (an arrow in the player's sigil colour and their name from the presence list), kept in world units and placed again after every redraw, with a CSS glide between positions. Not drawn on the canvas, so a moving pointer never redraws the map. |
 | `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
@@ -300,7 +313,7 @@ codebase is organized around it.
 
 **Elements** (`state.elements`) are plain objects with a `type` discriminator:
 `rect`, `wall`, `token`, `label`. Elements are pure data (they're persisted,
-cloned for undo, and synced to peers, so they can't carry methods). Each type's
+cloned for undo, and synced to other players, so they can't carry methods). Each type's
 behavior lives in its own `elements/<type>.ts` object, and `elements/index.ts`
 maps `el.type` to it. Code elsewhere calls dispatchers like
 `getElementBounds(el)` or `hitElement(el, x, y)` instead of switching on
@@ -331,7 +344,7 @@ field and the token's color (the eight `PALETTE` swatches from `elements/token.t
 ring that opens the browser's own picker for any color; a choice applies at once as one
 undo step, and the token's right-click "Change Color" just selects it and moves to these
 swatches). HP and AC are meant to join it (as plain numbers everyone sees;
-hiding them from players needs roles). The card never takes focus by itself, so Delete and
+hiding them from other players needs roles). The card never takes focus by itself, so Delete and
 the arrows still act on the token; click its field, double-click the token, press Enter, or
 choose "Add name" (or "Rename") from the token's right-click menu to type. Enter or
 clicking away keeps the name (one undo step; unchanged is none; trimmed; empty removes
@@ -521,7 +534,7 @@ it) keyed by a random id carried in the URL (`?session=...`). Clicking
 the first time (a session is never created just by opening the app),
 puts it in the URL via `history.replaceState`, connects, and opens a
 popover showing the code with a "Copy Link" button. "Join" (`btn-join`)
-opens a sibling popover where a user pastes another session's code or
+opens a sibling popover where someone pastes another session's code or
 full invite link (`extractSessionId()` accepts either) to connect to it
 without creating a new session.
 
@@ -533,7 +546,7 @@ map against `synced` (what the room is believed to hold) and sends
 `{ type: 'changes', base, changes }`: `set` (an element, new or edited; new ids go last),
 `del` (an id), `order` (all ids, only when the order isn't what adding and removing gives
 anyway) and `name`. So undo stays whole-snapshot (see below) while the traffic is just the
-difference, and two people editing *different* elements never collide. Token images no longer
+difference, and two players editing *different* elements never collide. Token images no longer
 travel on every edit.
 
 **Pictures are not changes.** A token's `image` is an id (see `elements/token-image.ts`); the picture itself
@@ -559,10 +572,10 @@ was refused (the element as it is, or a deletion), and the client applies it, wi
 else changed that first, so their version was kept"). What was accepted is forwarded to the others
 as `{ type: 'changes', rev, changes }`; a client that sees a revision other than the one after the
 last it has asks to be caught up. A client built on a revision older than the log reaches is refused
-whole. The relay's author is a placeholder: `collab.ts` keeps `{ id, name: 'Guest 1234' }` per
-browser (`inkstone-author`), and a `cid` per page load.
+whole. You are a `Player`, `{ id, name }`, from `collab/player.ts` (kept per
+browser as `inkstone-player`; the name is chosen before joining), and `collab.ts` adds a `cid` per page load.
 
-**Connecting.** The client says `{ type: 'hello', cid, author, epoch?, since? }` as soon as the
+**Connecting.** The client says `{ type: 'hello', cid, player, epoch?, since? }` as soon as the
 socket opens (the relay ignores a client it hasn't met, and the client sends nothing until the
 relay has answered: `caughtUp`). `epoch` names one life of the room (a new one after it expires and
 is made again) and `since` is the last revision the client has, sent only if it has been in this
@@ -580,8 +593,8 @@ room before. The relay answers with one of:
   late one just gets the room's map back), acknowledged with the new epoch at revision 0.
 
 `protocol.ts` checks every message from the relay on arrival, dropping a bad change on its own. A
-peer's changes are applied with `applyRemoteChanges` (history.ts), which does *not* make an undo
-step, so Ctrl+Z undoes your own last edit, not whatever a peer just did. They are applied to every
+someone else's changes are applied with `applyRemoteChanges` (history.ts), which does *not* make an undo
+step, so Ctrl+Z undoes your own last edit, not whatever someone else just did. They are applied to every
 step of your undo stack too, so undoing your own edit later keeps their work, and your selection is
 kept by id (unless they deleted what you had selected). `applyRemoteDocument` makes the room's
 map the new start of the undo history.
@@ -595,7 +608,7 @@ import, so the dependency arrow still only points one way.
 
 **The room is kept.** The relay keeps the map in the Durable Object's storage, one row per
 element (`el:<id>`), one per log entry (`log:<rev>`) plus `order` and `meta` (name, epoch, revision), so an edit writes only the rows it
-changed (once per burst of edits, and at once when the last person leaves). Whoever opens the
+changed (once per burst of edits, and at once when the last player leaves). Whoever opens the
 link later, even after everyone has left, gets the map as it was. A room (and its log) is deleted a week
 after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms
 don't fill the free plan. The relay drops any message that isn't well formed (an element

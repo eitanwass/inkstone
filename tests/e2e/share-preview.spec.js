@@ -65,7 +65,7 @@ test('a production build writes absolute preview URLs', () => {
 });
 
 // The template is meant to be reused for per-map previews, so it has to be safe
-// and well-behaved with arbitrary user-supplied names.
+// and well-behaved with arbitrary names that players type.
 test.describe('the preview template, given a map name', () => {
   async function open(page, name) {
     await page.setViewportSize({ width: 1200, height: 630 });

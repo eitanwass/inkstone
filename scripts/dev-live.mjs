@@ -1,7 +1,7 @@
 // Runs everything live sharing needs on this machine: the Vite dev server and the relay
 // (`wrangler dev`, see party/server.js), with their output side by side. Ctrl+C stops both.
 // Vite is started with --host so the page also answers on 127.0.0.1 (and on the network): the browser
-// keeps a map and a person per origin, so localhost, 127.0.0.1 and a private window are separate clients.
+// keeps a map and a player per origin, so localhost, 127.0.0.1 and a private window are separate clients.
 import { spawn, spawnSync } from 'node:child_process';
 
 const processes = [
@@ -39,7 +39,7 @@ process.on('SIGTERM', stop);
 console.log(
   [
     '',
-    'Live sharing, locally. Open the app twice as different people:',
+    'Live sharing, locally. Open the app twice as different players:',
     '  http://localhost:5173       and       http://127.0.0.1:5173   (or a private window)',
     'Click Share in one, then paste its link into the other. Relay: localhost:8787',
     '',

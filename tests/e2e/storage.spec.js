@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
 
-test('a browser that refuses to save tells the user once, and the app keeps working', async ({ page }) => {
+test('a browser that refuses to save tells the player once, and the app keeps working', async ({ page }) => {
   await page.addInitScript(() => {
     Storage.prototype.setItem = () => {
       throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');

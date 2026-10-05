@@ -1,9 +1,10 @@
 // ── Who is connected ───────────────────────────────────────────
-// The number beside "Live", and a round identicon for each person under it (right rail). Built from DOM
+// The number beside "Live", and a round identicon for each player under it (right rail). Built from DOM
 // nodes, never an HTML string: a name is text someone in the session typed.
 
 import { byId } from '../core/dom';
 import { BEZEL_RADIUS, identicon } from '../core/identicon';
+import type { Player } from '../core/player-name';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const MAX_SHOWN = 8; // the rest become a "+N"
@@ -42,40 +43,41 @@ function avatar(seed: string, size: number): SVGSVGElement {
   return svg;
 }
 
-const list = byId('people');
+const list = byId('players');
 let names = new Map<string, string>();
 
-// A connected person's name, if the room has told us (cursors are labelled with it).
-export const personName = (id: string): string | undefined => names.get(id);
+// A connected player's name, if the room has told us (cursors are labelled with it).
+export const playerName = (id: string): string | undefined => names.get(id);
 const count = byId('collab-count');
 
-// Shows `count` people (you first), or nothing when `null` (not connected).
-export function showPeople(
-  room: { count: number; people: { id: string; name: string }[] } | null,
-  selfId: string,
-): void {
+// Shows `count` players (you first), or nothing when `null` (not connected).
+export function showPlayers(room: { count: number; players: Player[] } | null, selfId: string): void {
   list.replaceChildren();
-  names = new Map(room?.people.map((p) => [p.id, p.name]));
+  names = new Map(room?.players.map((p) => [p.id, p.name]));
   count.textContent = room ? `· ${room.count}` : '';
   byId('collab-status').title = room
-    ? `${room.count} ${room.count === 1 ? 'person' : 'people'} connected`
+    ? `${room.count} ${room.count === 1 ? 'player' : 'players'} connected`
     : '';
   if (!room) return;
-  const people = [...room.people].sort((a, b) => Number(b.id === selfId) - Number(a.id === selfId));
-  for (const person of people.slice(0, MAX_SHOWN)) {
-    const label = person.id === selfId ? `${person.name} (you)` : person.name;
+  const players = [...room.players].sort((a, b) => Number(b.id === selfId) - Number(a.id === selfId));
+  for (const player of players.slice(0, MAX_SHOWN)) {
+    const label = player.id === selfId ? `${player.name} (you)` : player.name;
     const li = document.createElement('li');
-    li.className = person.id === selfId ? 'person is-self' : 'person';
-    li.title = label;
+    li.className = player.id === selfId ? 'player is-self' : 'player';
     li.setAttribute('role', 'img');
     li.setAttribute('aria-label', label);
-    li.append(avatar(person.id, 30));
+    li.append(avatar(player.id, 30));
+    const tip = document.createElement('span');
+    tip.className = 'player-name';
+    tip.setAttribute('aria-hidden', 'true');
+    tip.textContent = label;
+    li.append(tip);
     list.append(li);
   }
-  const more = room.count - Math.min(people.length, MAX_SHOWN);
+  const more = room.count - Math.min(players.length, MAX_SHOWN);
   if (more > 0) {
     const li = document.createElement('li');
-    li.className = 'person person-more';
+    li.className = 'player player-more';
     li.textContent = `+${more}`;
     list.append(li);
   }

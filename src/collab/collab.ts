@@ -12,8 +12,8 @@
 // After a drop, we say the last revision we have and are sent what changed;
 // our own offline edits are sent on top, and refused where they conflict.
 //
-// A room is only ever created when the user clicks "Share" — opening the
-// app cold never talks to the relay. "Join" lets a user key in another
+// A room is only ever created when someone clicks "Share" — opening the
+// app cold never talks to the relay. "Join" lets someone key in another
 // session's code (or paste its link) instead of clicking a shared link.
 //
 // The client side here only ever speaks plain WebSocket (via `partysocket`,
@@ -25,16 +25,17 @@
 import PartySocket from 'partysocket';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
-import { storageGet, storageSet } from '../core/storage';
 import type { BoardElement } from '../core/types';
 import { getImageData, receiveImage } from '../elements/token-image';
 import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
-import { showPeople } from '../ui/people';
+import { ensureName } from '../ui/name-dialog';
+import { showPlayers } from '../ui/players';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
-import { applyChanges, type Change, diff, ensureIds, ID_RE } from './changes';
+import { applyChanges, type Change, diff, ensureIds } from './changes';
 import { connectCursors } from './cursors';
+import { me, onNameChanged } from './player';
 import { type Message, parseMessage } from './protocol';
 import { resolveRelayHost } from './relay-host';
 
@@ -51,7 +52,7 @@ document.documentElement.classList.toggle('sharing-unavailable', !RELAY_HOST);
 
 const SHARING_UNAVAILABLE = "Sharing isn't set up on this site yet.";
 
-// Whether sharing can be used; if not, tells the user why.
+// Whether sharing can be used; if not, tells the player why.
 function requireSharing(): boolean {
   if (RELAY_HOST) return true;
   showToast(SHARING_UNAVAILABLE);
@@ -61,29 +62,8 @@ function requireSharing(): boolean {
 let socket: PartySocket | null = null;
 
 // This tab (new on each page load; the relay doesn't count a client's own earlier batches as
-// conflicts) and the person, kept in this browser so the room's log can say who changed what. The
-// name is a placeholder until it can be edited.
+// conflicts). You, and the name you chose, are in player.ts.
 const clientId = crypto.randomUUID().replaceAll('-', '').slice(0, 12);
-const AUTHOR_KEY = 'inkstone-author';
-
-function loadAuthor(): { id: string; name: string } {
-  const saved = parseJson(storageGet(AUTHOR_KEY) ?? '') as { id?: unknown; name?: unknown } | null;
-  if (
-    typeof saved?.id === 'string' &&
-    ID_RE.test(saved.id) &&
-    typeof saved.name === 'string' &&
-    saved.name.length <= 40
-  ) {
-    return { id: saved.id, name: saved.name };
-  }
-  const author = {
-    id: crypto.randomUUID().replaceAll('-', '').slice(0, 12),
-    name: `Guest ${1000 + Math.floor(Math.random() * 9000)}`,
-  };
-  storageSet(AUTHOR_KEY, JSON.stringify(author));
-  return author;
-}
-const author = loadAuthor();
 
 // True when an edit was made while we couldn't send it (the connection was down, or the room had
 // not yet told us where it stands). It is sent once we are caught up, as part of the difference
@@ -156,6 +136,14 @@ function broadcastState() {
 
 setHistoryListener(broadcastState);
 
+// A name changed in Settings while connected: the room tells everyone (it ignores this before our hello,
+// which carries the current name anyway).
+onNameChanged(() => {
+  if (socket?.readyState === WebSocket.OPEN && caughtUp) {
+    socket.send(JSON.stringify({ type: 'rename', name: me.name }));
+  }
+});
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -179,7 +167,7 @@ const UNREACHABLE_AFTER_MS = 8000;
 
 function sendHello(sock: PartySocket): void {
   const since = synced && room.epoch ? { epoch: room.epoch, since: room.rev } : {};
-  sock.send(JSON.stringify({ type: 'hello', cid: clientId, author, ...since }));
+  sock.send(JSON.stringify({ type: 'hello', cid: clientId, player: me, ...since }));
 }
 
 // Applies changes that came from the room to the map and to what we know the room holds.
@@ -262,7 +250,7 @@ function onMessage(sock: PartySocket, message: Message): void {
       }
       break;
     case 'presence':
-      showPeople(message, author.id);
+      showPlayers(message, me.id);
       return;
     case 'image':
       requestedImages.delete(message.id);
@@ -284,8 +272,8 @@ function connect(sessionId: string): void {
   room = { epoch: '', rev: 0 };
   caughtUp = false;
   unsentEdits = false;
-  showPeople(null, author.id);
-  connectCursors(RELAY_HOST, sessionId, clientId, author.id);
+  showPlayers(null, me.id);
+  connectCursors(RELAY_HOST, sessionId, clientId, me.id);
   let everOpened = false;
   let live = false;
   setStatus('connecting');
@@ -312,7 +300,7 @@ function connect(sessionId: string): void {
   current.addEventListener('close', () => {
     if (socket !== current || !everOpened) return; // replaced by another session, or never connected
     setStatus('reconnecting');
-    showPeople(null, author.id); // the room tells us again once we are back
+    showPlayers(null, me.id); // the room tells us again once we are back
     // Each failed retry also fires 'close'; only announce the drop once.
     if (live) showToast('Connection lost — reconnecting…');
     live = false;
@@ -341,16 +329,19 @@ function hideSharePopover() {
 
 function openSharePopover() {
   if (!requireSharing()) return;
-  let sessionId = currentUrlSessionId();
-  if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    setUrlSessionId(sessionId);
-    connect(sessionId);
-  }
-  shareCodeInput.value = sessionId;
-  hideJoinPopover();
-  positionPopover(sharePopover, shareBtn);
-  shareCodeInput.focus();
+  // Sharing connects, so someone with no name yet is asked for one first.
+  ensureName(() => {
+    let sessionId = currentUrlSessionId();
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      setUrlSessionId(sessionId);
+      connect(sessionId);
+    }
+    shareCodeInput.value = sessionId;
+    hideJoinPopover();
+    positionPopover(sharePopover, shareBtn);
+    shareCodeInput.focus();
+  });
 }
 
 shareBtn.addEventListener('click', (e) => {
@@ -409,9 +400,11 @@ function joinSession() {
     showToast('Enter a valid session code or link');
     return;
   }
-  setUrlSessionId(sessionId);
-  connect(sessionId);
-  hideJoinPopover();
+  ensureName(() => {
+    setUrlSessionId(sessionId);
+    connect(sessionId);
+    hideJoinPopover();
+  });
 }
 
 byId('join-connect-btn').addEventListener('click', joinSession);
@@ -431,7 +424,7 @@ document.addEventListener('click', (e) => {
 const initialSession = currentUrlSessionId();
 if (initialSession) {
   if (RELAY_HOST) {
-    connect(initialSession);
+    ensureName(() => connect(initialSession));
   } else {
     // Wait a tick past the load handler, whose welcome toast would otherwise
     // replace this one.

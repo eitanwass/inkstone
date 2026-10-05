@@ -141,7 +141,7 @@ imageFile.addEventListener('change', async () => {
 
 // ── Conditions ─────────────────────────────────────────────────
 // What the token is under, as pills with a remove button, and a picker of every condition there is
-// (the default ones and the person's own) to switch on and off. Each switch is one undo step.
+// (the default ones and the player's own) to switch on and off. Each switch is one undo step.
 const pills = byId('token-cond-pills');
 const addButton = byId<HTMLButtonElement>('token-cond-add');
 const picker = byId('token-cond-picker');

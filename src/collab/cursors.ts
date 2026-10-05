@@ -3,8 +3,8 @@
 // the map (collab.ts) so that pointers, which are frequent and worth nothing a moment later, can never
 // hold up a change to the map. It is the lower priority one: a position is sent at most every GAP_MS
 // (the latest one, so the pointer ends where it stopped), is dropped rather than queued if the socket
-// is backed up, and nothing about it is ever shown to the user as an error. Positions are in world
-// units, so they land in the right place whatever each person's pan and zoom.
+// is backed up, and nothing about it is ever shown to anyone as an error. Positions are in world
+// units, so they land in the right place whatever each player's pan and zoom.
 
 import PartySocket from 'partysocket';
 import { clientToWorld, iCanvas } from '../core/canvas';
@@ -48,7 +48,7 @@ iCanvas.addEventListener('pointerleave', () => {
   if (canSend(socket)) socket.send('{"type":"hide"}');
 });
 
-// Joins the session's cursors (leaving any earlier one). `cid` is this tab and `id` this person, the
+// Joins the session's cursors (leaving any earlier one). `cid` is this tab and `id` this player, the
 // same as in the map's hello.
 export function connectCursors(host: string, room: string, cid: string, id: string): void {
   disconnectCursors();

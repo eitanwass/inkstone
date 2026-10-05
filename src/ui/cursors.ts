@@ -1,5 +1,5 @@
-// ── Other people's pointers ────────────────────────────────────
-// One small arrow in the person's colour (their sigil's, see core/identicon.ts) with their name, for
+// ── Other players' pointers ────────────────────────────────────
+// One small arrow in the player's colour (their sigil's, see core/identicon.ts) with their name, for
 // each cursor the cursor relay reports (collab/cursors.ts). They are DOM elements over the map rather
 // than canvas drawing, so a moving pointer never redraws the map, and CSS glides each one between the
 // positions it is sent. A pointer is kept in world units and placed again after every redraw
@@ -10,7 +10,7 @@ import { byId } from '../core/dom';
 import { identicon } from '../core/identicon';
 import { state } from '../core/state';
 import { onMainDrawn } from '../draw/render';
-import { personName } from './people';
+import { playerName } from './players';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const layer = byId('cursors');
@@ -46,7 +46,7 @@ function create(id: string): Cursor {
   return { el, name, x: 0, y: 0 };
 }
 
-// Puts (or moves) a person's pointer at a point in the map.
+// Puts (or moves) a player's pointer at a point in the map.
 export function showCursor(cid: string, id: string, x: number, y: number): void {
   let cursor = cursors.get(cid);
   const isNew = !cursor;
@@ -56,7 +56,7 @@ export function showCursor(cid: string, id: string, x: number, y: number): void 
   }
   cursor.x = x;
   cursor.y = y;
-  const name = personName(id) ?? '';
+  const name = playerName(id) ?? '';
   if (cursor.name.textContent !== name) cursor.name.textContent = name;
   place(cursor);
   const { el } = cursor;

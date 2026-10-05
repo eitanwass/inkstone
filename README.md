@@ -51,7 +51,7 @@ to paste.
 
 **Share** creates a session and puts its code in the URL; send the link to
 others. **Join** takes a code or a full link. Everyone's edits go to the same
-map. It is last-write-wins: two people changing the *same* element at the same
+map. It is last-write-wins: two players changing the *same* element at the same
 instant is resolved by whoever's change arrives last. If your connection drops,
 the status shows "Reconnecting…", and anything you changed while offline is
 replaced by the shared map when you're back (you'll be told).
@@ -100,7 +100,7 @@ The site redeploys only when the version in `package.json` changes. To release:
 
 1. Bump the version: `npm version patch|minor --no-git-tag-version`.
 2. Add a matching `## <version> - <date>` section to the top of
-   [CHANGELOG.md](CHANGELOG.md), written for people using the editor. The app
+   [CHANGELOG.md](CHANGELOG.md), written for players using the editor. The app
    shows this file in its "What's new" panel, and CI fails if it's missing.
 3. Push to `master`.
 

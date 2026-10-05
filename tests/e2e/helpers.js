@@ -1,12 +1,22 @@
 // Shared setup + actions for the Inkstone test suite. Every test interacts
-// with the app the same way a user would (click toolbar buttons, drag on
+// with the app the same way a player would (click toolbar buttons, drag on
 // the canvas) rather than reaching into module internals — there's no
 // exposed JS API to call directly, and DOM/canvas interaction is what
 // actually exercises the code paths worth regression-testing.
 
-export async function resetBoard(page) {
+// A fresh browser: nothing saved. The player already has a name, so sharing and joining don't stop to
+// ask for one ({ named: false } for the tests of that).
+export async function resetBoard(page, { named = true } = {}) {
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate((named) => {
+    localStorage.clear();
+    try {
+      if (named)
+        localStorage.setItem('inkstone-player', JSON.stringify({ id: 'tester0001', name: 'Tester One' }));
+    } catch {
+      // the tests of a browser that refuses to save make setItem throw
+    }
+  }, named);
   await page.reload();
   await page.waitForSelector('#tool-rect');
   await page.waitForTimeout(300); // let layout/webfont settle before reading boundingBox()
@@ -47,7 +57,7 @@ export async function placeWall(page, toScreen, x1, y1, x2, y2) {
 }
 
 // Places a token with the token tool (dragging out to dragTo makes it bigger). A token is placed
-// with no name; pass one to give it a name afterwards, the way a person would: click it and type in
+// with no name; pass one to give it a name afterwards, the way a player would: click it and type in
 // the card that appears above it. The token tool is back in use afterwards.
 export async function placeToken(page, toScreen, x, y, name, dragTo) {
   await page.click('#tool-token');

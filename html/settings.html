@@ -4,6 +4,11 @@
     <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
       <div id="settings-header">
         <h2 id="settings-title">Settings</h2>
+        <!-- Says a change was kept: shown for a moment after each one (see src/settings/saved.ts) -->
+        <span id="settings-saved" role="status">
+          <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="settings-saved-text"></span>
+        </span>
         <button class="icon-btn" id="settings-close" aria-label="Close">
           <svg width="18" height="18"><use href="/icons.svg#icon-close"></use></svg>
         </button>
@@ -12,6 +17,7 @@
         <div id="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
           <button id="settings-tab-board" role="tab" aria-selected="true" aria-controls="settings-panel-board">Board</button>
           <button id="settings-tab-conditions" role="tab" aria-selected="false" aria-controls="settings-panel-conditions" tabindex="-1">Conditions</button>
+          <button id="settings-tab-profile" role="tab" aria-selected="false" aria-controls="settings-panel-profile" tabindex="-1">Profile</button>
         </div>
         <section id="settings-panel-board" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-board" tabindex="0">
           <h3>Board</h3>
@@ -95,6 +101,21 @@
           <div class="settings-field">
             <div class="settings-sublabel" id="cond-default-heading">Default conditions</div>
             <ul class="cond-list cond-list-defaults" id="cond-default-list" aria-labelledby="cond-default-heading"></ul>
+          </div>
+        </section>
+
+        <!-- Profile: your name in shared maps (see src/settings/profile.ts) -->
+        <section id="settings-panel-profile" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-profile" tabindex="0" hidden>
+          <h3>Profile</h3>
+          <p class="settings-note">Shown to others in shared maps, by your cursor and in the list of players. Saved in this browser. Nobody checks it, so it is only a label.</p>
+          <div class="settings-field">
+            <label for="profile-name">Your name</label>
+            <div class="name-row">
+              <input type="text" id="profile-name" maxlength="40" autocomplete="off" spellcheck="false" />
+              <button type="button" class="icon-btn" id="profile-shuffle" aria-label="Suggest another name" title="Suggest another name">
+                <svg width="18" height="18"><use href="/icons.svg#icon-shuffle"></use></svg>
+              </button>
+            </div>
           </div>
         </section>
       </div>

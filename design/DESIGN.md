@@ -96,7 +96,7 @@ one accent. Red means "danger", "live", or a map token, never decoration.
 | `--dot-color` | `rgba(180,170,155,0.55)` | The dot grid |
 | `--grid-size` | `40px` | One map cell |
 
-### Drawing palettes (what users pick from)
+### Drawing palettes (what players pick from)
 
 - **Stroke:** Parchment `#e8dcc8`, Brown `#8b5e3c`, Forest `#4a7c59`, Water `#5b7fa6`, Gold `#c9a84c`, Blood `#a04040`. Default: Parchment.
 - **Fill:** None, Dark `#433b31`, Dungeon `#564837`, Forest `#364c3f`, Water `#333e4e`, Earth `#463b29`. Default: Earth.
@@ -224,7 +224,7 @@ without exclamation marks or jargon.
 
 - Toasts: "Copied element", "Token removed", "Connection lost, reconnecting…".
 - Explain, don't blame: "Sharing isn't set up on this site yet."
-- Release notes are written for people using the editor, not for developers
+- Release notes are written for players using the editor, not for developers
   (one "Under the hood" line at most).
 
 ## 11. Share preview
@@ -244,7 +244,7 @@ The template has two layouts:
   this map on Inkstone" beneath. A sample is
   [share-preview/example-named.png](share-preview/example-named.png).
 
-Names are user text: the template sets them as text (never HTML), keeps them to
+Names are text players type: the template sets them as text (never HTML), keeps them to
 60 characters, shrinks them from 112px to a 44px floor, and then trims with an
 ellipsis until they fit their box.
 

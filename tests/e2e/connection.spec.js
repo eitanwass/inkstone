@@ -68,10 +68,10 @@ test('the status follows the connection: live, reconnecting, live again', async 
 });
 
 test('edits made while offline are sent on reconnect, on top of what the room changed', async ({ page }) => {
-  const peerToken = { type: 'token', id: 'peer-token', x: 400, y: 400 };
+  const theirToken = { type: 'token', id: 'their-token', x: 400, y: 400 };
   const sent = [];
   const connections = await loadWithMockRelay(page, {
-    catchup: () => [{ t: 'set', el: peerToken }], // someone added a token while we were away
+    catchup: () => [{ t: 'set', el: theirToken }], // someone added a token while we were away
     onMessage: (connection, message) => sent.push({ connection, message }),
   });
   await page.click('#btn-share');
@@ -260,22 +260,22 @@ test('the Live pill shows how many are connected, with an identicon for each, yo
   const connections = await loadWithMockRelay(page);
   await page.click('#btn-share');
   await expect(page.locator('#collab-status')).toHaveText('Live');
-  const me = await page.evaluate(() => JSON.parse(localStorage.getItem('inkstone-author')).id);
+  const me = await page.evaluate(() => JSON.parse(localStorage.getItem('inkstone-player')).id);
 
-  const presence = (people, count = people.length) =>
-    connections[0].send(JSON.stringify({ type: 'presence', count, people }));
+  const presence = (players, count = players.length) =>
+    connections[0].send(JSON.stringify({ type: 'presence', count, players }));
   presence([
     { id: 'zed', name: 'Zed' },
-    { id: me, name: 'Guest' },
+    { id: me, name: 'Quiet Heron' },
   ]);
   await expect(page.locator('#collab-status')).toContainText('2');
-  await expect(page.locator('#people .person')).toHaveCount(2);
-  await expect(page.locator('#people .person').first()).toHaveAttribute('aria-label', 'Guest (you)');
-  await expect(page.locator('#people .person svg').first()).toBeVisible();
+  await expect(page.locator('#players .player')).toHaveCount(2);
+  await expect(page.locator('#players .player').first()).toHaveAttribute('aria-label', 'Quiet Heron (you)');
+  await expect(page.locator('#players .player svg').first()).toBeVisible();
 
-  presence([{ id: me, name: 'Guest' }], 12); // more than are listed
-  await expect(page.locator('#people .person-more')).toHaveText('+11');
+  presence([{ id: me, name: 'Quiet Heron' }], 12); // more than are listed
+  await expect(page.locator('#players .player-more')).toHaveText('+11');
 
   connections[0].close();
-  await expect(page.locator('#people .person')).toHaveCount(0);
+  await expect(page.locator('#players .player')).toHaveCount(0);
 });

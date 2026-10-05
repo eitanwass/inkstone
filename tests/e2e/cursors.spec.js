@@ -11,7 +11,7 @@ async function shared(page) {
     ws.onMessage((raw) => {
       if (JSON.parse(raw).type === 'hello') {
         ws.send(JSON.stringify({ type: 'doc', fresh: true, epoch: '', rev: 0, name: '', elements: [] }));
-        ws.send(JSON.stringify({ type: 'presence', count: 1, people: [{ id: 'zed', name: 'Zed' }] }));
+        ws.send(JSON.stringify({ type: 'presence', count: 1, players: [{ id: 'zed', name: 'Zed' }] }));
       }
     });
   });
@@ -21,7 +21,7 @@ async function shared(page) {
   });
   await resetBoard(page);
   await page.click('#btn-share');
-  await expect(page.locator('#people .person')).toHaveCount(1);
+  await expect(page.locator('#players .player')).toHaveCount(1);
   await expect.poll(() => sent.length).toBeGreaterThan(0); // the hello
   return { sent, sockets };
 }

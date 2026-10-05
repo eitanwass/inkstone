@@ -1,5 +1,5 @@
 // ── Controls ───────────────────────────────────────────────────
-// The commands a user can give the map outside any one tool: zooming, going
+// The commands a player can give the map outside any one tool: zooming, going
 // home, nudging the selection, selecting everything. This is the one place they
 // live; the keyboard (shortcuts.ts), the mouse wheel and the buttons all call
 // these instead of carrying their own copy.
@@ -87,7 +87,7 @@ export function toggleShortcutsHelp(): void {
   }
   shortcutsPopover.classList.remove('hidden');
   shortcutsBtn.setAttribute('aria-expanded', 'true');
-  shortcutsPopover.focus(); // so a keyboard user lands in it; Escape closes it from anywhere
+  shortcutsPopover.focus(); // so someone using the keyboard lands in it; Escape closes it from anywhere
 }
 
 shortcutsBtn.addEventListener('click', (e) => {

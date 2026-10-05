@@ -238,7 +238,7 @@ test.describe('the D&D diagonal rule', () => {
     await page.locator('#settings-title').hover(); // away again
     await expect(hint).toBeHidden();
 
-    await help.focus(); // a keyboard user gets it too
+    await help.focus(); // someone using the keyboard gets it too
     await expect(hint).toBeVisible();
     await expect(help).toHaveAttribute('aria-describedby', 'board-diagonals-note'); // and a screen reader reads it
     await page.locator('#board-per-cell').focus();
@@ -414,4 +414,13 @@ test.describe('keeping it', () => {
     await expect(page.locator('#btn-undo')).toBeDisabled();
     expect(await boardElements(page)).toHaveLength(0);
   });
+});
+
+test('changing a board setting says "Saved"', async ({ page }) => {
+  await resetBoard(page);
+  await page.click('#btn-settings');
+  await expect(page.locator('#settings-saved')).toHaveCSS('opacity', '0');
+  await page.click('#board-units label:has-text("Meters")');
+  await expect(page.locator('#settings-saved')).toHaveText('Saved');
+  await expect(page.locator('#settings-saved')).toHaveCSS('opacity', '1');
 });

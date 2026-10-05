@@ -1,7 +1,7 @@
 // ── "What's new" modal ─────────────────────────────────────────
 // Lists the releases in CHANGELOG.md, newest first, in a modal over a blurred
 // page, opened from the changelog button. The button carries a dot until the
-// user has opened the modal for the current version.
+// player has opened the modal for the current version.
 
 import changelogText from '../../CHANGELOG.md?raw';
 import { version } from '../../package.json';

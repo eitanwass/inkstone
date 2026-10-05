@@ -24,6 +24,7 @@ import './collab/collab';
 import './ui/changelog';
 import './settings';
 import './settings/conditions';
+import './settings/profile';
 import './ui/label-card';
 import './ui/lock-hint';
 import './ui/label-editor';

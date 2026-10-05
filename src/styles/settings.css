@@ -22,6 +22,23 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* "Saved", right of the title, fading in for a moment after each change. */
+#settings-saved {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  margin-right: 12px;
+  color: #5fbf85;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#settings-saved.shown {
+  opacity: 1;
+}
+
 #settings-header h2 {
   font-size: 15px;
   font-weight: 600;

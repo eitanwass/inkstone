@@ -1,5 +1,5 @@
 // ── Shared types ──────────────────────────────────────────────
-// Board elements are plain data (saved, cloned for undo, synced to peers), so
+// Board elements are plain data (saved, cloned for undo, synced to other players), so
 // they're modelled as a discriminated union on `type`. Their behavior lives in
 // src/elements/ — see elements/index.ts.
 
@@ -19,7 +19,7 @@ export interface Bounds {
 
 // Style fields any element may carry; only the ones a type uses are set.
 interface ElementStyle {
-  // Names the element to other people in a session (see collab/changes.ts). Given the first time the
+  // Names the element to other players in a session (see collab/changes.ts). Given the first time the
   // map is saved or sent, so it is missing on a new element until then.
   id?: string;
   // Locked: it can't be selected, moved, erased or deleted by clicking, and clicks go to what is under it

@@ -1,7 +1,7 @@
 // ── The map's name ─────────────────────────────────────────────
 // Shown top-centre as a title that reads like text and turns into a text field
 // when clicked. Pressing Enter or clicking away commits the new name; Escape
-// puts the old one back. A commit is saved and sent to collaborators once, not
+// puts the old one back. A commit is saved and sent to other players once, not
 // per keystroke, and is not an undo step (renaming and undoing don't interact).
 
 import { byId } from '../core/dom';
@@ -23,7 +23,7 @@ function renderPageTitle(): void {
 }
 
 // Shows state.mapName: in the field, in the tab title. Called at startup and
-// whenever the name may have changed under us (a collaborator renamed the map).
+// whenever the name may have changed under us (someone else renamed the map).
 // It never touches the field while someone is typing in it, so an incoming
 // message can't eat their half-written name; it's shown when they finish.
 export function refreshMapName(): void {

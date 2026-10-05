@@ -1,15 +1,24 @@
 # Changelog
 
+## 0.7.1 - 2026-10-05
+
+- Choose your name before joining a shared map: a window asks "Who's at the table?" with a
+  fantasy name already filled in (like "Crimson Owl") and a shuffle button for another. It only
+  asks once; after that your name is remembered in this browser.
+- Hover over a player's icon to see their name, and see it beside their cursor too.
+- Change your name any time in Settings, under the new Profile tab.
+- Settings now say "Saved" for a moment whenever a change is kept.
+
 ## 0.7.0 - 2026-10-05
 
-- See everyone's pointers live in a shared map: each person's cursor appears as an
+- See everyone's pointers live in a shared map: each player's cursor appears as an
   arrow in their own colour with their name, and moves smoothly as they move it. It
   disappears when they leave the map or disconnect.
 
 ## 0.6.15 - 2026-10-05
 
-- In a shared map you can now see who is here: the "Live" pill shows how many people
-  are connected, and each person gets a round sigil under it (yours has a gold ring).
+- In a shared map you can now see who is here: the "Live" pill shows how many players
+  are connected, and each player gets a round sigil under it (yours has a gold ring).
   Hover one to see the name. If there are more than eight, the rest are counted as "+N".
 - The top panel is now wider, so on screens up to 1100px wide the map's name sits in
   its own row below it instead of beside it.
@@ -61,10 +70,10 @@
 
 ## 0.6.9 - 2026-10-05
 
-- Shared maps are kept for a week after the last person leaves, so you can open the
+- Shared maps are kept for a week after the last player leaves, so you can open the
   link again later and find the map as it was. Opening the link counts as a visit
   and keeps it another week.
-- Live sessions are steadier. Two people editing different things at once no
+- Live sessions are steadier. Two players editing different things at once no
   longer overwrite each other, renaming the map never overwrites anyone's drawing,
   and an undo only undoes your own edits, keeping what others did.
 - If your connection drops and comes back, you catch up with what changed while

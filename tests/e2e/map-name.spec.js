@@ -201,7 +201,7 @@ test.describe('the name in a shared session', () => {
     expect(sent).toHaveLength(1);
   });
 
-  test("a peer's rename arrives without becoming an undo step", async ({ page }) => {
+  test("someone else's rename arrives without becoming an undo step", async ({ page }) => {
     const { connections } = await loadWithRelay(page);
     connections[0].send(
       JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'name', name: 'From a friend' }] }),
@@ -242,20 +242,20 @@ test.describe('the name in a shared session', () => {
     await expect(page.locator('#map-name')).toHaveValue('Mine');
   });
 
-  test("a peer's rename never overwrites what you are typing", async ({ page }) => {
+  test("someone else's rename never overwrites what you are typing", async ({ page }) => {
     const { connections } = await loadWithRelay(page);
     await page.click('#map-name');
     await page.keyboard.type('Half writ');
 
     connections[0].send(
-      JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'name', name: 'Peer name' }] }),
+      JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'name', name: 'Their name' }] }),
     );
     await page.waitForTimeout(300);
     await expect(page.locator('#map-name')).toHaveValue('Half writ'); // untouched while you type
-    expect(await page.title()).toBe('Peer name – Inkstone'); // but the shared name is known
+    expect(await page.title()).toBe('Their name – Inkstone'); // but the shared name is known
 
-    await page.keyboard.press('Escape'); // give up on your edit: the peer's name shows
-    await expect(page.locator('#map-name')).toHaveValue('Peer name');
+    await page.keyboard.press('Escape'); // give up on your edit: their name shows
+    await expect(page.locator('#map-name')).toHaveValue('Their name');
   });
 });
 

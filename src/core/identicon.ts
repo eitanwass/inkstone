@@ -1,10 +1,10 @@
 // ── Identicons ─────────────────────────────────────────────────
-// A person's picture until they can choose one: a sigil on a dark tile, made from a seed (their id) so
-// the same person looks the same to everyone. It is the logo's own idea: a compass bezel with a tick for
+// A player's picture until they can choose one: a sigil on a dark tile, made from a seed (their id) so
+// the same player looks the same to everyone. It is the logo's own idea: a compass bezel with a tick for
 // each fold, and a ring of two-tone nib-shaped petals around the middle, turned 3 to 8 times. A ring of
 // dots or strokes between the petals and a ring or dot at the centre vary it, and the colour is one of
-// the token colours, so a person's sigil can later match their tokens. Pure, so it is unit tested; the
-// page draws it in ui/people.ts. Coordinates are in a box from -10 to 10, the tile a circle of radius 10.
+// the token colours, so a player's sigil can later match their tokens. Pure, so it is unit tested; the
+// page draws it in ui/players.ts. Coordinates are in a box from -10 to 10, the tile a circle of radius 10.
 
 export const TOKEN_COLORS = [
   '#e05c5c',

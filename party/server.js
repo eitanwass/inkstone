@@ -1,7 +1,7 @@
 // ── Collab relay (Cloudflare Worker + Durable Object) ───────────
 // One Durable Object instance per session id. It keeps the map as one entry per element (by id),
 // applies the changes clients send (see src/collab/changes.ts: set, del, order, name) and passes them
-// on, so two people editing different elements never overwrite each other.
+// on, so two players editing different elements never overwrite each other.
 //
 // Every accepted batch of changes is a numbered revision (`rev`) with a small log entry saying who
 // sent it and which elements it touched (not what it put in them, so the log is tiny). The relay is
@@ -44,12 +44,12 @@ const MAX_ELEMENT_LENGTH = 20_000;
 const MAX_ELEMENTS = 2000;
 const MAX_TOTAL_LENGTH = 900_000;
 const MAX_NAME_LENGTH = 200;
-const MAX_AUTHOR_NAME_LENGTH = 40;
+const MAX_PLAYER_NAME_LENGTH = 40;
 const MAX_IMAGE_LENGTH = 100_000; // the same raster-only check as src/core/image-data.ts
 const MAX_IMAGES = 100;
 const MAX_IMAGES_TOTAL_LENGTH = 1_500_000;
 const MAX_IMAGES_PER_REQUEST = 50;
-const MAX_PEOPLE_LISTED = 50; // the count is always the true one; only the list is cut
+const MAX_PLAYERS_LISTED = 50; // the count is always the true one; only the list is cut
 
 // Kept in step by hand with src/collab/changes.ts, which this file can't import.
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -74,14 +74,15 @@ function elementJson(el) {
 
 // A message from a client, checked and in a form the room can use, or null if any part of it is
 // wrong (all of it is dropped then: what is stored lasts).
-//   { type: 'hello', cid, author: { id, name }, epoch?, since? }
-//        who is connecting (cid is this tab; author is the person) and, for a client that has been in
+//   { type: 'hello', cid, player: { id, name }, epoch?, since? }
+//        who is connecting (cid is this tab; player is who they are) and, for a client that has been in
 //        this room before, the room's epoch and the last revision it has
 //   { type: 'doc', name, elements }       a map to give a fresh room
 //   { type: 'changes', base, changes }    changes made on top of revision `base`
+//   { type: 'rename', name }              the player's new name (a client that has said hello)
 //   { type: 'image', id, data }           a token picture, which the room keeps if it hasn't got it
 //   { type: 'getimages', ids }            asks for pictures, each answered with an `image` message
-// and the room tells everyone `{ type: 'presence', count, people: [{ id, name }] }` when someone arrives
+// and the room tells everyone `{ type: 'presence', count, players: [{ id, name }] }` when someone arrives
 // or leaves.
 export function parseMessage(text) {
   if (typeof text !== 'string' || text.length > MAX_TOTAL_LENGTH) return null;
@@ -93,11 +94,16 @@ export function parseMessage(text) {
   }
   if (!isObject(data)) return null;
   if (data.type === 'hello') {
-    const { cid, author, epoch, since } = data;
-    if (!isId(cid) || !isObject(author) || !isId(author.id)) return null;
-    if (typeof author.name !== 'string' || author.name.length > MAX_AUTHOR_NAME_LENGTH) return null;
+    const { cid, player, epoch, since } = data;
+    if (!isId(cid) || !isObject(player) || !isId(player.id)) return null;
+    if (typeof player.name !== 'string' || player.name.length > MAX_PLAYER_NAME_LENGTH) return null;
     if ((epoch !== undefined && !isId(epoch)) || (since !== undefined && !isRev(since))) return null;
-    return { type: 'hello', cid, author: { id: author.id, name: author.name }, epoch, since };
+    return { type: 'hello', cid, player: { id: player.id, name: player.name }, epoch, since };
+  }
+  if (data.type === 'rename') {
+    const ok =
+      typeof data.name === 'string' && data.name.length > 0 && data.name.length <= MAX_PLAYER_NAME_LENGTH;
+    return ok ? { type: 'rename', name: data.name } : null;
   }
   if (data.type === 'image') {
     return isId(data.id) && isImageData(data.data) ? { type: 'image', id: data.id, data: data.data } : null;
@@ -140,7 +146,7 @@ const wire = (c) => (c.t === 'set' ? `{"t":"set","el":${c.json}}` : JSON.stringi
 export class InkstoneRoom {
   constructor(state) {
     this.state = state;
-    this.sessions = new Map(); // socket -> { cid, author }, once it has said hello
+    this.sessions = new Map(); // socket -> { cid, player }, once it has said hello
     this.elements = new Map(); // id -> the element's JSON text; the map's order is the room's order
     this.total = 0; // the length of all the JSON texts
     this.name = '';
@@ -289,16 +295,16 @@ export class InkstoneRoom {
     ws.send(`{"type":"catchup","epoch":"${this.epoch}","rev":${this.rev},"changes":[${changes}]}`);
   }
 
-  // Who is here: one per person (the same person in two tabs is one), as the message every client
-  // gets when someone arrives or leaves. `count` is everyone; `people` is cut to a sensible length.
+  // Who is here: one per player (the same player in two tabs is one), as the message every client
+  // gets when someone arrives or leaves. `count` is everyone; `players` is cut to a sensible length.
   presenceMessage() {
-    const people = new Map();
-    for (const { author } of this.sessions.values())
-      people.set(author.id, { id: author.id, name: author.name });
+    const players = new Map();
+    for (const { player } of this.sessions.values())
+      players.set(player.id, { id: player.id, name: player.name });
     return JSON.stringify({
       type: 'presence',
-      count: people.size,
-      people: [...people.values()].slice(0, MAX_PEOPLE_LISTED),
+      count: players.size,
+      players: [...players.values()].slice(0, MAX_PLAYERS_LISTED),
     });
   }
 
@@ -340,7 +346,7 @@ export class InkstoneRoom {
       this.log.push({
         rev: this.rev,
         cid: session.cid,
-        by: session.author,
+        by: session.player,
         at: Date.now(),
         ids: accepted.filter((c) => c.t === 'set' || c.t === 'del').map((c) => c.id),
         order: accepted.some((c) => c.t === 'order'),
@@ -427,7 +433,7 @@ export class InkstoneRoom {
       if (!message) return;
       if (message.type === 'hello') {
         const arrived = !this.sessions.has(ws);
-        this.sessions.set(ws, { cid: message.cid, author: message.author });
+        this.sessions.set(ws, { cid: message.cid, player: message.player });
         this.hello(ws, message);
         if (arrived) this.sendPresence();
         // A visit keeps the room another week.
@@ -435,6 +441,12 @@ export class InkstoneRoom {
         return;
       }
       if (!this.sessions.has(ws)) return; // nothing is taken from a client that hasn't said hello
+      if (message.type === 'rename') {
+        const session = this.sessions.get(ws);
+        session.player = { ...session.player, name: message.name };
+        this.sendPresence();
+        return;
+      }
       if (message.type === 'getimages') {
         for (const id of message.ids) {
           const data = this.images.get(id);

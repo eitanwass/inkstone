@@ -14,7 +14,7 @@ export interface Scale {
   dndDiagonals: boolean;
 }
 
-// The units on offer, each with what one square is worth until the person says otherwise.
+// The units on offer, each with what one square is worth until the player says otherwise.
 export const UNITS = [
   { unit: 'ft', label: 'Feet', perCell: 5 },
   { unit: 'm', label: 'Meters', perCell: 1.5 },

@@ -1,6 +1,6 @@
 // ── Element types ─────────────────────────────────────────────
 // Elements (state.elements) are plain data — they're saved to localStorage,
-// cloned for undo, and sent to collaborators — so they can't carry methods.
+// cloned for undo, and sent to other players — so they can't carry methods.
 // Instead each type has a file in this folder exporting an object of
 // behavior, and ELEMENT_TYPES maps el.type to it. The functions below look up
 // the type and call into it, so the rest of the app never switches on el.type.

@@ -105,6 +105,21 @@ test.describe('axe finds no violations', () => {
     expect(await violations(page)).toEqual([]);
   });
 
+  test('with the settings open on the Profile tab', async ({ page }) => {
+    await page.click('#btn-settings');
+    await page.click('#settings-tab-profile');
+    await expect(page.locator('#profile-name')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('with the name dialog ("Who\'s at the table?") open', async ({ page }) => {
+    await page.evaluate(() => localStorage.removeItem('inkstone-player'));
+    await page.reload();
+    await page.click('#btn-share');
+    await expect(page.locator('#name-dialog')).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('with the settings open and a size that cannot be used typed in', async ({ page }) => {
     await page.click('#btn-settings');
     await page.fill('#board-per-cell', '0');

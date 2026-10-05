@@ -24,7 +24,7 @@ Each item is meant to ship on its own.
 - ~~**Undo for Clear All and other destructive actions.**~~
   - ~~A toast with an "Undo" button after Clear All and after deleting elements or a token.~~
 - ~~**Saved-state feedback.**~~
-  - ~~A quiet "Saved" mark so people trust that the map survives a reload.~~
+  - ~~A quiet "Saved" mark so players trust that the map survives a reload.~~
 - ~~**First-visit hint.**~~
   - ~~A welcome on an empty map, with an arrow to the shortcut list.~~
 
@@ -41,7 +41,7 @@ Each item is meant to ship on its own.
   - ~~Place tokens without a name dialog: a plain disc straight away.~~
   - ~~A card above the selected token, with a name field (`src/ui/token-card.ts`).~~
   - ~~Image on the token. Each picture is stored once, downscaled, and tokens point at it by id, so moving a token or saving the map never carries it; in a live session it goes over once.~~ (Still to do: offer pictures already used when choosing one.)
-  - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).
+  - HP and AC in the card, as plain numbers everyone sees (hiding them from other players needs roles).
   - ~~Color per token, in the card: the palette as swatches, and any color.~~
   - ~~Conditions (dead, prone, ...): badges on the token, set from its card or a right-click submenu, with your own in Settings.~~
   - ~~"Duplicate and increment" for packs of enemies ("Goblin 1, 2, 3").~~
@@ -53,10 +53,8 @@ Each item is meant to ship on its own.
   - ~~Lock an element so a background room isn't dragged by accident: clicks pass through it, right-click it to unlock, a faded lock fades in on hover. From the right-click menus, for any selection.~~
   - ~~Send to back~~
   - Hiding elements, named groups or layers, a lock shortcut.
-- **Right-click and long-press menus reachable by keyboard** (known a11y gap). (M)
 - **More stock shapes**: doors and windows on walls, circles, stairs, and a line
-  with an arrow. Rooms and walls cover dungeons; doors are what people draw next. (M)
-
+  with an arrow. Rooms and walls cover dungeons; doors are what players draw next. (M)
 
 ## Then: working with more than one map (M to L)
 
@@ -65,25 +63,35 @@ Each item is meant to ship on its own.
   no account. (L)
 - ~~**Save to / open from a file** (JSON). Backup, moving between devices, sharing a
   map by email. Also the escape hatch for the no-account approach.~~
+  - Still to do: drop a file onto the page to open it. (S)
 - **Import an image as a background** (a scanned or downloaded map to draw over). (L)
 - **Export options**: PNG with or without grid, transparent background, print
   layout at one-inch squares. (M)
 
 ## Sessions: make live play smoother (M to L)
 
-- **See who's here**: a small list of people and their cursors. The Live pill only
-  says the connection is up. (M)
-- **Fix the rename overwrite** documented in CLAUDE.md (relay change; deploy the
-  relay first). Also removes a class of lost updates for map names. (M)
-- **Presenter / read-only link**: a view-only invite so players can't move
-  things by accident. A light version of GM-versus-player roles. (M)
-- **Ping**: click-and-hold to flash a spot for everyone ("look here"). (S)
+- ~~**See who's here**~~
+  - ~~The Live pill shows how many are connected, with a round sigil for each player under it (made from their id, in the logo's compass style).~~
+  - ~~Everyone's cursors live, on their own socket and relay so they never slow down map changes.~~
+- ~~**Fix the rename overwrite.** A rename is its own change and never carries the map.~~
+- ~~**Names for players.**~~
+  - ~~"Who's at the table?" before first joining or sharing, with a fantasy name suggested and a shuffle; no skip. Change it later in Settings, Profile. Names show on hover in the list and by each cursor.~~
+- **Sigil and colour for players** (S): let a player shuffle their look (a stored seed, separate from
+  their id) and pick their colour, in Settings, Profile and from the list.
+- **Ping**: click-and-hold to flash a spot for everyone ("look here"). It can ride the
+  cursors socket, so it needs no new connection. (S)
+- **Follow a player**: click someone's sigil to jump the view to their cursor, or keep following
+  it. Useful when the GM wants the table looking at one spot. (S)
+- **Who changed what**: the relay already logs who sent each revision, so show it: a "last edited
+  by" on the selected element, or a brief highlight on what someone else just changed. (M)
+- **Presenter / read-only link**: a view-only invite so a player can't move
+  things by accident. A light version of roles: a GM and everyone else. (M)
 
 ## Later: bigger bets (L)
 
-- **Fog of war / hidden areas**: the main thing GMs ask a battle map for. Needs roles first (the GM sees everything, players
-  don't), so it follows read-only links.
+- **Fog of war / hidden areas**: the main thing GMs ask a battle map for. Needs roles first (the GM sees everything, the other
+  players don't), so it follows read-only links.
 - **Dice roller** with shared roll history. Cheap to build, but players already
-  have dice; do it only if it keeps people on the page.
-- **Accounts and cloud-saved maps**: only if people ask for it. It brings storage
+  have dice; do it only if it keeps players on the page.
+- **Accounts and cloud-saved maps**: only if players ask for it. It brings storage
   and cost, and it ends the "nothing to sign up for" advantage.
