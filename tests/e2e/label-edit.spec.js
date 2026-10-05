@@ -3,7 +3,7 @@ import { boardElements, placeLabel, resetBoard, worldToScreenFn } from './helper
 
 // A label's text is edited in place: double-click it, press Enter on it, or choose "Edit Text" from its
 // right-click menu, and a field appears right over it on the map. Enter or clicking away keeps the text
-// (one undo step); Escape puts the old text back. There is no dialog.
+// (one undo step); Escape puts the old text back. There is no dialog. (Placing one is in label-place.spec.js.)
 
 const field = (page) => page.locator('#label-editor');
 const texts = async (page) => (await boardElements(page)).map((e) => e.text);
@@ -131,14 +131,6 @@ test('the field grows with the text, and follows the label when the map is zoome
   await expect.poll(async () => (await field(page).boundingBox()).width).toBeGreaterThan(wider.width * 1.3);
   const zoomed = await field(page).boundingBox();
   expect(zoomed.x).toBeLessThan(wider.x); // zoomed toward the cursor, so the label moved away from it
-});
-
-test('a new label is still placed with the dialog', async ({ page }) => {
-  await page.click('#tool-text');
-  await page.mouse.click(500, 300);
-  await expect(page.locator('#text-label-overlay')).toBeVisible();
-  await expect(page.locator('#text-label-title')).toHaveText('Enter label text');
-  await expect(field(page)).toBeHidden();
 });
 
 test('the edit is sent to a shared session as one change to the label', async ({ page }) => {

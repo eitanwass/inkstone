@@ -147,8 +147,7 @@ body.tool-ruler #interaction-canvas {
     min-width: 0;
     max-width: calc(100vw - 32px);
   }
-  #modal,
-  .input-modal {
+  #modal {
     min-width: 0;
     width: calc(100vw - 48px);
     max-width: 360px;

@@ -1,6 +1,5 @@
 /* ── Modals ────────────────────────────────────────────────── */
-#modal-overlay,
-.input-overlay {
+#modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
@@ -10,8 +9,7 @@
   z-index: 2000;
 }
 
-#modal,
-.input-modal {
+#modal {
   background: #1e1b17;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -20,27 +18,10 @@
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
-#modal p,
-.input-modal p {
+#modal p {
   color: var(--text-primary);
   font-size: 14px;
   margin-bottom: 16px;
-}
-
-.input-modal input {
-  width: 100%;
-  padding: 8px 10px;
-  background: #25211d;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 13px;
-  margin-bottom: 16px;
-  outline: none;
-}
-
-.input-modal input:focus {
-  border-color: var(--accent-dim);
 }
 
 .modal-actions {

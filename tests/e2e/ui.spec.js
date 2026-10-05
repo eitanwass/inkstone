@@ -35,19 +35,11 @@ test('the custom-color "+" icon is an SVG, not a text glyph (centering fix)', as
   expect(isSvgIcon).toBe(true);
 });
 
-test('the label tool style panel preview updates with font size and color', async ({ page }) => {
+test('the text tool has no style panel: a label is styled in its own card', async ({ page }) => {
+  await page.click('#tool-rect');
+  await expect(page.locator('#style-panel')).toBeVisible();
   await page.click('#tool-text');
-  const preview = page.locator('#label-preview-text');
-
-  await page.evaluate(() => {
-    const slider = document.getElementById('stroke-width');
-    slider.value = 28;
-    slider.dispatchEvent(new Event('input'));
-  });
-  await expect(preview).toHaveCSS('font-size', '28px');
-
-  await page.click('#stroke-swatches [data-color="#a04040"]');
-  await expect(preview).toHaveCSS('color', 'rgb(160, 64, 64)');
+  await expect(page.locator('#style-panel')).toBeHidden();
 });
 
 test('hovering the brand mark triggers the spin transform', async ({ page }) => {

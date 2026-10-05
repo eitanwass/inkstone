@@ -21,7 +21,7 @@ import { drawMain, setView } from '../draw/render';
 import { hitTest } from '../elements';
 import { nextTokenColor } from '../elements/token';
 import { hideContextMenus } from '../ui/context-menu';
-import { openTextDialog } from '../ui/dialogs';
+import { placeLabel } from '../ui/label-editor';
 import { hideConditionsTip, updateConditionsTip } from '../ui/token-card';
 import { editSelectedText, zoomAround } from './controls';
 import { eraseAtCell, updateEraseHover } from './erase';
@@ -143,7 +143,13 @@ function onPointerMove(e: PointerEvent): void {
   if (e.pointerType === 'mouse') updateConditionsTip(world, e.clientX, e.clientY); // a fingertip doesn't hover
 }
 
+// Where the text tool was pressed: the label is placed when the pointer is released (and not on the
+// press, or the browser, moving focus as the press finishes, would take it from the field the new label
+// opens), if nothing turned the press into something else in between.
+let pendingLabelAt: Point | null = null;
+
 function onPointerDown(e: PointerEvent): void {
+  pendingLabelAt = null;
   hideConditionsTip(); // whatever happens next, the list it was showing is out of date
   if (onTouchDown(e)) return;
 
@@ -263,7 +269,7 @@ function onPointerDown(e: PointerEvent): void {
     }
 
     case 'text': {
-      openTextDialog(world.x, world.y);
+      pendingLabelAt = world;
       break;
     }
   }
@@ -271,6 +277,13 @@ function onPointerDown(e: PointerEvent): void {
 
 function onPointerUp(e: PointerEvent): void {
   if (onTouchUp(e)) return;
+
+  if (pendingLabelAt) {
+    const at = pendingLabelAt;
+    pendingLabelAt = null;
+    if (state.tool === 'text') placeLabel(at.x, at.y);
+    return;
+  }
 
   if (state.isErasing) {
     state.isErasing = false;
@@ -364,6 +377,7 @@ function onPointerUp(e: PointerEvent): void {
 }
 
 function onPointerCancel(e: PointerEvent): void {
+  pendingLabelAt = null;
   onTouchCancel(e);
   state.isPanning = false;
   cancelInProgressDrag();

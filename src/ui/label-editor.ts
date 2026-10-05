@@ -4,6 +4,10 @@
 // Enter or clicking away keeps it (one undo step, sent to a live session once); Escape puts the old
 // text back. Blank or unchanged text is no edit: a label with no text would be invisible.
 //
+// The text tool uses the same field to place a label: a click puts a new, empty label there and opens it
+// (placeLabel), with its card (label-card.ts) beside it. It joins the map, and the undo history, only
+// when it has text; blank, or Escape, and it was never there.
+//
 // The label itself isn't drawn by the canvas while it is edited (see state.editingLabel), and the
 // field follows it as the map is panned or zoomed. It is positioned from render.ts's onMainDrawn hook,
 // which is registered rather than imported to keep the module chain one-way.
@@ -19,7 +23,7 @@ const field = byId<HTMLInputElement>('label-editor');
 const DEFAULT_COLOR = '#e8dcc8'; // as in elements/label.ts
 const PAD_PX = 3;
 
-let editing: { label: LabelElement; original: string } | null = null;
+let editing: { label: LabelElement; original: string; isNew: boolean } | null = null;
 
 // A field the size of what is typed (a text input doesn't grow by itself), at the label's own size
 // on screen: a hidden canvas measure, the same one the label's bounds use.
@@ -42,9 +46,30 @@ function place(): void {
   field.style.top = `${screen.top + state.panY + label.y * state.zoom - PAD_PX - 1}px`;
 }
 
-export function editLabel(label: LabelElement): void {
+// Whether this is a label that has just been placed and has no text yet: it is on the map for the field
+// and the card to work on, but it is not part of the saved map until it has some.
+export const isPendingLabel = (label: LabelElement): boolean =>
+  editing?.isNew === true && editing.label === label;
+
+// Puts a new, empty label where the text tool was clicked, selects it, and opens it to type into.
+export function placeLabel(x: number, y: number): void {
+  if (editing) commit();
+  const label: LabelElement = {
+    type: 'label',
+    x,
+    y,
+    text: '',
+    fontSize: state.labelStyle.fontSize,
+    strokeColor: state.labelStyle.color,
+  };
+  state.elements.push(label);
+  state.selected = [state.elements.length - 1];
+  editLabel(label, true);
+}
+
+export function editLabel(label: LabelElement, isNew = false): void {
   if (editing) commit(); // another label was chosen: keep this one's text first
-  editing = { label, original: label.text };
+  editing = { label, original: label.text, isNew };
   state.editingLabel = label;
   field.value = label.text;
   field.classList.remove('hidden');
@@ -61,11 +86,29 @@ function close(): void {
   drawMain();
 }
 
+function removeFromMap(label: LabelElement): void {
+  const i = state.elements.indexOf(label);
+  if (i >= 0) state.elements.splice(i, 1);
+  state.selected = [];
+  drawMain();
+}
+
 function commit(): void {
   if (!editing) return;
-  const { label, original } = editing;
+  const { label, original, isNew } = editing;
   const text = field.value.trim();
   close();
+  if (isNew) {
+    if (!state.elements.includes(label)) return;
+    if (!text)
+      removeFromMap(label); // nothing was typed: it was never there
+    else {
+      label.text = text;
+      drawMain();
+      pushHistory(); // the label is added, whatever size and colour its card gave it
+    }
+    return;
+  }
   // Only a real change is an edit: typing and putting it back is not.
   if (text && text !== original && state.elements.includes(label)) {
     label.text = text;
@@ -75,11 +118,24 @@ function commit(): void {
 }
 
 function cancel(): void {
-  if (editing) close();
+  if (!editing) return;
+  const { label, isNew } = editing;
+  close();
+  if (isNew) removeFromMap(label);
 }
 
 field.addEventListener('input', place); // it grows as it is typed into
-field.addEventListener('blur', commit);
+// Going to the label's card (to set its size or colour) doesn't end the edit; leaving the field and the
+// card both does. A new label with no text yet would otherwise be gone before it could be given a size.
+const card = byId('label-card');
+const inCardOrField = (target: EventTarget | null) =>
+  target instanceof Node && (card.contains(target) || target === field);
+field.addEventListener('blur', (e) => {
+  if (!inCardOrField(e.relatedTarget)) commit();
+});
+card.addEventListener('focusout', (e) => {
+  if (editing && !inCardOrField(e.relatedTarget)) commit();
+});
 field.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     field.blur();

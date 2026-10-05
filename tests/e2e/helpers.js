@@ -74,9 +74,9 @@ export async function placeLabel(page, toScreen, x, y, text) {
   await page.click('#tool-text');
   const p = toScreen(x, y);
   await page.mouse.click(p.x, p.y);
-  await page.waitForSelector('#text-label-overlay:not(.hidden)');
-  await page.fill('#text-label-input', text);
-  await page.click('#text-label-confirm');
+  await page.waitForSelector('#label-editor:not(.hidden)');
+  await page.fill('#label-editor', text);
+  await page.keyboard.press('Enter');
 }
 
 // Playwright's touchscreen API only does taps, so multi-touch gestures are

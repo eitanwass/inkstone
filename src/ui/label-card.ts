@@ -17,14 +17,22 @@ import { getElementBounds } from '../elements';
 import { fontSizeOf, LABEL_COLORS, LABEL_SIZE, labelColorOf } from '../elements/label';
 import { pushHistory } from '../input/history';
 import { cardPosition } from './card-placement';
+import { isPendingLabel } from './label-editor';
 
 const card = byId('label-card');
 
-// The label the card is for: the one selected label, while the select tool is in use.
+// The label the card is for: the one selected label, while the select or text tool is in use (the text
+// tool leaves a label it has placed selected, to be given its size and colour).
 function cardLabel(): LabelElement | null {
-  if (state.tool !== 'select' || state.selected.length !== 1) return null;
+  if (!['select', 'text'].includes(state.tool) || state.selected.length !== 1) return null;
   const el = state.elements[state.selected[0]];
   return el?.type === 'label' ? el : null;
+}
+
+// Keeps a change as an undo step, unless the label has just been placed and has no text yet: it is not
+// part of the saved map until it has (see label-editor.ts), and is saved then with whatever it was given.
+function keep(label: LabelElement): void {
+  if (!isPendingLabel(label)) pushHistory();
 }
 
 // ── Size ───────────────────────────────────────────────────────
@@ -41,6 +49,7 @@ size.addEventListener('input', () => {
   if (!label) return;
   sizing ??= { label, original: fontSizeOf(label) };
   label.fontSize = Number(size.value);
+  state.labelStyle.fontSize = label.fontSize; // the next new label starts like this one
   sizeValue.textContent = size.value;
   drawMain();
 });
@@ -49,7 +58,7 @@ function finishSizing(): void {
   if (!sizing) return;
   const { label, original } = sizing;
   sizing = null;
-  if (state.elements.includes(label) && fontSizeOf(label) !== original) pushHistory();
+  if (state.elements.includes(label) && fontSizeOf(label) !== original) keep(label);
 }
 
 size.addEventListener('change', finishSizing);
@@ -81,8 +90,9 @@ function setColor(hex: string): void {
   const label = cardLabel();
   if (!label || labelColorOf(label) === hex.toLowerCase()) return;
   label.strokeColor = hex;
+  state.labelStyle.color = hex;
   drawMain();
-  pushHistory();
+  keep(label);
 }
 
 let picking: { label: LabelElement; original: string } | null = null;
@@ -92,6 +102,7 @@ customInput.addEventListener('input', () => {
   if (!label) return;
   picking ??= { label, original: labelColorOf(label) };
   label.strokeColor = customInput.value;
+  state.labelStyle.color = customInput.value;
   drawMain();
 });
 
@@ -99,7 +110,7 @@ function finishPicking(): void {
   if (!picking) return;
   const { label, original } = picking;
   picking = null;
-  if (state.elements.includes(label) && labelColorOf(label) !== original) pushHistory();
+  if (state.elements.includes(label) && labelColorOf(label) !== original) keep(label);
 }
 
 customInput.addEventListener('change', () => {

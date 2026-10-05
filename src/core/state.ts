@@ -33,7 +33,6 @@ interface AppState {
   strokeColor: string;
   fillColor: string;
   strokeWidth: number;
-  fontSize: number;
   // Viewport transform
   panX: number;
   panY: number;
@@ -69,6 +68,9 @@ interface AppState {
   isMeasuring: boolean;
   // Element under the eraser cursor, shown as a deletion preview
   eraseHover: EraseHover | null;
+  // What a new label starts as: the size and colour of the last one that was set in a label's card
+  // (kept for this visit only).
+  labelStyle: { fontSize: number; color: string };
   // The label whose text is being edited in place: its field is on top of it, so it isn't drawn
   editingLabel: LabelElement | null;
 }
@@ -78,7 +80,6 @@ export const state: AppState = {
   strokeColor: '#e8dcc8',
   fillColor: '#463b29',
   strokeWidth: 4,
-  fontSize: DEFAULT_FONT_SIZE,
   panX: 0,
   panY: 0,
   zoom: 1,
@@ -101,6 +102,7 @@ export const state: AppState = {
   ruler: null,
   isMeasuring: false,
   eraseHover: null,
+  labelStyle: { fontSize: DEFAULT_FONT_SIZE, color: '#e8dcc8' },
   editingLabel: null,
 };
 

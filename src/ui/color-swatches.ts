@@ -8,7 +8,6 @@
 import { byId, qs } from '../core/dom';
 import { state } from '../core/state';
 import { storageGet, storageGetStrings, storageRemove, storageSet } from '../core/storage';
-import { updateLabelPreview } from '../input/toolbar';
 import { closePopover } from './popover';
 
 // This app used to be called Tavern Map; carry any saved custom colors over
@@ -129,7 +128,6 @@ setupColorRow(
   'tavernmap-custom-stroke',
   (c) => {
     state.strokeColor = c;
-    updateLabelPreview();
   },
 );
 setupColorRow(
