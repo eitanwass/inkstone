@@ -12,6 +12,7 @@ import { state } from '../core/state';
 import type { Point, TokenElement } from '../core/types';
 import { drawMain } from '../draw/render';
 import { hitTest } from '../elements';
+import { editSelectedText } from '../input/controls';
 import { pushHistory, showUndoToast } from '../input/history';
 import {
   bringSelectedToFront,
@@ -91,6 +92,9 @@ function placeMenu(menu: HTMLElement, cx: number, cy: number): void {
 }
 
 function showElementContextMenu(cx: number, cy: number): void {
+  // "Edit Text" is for a single label, which is what a right-click on one selects.
+  const only = state.selected.length === 1 ? state.elements[state.selected[0]] : undefined;
+  byId('ctx-edit-text').classList.toggle('hidden', only?.type !== 'label');
   placeMenu(byId('context-menu'), cx, cy);
 }
 
@@ -181,6 +185,7 @@ iCanvas.addEventListener('contextmenu', onContextMenu);
 document.addEventListener('click', hideContextMenus);
 
 // ── Context menu actions (act on the current selection) ───────
+byId('ctx-edit-text').addEventListener('click', editSelectedText);
 byId('ctx-copy').addEventListener('click', copySelection);
 
 byId('ctx-paste').addEventListener('click', () => {

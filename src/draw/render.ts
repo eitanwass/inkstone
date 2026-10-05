@@ -28,9 +28,9 @@ export function setView(panX: number, panY: number, zoom: number = state.zoom): 
 // Something that needs to follow the map around (the token card) asks to be told after every
 // redraw. Registered here rather than imported, because it sits above history.ts, which sits
 // above this file.
-let afterDraw: (() => void) | null = null;
+const afterDraw: (() => void)[] = [];
 export function onMainDrawn(fn: () => void): void {
-  afterDraw = fn;
+  afterDraw.push(fn);
 }
 
 export function drawMain() {
@@ -66,7 +66,7 @@ export function drawMain() {
 
   mCtx.restore();
   updateFirstVisitHint();
-  afterDraw?.();
+  for (const fn of afterDraw) fn();
 }
 
 // ── Highlight boxes ────────────────────────────────────────────

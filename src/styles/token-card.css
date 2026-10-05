@@ -362,3 +362,19 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* A label being edited in place: a field right over it, in its own size and colour. */
+#label-editor {
+  position: fixed;
+  z-index: 90;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 2px;
+  font-family: 'Inter Variable', system-ui, sans-serif;
+  line-height: 1.2;
+  background: rgba(30, 27, 23, 0.92);
+  border: 1px solid var(--accent-dim);
+  border-radius: 3px;
+  outline: none;
+}
+

@@ -8,6 +8,7 @@ import type {
   ElementDrag,
   EraseHover,
   HandleDrag,
+  LabelElement,
   Point,
   Ruler,
   SelectBox,
@@ -68,6 +69,8 @@ interface AppState {
   isMeasuring: boolean;
   // Element under the eraser cursor, shown as a deletion preview
   eraseHover: EraseHover | null;
+  // The label whose text is being edited in place: its field is on top of it, so it isn't drawn
+  editingLabel: LabelElement | null;
 }
 
 export const state: AppState = {
@@ -98,6 +101,7 @@ export const state: AppState = {
   ruler: null,
   isMeasuring: false,
   eraseHover: null,
+  editingLabel: null,
 };
 
 // Aborts whatever single-pointer tool action is mid-flight (a draw preview,

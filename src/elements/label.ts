@@ -2,7 +2,7 @@
 
 import { mCtx } from '../core/canvas';
 import { cellOf } from '../core/geometry';
-import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../core/state';
+import { DEFAULT_FONT_SIZE, FONT_FAMILY, state } from '../core/state';
 import type { ElementBehavior, LabelElement } from '../core/types';
 
 const DEFAULT_COLOR = '#e8dcc8';
@@ -25,6 +25,7 @@ export const label: ElementBehavior<LabelElement> = {
       ctx.fillRect(el.x - 2, el.y - 2, ctx.measureText(el.text).width + 4, size + 4);
       ctx.restore();
     }
+    if (el === state.editingLabel) return; // the field over it is its text
     ctx.fillStyle = el.strokeColor || DEFAULT_COLOR;
     ctx.fillText(el.text, el.x, el.y);
   },

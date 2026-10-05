@@ -23,7 +23,7 @@ import { nextTokenColor } from '../elements/token';
 import { hideContextMenus } from '../ui/context-menu';
 import { openTextDialog } from '../ui/dialogs';
 import { hideConditionsTip, updateConditionsTip } from '../ui/token-card';
-import { editTokenName, zoomAround } from './controls';
+import { editSelectedText, zoomAround } from './controls';
 import { eraseAtCell, updateEraseHover } from './erase';
 import { pushHistory } from './history';
 import { applyElementDrag, finishBoxSelect, startElementDrag } from './selection';
@@ -380,15 +380,15 @@ function onWheel(e: WheelEvent): void {
 
 iCanvas.addEventListener('pointermove', onPointerMove);
 // Double-clicking a token puts the cursor in its name (its card is already showing: the first
-// click selected it).
+// click selected it); double-clicking a label opens its text to edit.
 iCanvas.addEventListener('dblclick', (e) => {
   if (state.tool !== 'select') return;
   const world = clientToWorld(e.clientX, e.clientY);
   const idx = hitTest(world.x, world.y);
-  if (idx === null || state.elements[idx].type !== 'token') return;
+  if (idx === null || !['token', 'label'].includes(state.elements[idx].type)) return;
   state.selected = [idx];
   drawMain();
-  editTokenName();
+  editSelectedText();
 });
 
 iCanvas.addEventListener('pointerleave', hideConditionsTip);
