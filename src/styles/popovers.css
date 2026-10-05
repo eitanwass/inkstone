@@ -1,0 +1,81 @@
+/* ── Custom color popover ──────────────────────────────────── */
+.color-popover {
+  position: fixed;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 10px;
+  min-width: 150px;
+  animation: ctx-pop 0.1s ease;
+}
+
+.color-popover-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-label);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.color-popover-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.color-popover-swatches:empty {
+  display: none;
+}
+.color-popover:has(.color-popover-swatches:empty) .color-popover-label {
+  display: none;
+}
+
+.color-popover-new {
+  width: 100%;
+  padding: 6px 8px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.color-popover-new:hover {
+  background: var(--bg-toolbar-hover);
+  color: var(--text-primary);
+}
+
+/* ── Collaboration popovers (Share / Join) ───────────────────── */
+.collab-popover {
+  position: fixed;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 12px;
+  min-width: 280px;
+  animation: ctx-pop 0.1s ease;
+}
+
+.collab-popover-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-label);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.collab-popover-row {
+  display: flex;
+  gap: 8px;
+}

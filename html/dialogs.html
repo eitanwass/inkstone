@@ -1,0 +1,22 @@
+  <!-- Confirm dialog -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-message">
+      <p id="modal-message">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-secondary">Cancel</button>
+        <button id="modal-confirm" class="btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text label dialog -->
+  <div id="text-label-overlay" class="input-overlay hidden">
+    <div id="text-label-modal" class="input-modal" role="dialog" aria-modal="true" aria-labelledby="text-label-title">
+      <p id="text-label-title">Enter label text</p>
+      <input type="text" id="text-label-input" placeholder="e.g. Throne Room" maxlength="40" />
+      <div class="modal-actions">
+        <button id="text-label-cancel" class="btn-secondary">Cancel</button>
+        <button id="text-label-confirm" class="btn-primary">Add Label</button>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,12 @@
+  <!-- Ambient brand mark, faded, non-interactive -->
+  <div id="brand-mark">
+    <img id="brand-icon" src="/logo.svg" alt="" width="26" height="26" />
+    <span>Inkstone</span>
+  </div>
+
+  <!-- The map's name: top-centre, click to rename (see src/ui/map-name.ts) -->
+  <div id="map-title">
+    <span id="map-title-mirror" aria-hidden="true"></span>
+    <input id="map-name" type="text" maxlength="60" placeholder="Untitled map" aria-label="Map name" title="Rename map" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" />
+    <svg class="map-title-edit" width="16" height="16" aria-hidden="true"><use href="/icons.svg#icon-edit"></use></svg>
+  </div>

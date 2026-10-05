@@ -1,0 +1,80 @@
+/* ── Keyboard shortcuts: button (bottom-right) and its list ─────── */
+#btn-shortcuts {
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px)); /* same bottom line as #tool-dock */
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  background: var(--bg-toolbar); /* .icon-btn would clear it */
+}
+
+#btn-shortcuts {
+  opacity: 0.6; /* a quiet corner control until it's wanted */
+  transition:
+    opacity 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+#btn-shortcuts:hover,
+#btn-shortcuts:focus-visible,
+#btn-shortcuts[aria-expanded="true"] {
+  opacity: 1;
+}
+
+#btn-shortcuts:hover {
+  background: var(--bg-toolbar-hover);
+}
+
+#shortcuts-popover {
+  position: fixed;
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 14px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  z-index: 1000;
+  animation: ctx-pop 0.1s ease;
+}
+
+#shortcuts-popover:focus {
+  outline: none;
+}
+
+#shortcuts-popover dl {
+  display: grid;
+  grid-template-columns: 9.5em auto; /* same key column in every group */
+  gap: 6px 14px;
+  margin: 0;
+}
+
+#shortcuts-popover dt {
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+#shortcuts-popover dd {
+  margin: 0;
+}
+
+#shortcuts-popover kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 5px;
+  text-align: center;
+  font: 600 11px / 1.5 monospace;
+  color: var(--text-primary);
+  background: var(--bg-toolbar-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}

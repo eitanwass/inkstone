@@ -1,0 +1,53 @@
+/* ── Floating panels (signature shape: chamfered brass plate) ─ */
+.floating-panel {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px;
+  background: var(--bg-toolbar);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  user-select: none;
+  clip-path: polygon(
+    var(--panel-chamfer) 0,
+    calc(100% - var(--panel-chamfer)) 0,
+    100% var(--panel-chamfer),
+    100% calc(100% - var(--panel-chamfer)),
+    calc(100% - var(--panel-chamfer)) 100%,
+    var(--panel-chamfer) 100%,
+    0 calc(100% - var(--panel-chamfer)),
+    0 var(--panel-chamfer)
+  );
+}
+
+.floating-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
+}
+
+.panel-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* #tool-dock and #style-panel fall back to overflow-x: auto on narrow
+   screens (see the max-width media query) instead of wrapping — but flex
+   items shrink to fit by default, which on a tight viewport squeezed
+   .color-swatches down until it wrapped into a vertical stack instead of
+   actually scrolling. Keeping every direct child at its natural width is
+   what makes the scrollbar (rather than a squashed layout) the fallback. */
+.floating-panel > * {
+  flex-shrink: 0;
+}

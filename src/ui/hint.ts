@@ -1,7 +1,7 @@
 // ── First-visit hint ───────────────────────────────────────────
 // A welcome on an empty map: how to start, and where the shortcut list is. It goes as soon as
 // anything is drawn, and for good: clearing the map later doesn't bring it back, since the
-// person has plainly found their way by then. It never takes clicks (see style.css).
+// person has plainly found their way by then. It never takes clicks (see src/styles/hint.css).
 
 import { byId } from '../core/dom';
 import { state } from '../core/state';

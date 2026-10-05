@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 
@@ -10,14 +10,18 @@ const squash = (text) => text.replace(/\s+/g, '').toLowerCase();
 
 const design = read('design/DESIGN.md');
 const guide = read('design/style-guide.html');
-const css = read('style.css');
+const readAll = (dir) =>
+  readdirSync(dir)
+    .map((f) => read(`${dir}/${f}`))
+    .join('\n');
+const css = readAll('src/styles');
 
 const rootTokens = [...css.match(/:root\s*\{([^}]*)\}/)[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => ({
   name: m[1],
   value: m[2].trim(),
 }));
 
-test('every :root token in style.css is documented, with its current value', () => {
+test('every :root token in src/styles/ is documented, with its current value', () => {
   expect(rootTokens.length).toBeGreaterThan(10);
   for (const { name, value } of rootTokens) {
     expect(design, `DESIGN.md should mention ${name}`).toContain(name);
@@ -34,7 +38,9 @@ test('the style guide shows every colour token', () => {
 });
 
 test('the drawing palettes and token colours in the app are documented', () => {
-  const swatches = [...read('index.html').matchAll(/data-color="(#[0-9a-f]{6})"/gi)].map((m) => m[1]);
+  const swatches = [
+    ...[read('index.html'), readAll('html')].join('\n').matchAll(/data-color="(#[0-9a-f]{6})"/gi),
+  ].map((m) => m[1]);
   const tokenColors = [
     ...read('src/elements/token.ts')
       .match(/PALETTE = \[([^\]]*)\]/)[1]

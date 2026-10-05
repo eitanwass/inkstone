@@ -1,0 +1,25 @@
+/* ── Ambient HUD readout (bottom-right, faded, non-interactive) */
+#hud-meta {
+  position: fixed;
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px)); /* its two lines are centred on #btn-shortcuts */
+  right: calc(76px + env(safe-area-inset-right, 0px)); /* left of the shortcuts button */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  z-index: 50;
+}
+
+#hud-coords {
+  display: flex;
+  gap: 16px;
+}
+
+#hud-meta span {
+  font-family: monospace;
+  font-size: 11px;
+  color: #4a3f2e;
+}

@@ -1,0 +1,157 @@
+/* ── Tool dock (bottom-center) ───────────────────────────────── */
+#tool-dock {
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content; /* see #style-panel */
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+}
+
+/* ── Style panel (bottom-center, above the dock, contextual) ── */
+#style-panel {
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 12px;
+  /* A fixed box placed at left: 50% may only grow into the half of the screen
+     to its right, so without this it capped at 50vw and clipped its own
+     contents on anything under ~1200px wide. */
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+}
+
+.style-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.style-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-label);
+  text-transform: uppercase;
+}
+
+#label-preview-text {
+  font-family: "Inter Variable", system-ui, sans-serif;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ── Icon buttons (action cluster) ───────────────────────────── */
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.icon-btn:hover {
+  background: var(--bg-toolbar-hover);
+  color: var(--text-primary);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.icon-btn:disabled:hover {
+  background: none;
+  color: var(--text-muted);
+}
+
+/* ── Tool buttons (tool dock) ─────────────────────────────────── */
+.tool-btn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.tool-btn:hover {
+  background: var(--bg-toolbar-hover);
+  color: var(--text-primary);
+}
+
+.tool-btn.active {
+  background: var(--bg-toolbar-active);
+  color: var(--accent);
+}
+
+.tool-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px 1px var(--accent);
+}
+
+/* ── Style controls ──────────────────────────────────────────── */
+.color-swatches {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    border-color 0.1s;
+}
+
+.swatch:hover {
+  transform: scale(1.15);
+}
+.swatch.active {
+  border-color: var(--accent);
+}
+
+.swatch-add {
+  background: rgba(255, 255, 255, 0.05);
+  border-style: dashed;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.swatch-add:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-dim);
+}

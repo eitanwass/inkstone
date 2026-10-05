@@ -6,7 +6,7 @@ version, with live swatches and specimens, is in
 [style-guide.html](style-guide.html).
 
 Where something here is a *value* (a colour, a size), the code is the source of
-truth: [style.css](../style.css) for the interface, [src/core/state.ts](../src/core/state.ts)
+truth: [src/styles/](../src/styles/) for the interface, [src/core/state.ts](../src/core/state.ts)
 for the type constants used on the canvas. If they disagree, fix this document.
 
 ## 1. Brand
@@ -251,7 +251,7 @@ every link gets this same card. (We built it and removed it; see CLAUDE.md.)
 
 ## 12. Known gaps
 
-- Many colours are hard-coded in `style.css` (the popover surface `#1e1b17`,
+- Many colours are hard-coded in `src/styles/` (the popover surface `#1e1b17`,
   the button surface `#2a2520`, hover fills, danger colours). Only the values in
   `:root` are real tokens; promoting the repeated ones would make this document
   and the CSS agree by construction.

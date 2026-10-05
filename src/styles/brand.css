@@ -1,0 +1,32 @@
+/* ── Ambient brand mark (top-left, faded; hover-interactive for the spin) */
+#brand-mark {
+  position: fixed;
+  top: calc(22px + env(safe-area-inset-top, 0px));
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.8;
+  pointer-events: auto;
+  user-select: none;
+  z-index: 50;
+}
+
+#brand-icon {
+  width: 30px;
+  height: 30px;
+  display: block;
+  transition: transform 0.6s ease;
+}
+
+#brand-mark:hover #brand-icon {
+  transform: rotate(360deg);
+}
+
+#brand-mark span {
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  font-size: 25px;
+  letter-spacing: 0.02em;
+  color: #4a3f2e;
+}

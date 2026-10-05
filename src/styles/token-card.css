@@ -1,0 +1,364 @@
+/* ── The token card: details of the selected token, floating above it ── */
+#token-card {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+#token-name-field {
+  box-sizing: border-box;
+  width: 100%; /* as wide as the row of colors under it */
+  padding: 6px 9px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+#token-name-field:focus {
+  border-color: var(--accent-dim);
+}
+#token-name-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* The card is a column: the name, then a row of colours. */
+#token-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#token-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px;
+}
+
+.token-swatch {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.token-swatch:hover {
+  transform: scale(1.12);
+}
+.token-swatch[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px #1e1b17,
+    0 0 0 4px var(--accent);
+}
+.token-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* "Any colour": a ring of colours that opens the browser's own picker. */
+.token-swatch-custom {
+  background: conic-gradient(#e05c5c, #e0a85c, #c8e05c, #5cba6a, #5ce0d4, #5c8ae0, #9a5ce0, #e05caa, #e05c5c);
+}
+
+.token-swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+#token-image {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--panel-line);
+  padding-top: 9px;
+}
+#token-image .tc-label {
+  margin-right: auto;
+}
+/* With a picture the button is the picture: click it to change it (a pencil shows on hover), and a small red X beside it removes it. */
+#token-image-pick.has-image {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+#token-image-pick.has-image #token-image-text {
+  display: none;
+}
+#token-image-preview[hidden] {
+  display: none;
+}
+#token-image-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tc-pencil {
+  display: none;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  padding: 8px;
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+#token-image-pick.has-image:hover .tc-pencil,
+#token-image-pick.has-image:focus-visible .tc-pencil {
+  display: block;
+}
+.tc-remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #c0392b;
+  color: #fff;
+  cursor: pointer;
+}
+.tc-remove[hidden] {
+  display: none;
+}
+.tc-remove:hover {
+  background: #e04a3a;
+}
+.tc-remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The names of a hovered token's conditions, beside the pointer. */
+#token-tip {
+  position: fixed;
+  z-index: 95;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 10px;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+#token-tip div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+/* Conditions in the card: what it has as pills, and a picker to add more. */
+#token-card {
+  width: 280px;
+  max-width: calc(100vw - 16px);
+}
+
+#token-conditions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-top: 1px solid var(--panel-line);
+  padding-top: 9px;
+}
+
+.tc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tc-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-label);
+}
+
+.tc-add {
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.tc-add:hover {
+  border-color: var(--accent-dim);
+}
+.tc-add:focus-visible,
+.tc-pill button:focus-visible,
+.tc-cond:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 24px;
+  align-items: center;
+}
+.tc-none {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px 2px 3px;
+  border-radius: 999px;
+  background: #2a2520;
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-primary);
+}
+
+.tc-pill button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 3px;
+  border-radius: 50%;
+}
+
+.tc-pill button:hover {
+  color: var(--text-primary);
+}
+
+.tc-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-top: 1px solid var(--panel-line);
+  padding-top: 9px;
+}
+.tc-picker[hidden] {
+  display: none;
+}
+
+.tc-picker input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 9px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.tc-picker input:focus {
+  border-color: var(--accent-dim);
+}
+
+.tc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  max-height: 190px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tc-cond {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: #25211d;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.tc-cond span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-cond:hover {
+  border-color: var(--accent-dim);
+}
+.tc-cond[aria-pressed="true"] {
+  background: #3a3020;
+  border-color: var(--accent);
+}
+.tc-cond[hidden] {
+  display: none;
+}
+.condition-badge {
+  flex: none;
+}
+
+.token-swatch-custom:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.token-swatch-custom.selected {
+  box-shadow:
+    0 0 0 2px #1e1b17,
+    0 0 0 4px var(--accent);
+}
+
+/* Text for assistive tech that is not drawn. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

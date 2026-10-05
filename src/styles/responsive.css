@@ -1,0 +1,189 @@
+/* ── Cursor overrides per tool ─────────────────────────────── */
+body.tool-select #interaction-canvas {
+  cursor: default;
+}
+body.tool-erase #interaction-canvas {
+  cursor: cell;
+}
+body.tool-text #interaction-canvas {
+  cursor: text;
+}
+body.tool-token #interaction-canvas {
+  cursor: crosshair;
+}
+body.tool-rect #interaction-canvas {
+  cursor: crosshair;
+}
+body.tool-wall #interaction-canvas {
+  cursor: crosshair;
+}
+body.tool-ruler #interaction-canvas {
+  cursor: crosshair;
+}
+
+/* ── Touch targets: coarse pointers (phones/tablets) get bigger hit areas
+   than the mouse-tuned defaults above, since a fingertip is far less
+   precise than a cursor. ────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+  }
+  .tool-btn {
+    width: 48px;
+    height: 48px;
+  }
+  .swatch {
+    width: 22px;
+    height: 22px;
+  }
+  .slider::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+  }
+  .slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .ctx-item {
+    padding: 10px 16px;
+  }
+}
+
+/* ── Medium and narrow screens: there's no room for the map name beside both
+   the brand mark and the right rail, so it moves to its own row beneath them,
+   left-aligned, and leaves room on the right for the "Live" pill when sharing. */
+@media (max-width: 1000px) {
+  #map-title {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    left: calc(24px + env(safe-area-inset-left, 0px));
+    transform: none;
+    max-width: calc(100vw - 48px - 40px); /* room for the save indicator */
+  }
+  body.is-sharing #map-title {
+    max-width: calc(100vw - 48px - 130px - 40px);
+  }
+  #map-name {
+    text-align: left;
+  }
+  #toast {
+    top: calc(124px + env(safe-area-inset-top, 0px));
+  }
+}
+
+/* ── Narrow viewports (phones): the bottom-center dock + style panel are
+   wide enough together to overflow a portrait phone screen, so they trade
+   some breathing room for fitting — overflow-x on both (set above) is the
+   fallback once even that isn't enough. The ambient brand mark and HUD
+   are decorative, so they're the first things dropped for space. ───── */
+@media (max-width: 640px) {
+  #brand-mark {
+    display: none;
+  }
+  #hud-meta {
+    display: none;
+  }
+  #btn-shortcuts,
+  #shortcuts-popover {
+    display: none;
+  } /* no keyboard on a phone */
+  #zoom-controls {
+    display: none;
+  } /* pinch zooms; the dock needs the width */
+  .hint-share,
+  .hint-help,
+  .hint-keys {
+    display: none;
+  } /* these point at keys and the ? button, which a phone lacks */
+
+  #map-title {
+    top: calc(74px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    max-width: calc(100vw - 28px - 40px);
+  }
+  body.is-sharing #map-title {
+    max-width: calc(100vw - 28px - 130px - 40px);
+  }
+
+  .floating-panel {
+    padding: 5px;
+    gap: 2px;
+  }
+  #style-panel {
+    gap: 8px;
+  }
+  .style-group {
+    gap: 6px;
+    padding: 0 2px;
+  }
+  .panel-divider {
+    margin: 0 1px;
+  }
+
+  #right-rail {
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
+  }
+  #tool-dock {
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+  #style-panel {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+  /* The action cluster's bigger touch targets (pointer: coarse, below) make
+     it wide enough to sit under the centered welcome/action toast — drop
+     the toast below that row instead of letting them overlap. */
+  #toast {
+    top: calc(120px + env(safe-area-inset-top, 0px));
+  }
+
+  /* Popovers/modals size to their anchor button or to viewport center, so
+     their min-width (set for desktop) is what risks overflow here. */
+  .collab-popover,
+  .color-popover {
+    min-width: 0;
+    max-width: calc(100vw - 32px);
+  }
+  #modal,
+  .input-modal {
+    min-width: 0;
+    width: calc(100vw - 48px);
+    max-width: 360px;
+  }
+}
+
+/* ── Short/landscape phones: less vertical room, so pull the floating
+   panels in from the edges a bit too. ───────────────────────────────── */
+@media (max-height: 420px) {
+  #first-visit-hint {
+    display: none;
+  } /* no room between the panels */
+  #right-rail {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+  #tool-dock {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  #btn-shortcuts {
+    bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+  } /* centred on the shorter dock */
+  #shortcuts-popover {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+  #style-panel {
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Landscape phones: the right rail sits higher, so the name does too. */
+@media (max-height: 420px) and (max-width: 1000px) {
+  #map-title {
+    top: calc(68px + env(safe-area-inset-top, 0px));
+  }
+  #toast {
+    top: calc(116px + env(safe-area-inset-top, 0px));
+  }
+}

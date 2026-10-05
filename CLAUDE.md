@@ -5,8 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A single-page D&D battle-map editor ("Inkstone"). Vanilla HTML/CSS and strict TypeScript (ES
-modules, no framework) bundled with Vite. [index.html](index.html) +
-[style.css](style.css) at the root; all behavior lives in [src/](src/) as
+modules, no framework) bundled with Vite. [index.html](index.html) at
+the root is the page shell, and a small Vite plugin in `vite.config.ts` pastes each
+`<!-- @include html/name.html -->` with that file's contents (so the markup lives in
+[html/](html/), one file per part of the page: tool dock, token card, settings...). The CSS is in
+[src/styles/](src/styles/), one file per part, pulled together in order by `main.css`
+(`@import`s; keep `responsive.css` last so it wins the cascade). All behavior lives in [src/](src/) as
 small single-purpose modules (see Module layout below).
 
 ## Running it
@@ -243,7 +247,7 @@ chain, so there are no circular imports to reason about.
 | `input/selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
 | `input/erase.ts` | Erase tool targeting + hover preview. |
 | `core/measure.ts` | Pure measuring rules: `scale` (unit, size of a square, and the D&D diagonal rule; 5 ft with the rule on by default; the Board settings panel's one input), `UNITS` (the choices and each one's usual square), `validPerCell` / `parseScale` (checking a typed or stored size; the rule stays on unless stored as exactly `false`), `gridDistance` (with the D&D rule, the default: the DMG 1-2-1-2 count, the longer side plus half the shorter, rounded down; with it off, the true straight line, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
-| `settings/` | The settings modal, opened from the gear button in the action cluster. `index.ts` is the modal (open, close, the tabs) and the Board panel: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session. `conditions.ts` is the Conditions panel (below). The tabs down the left are one tab stop, with the arrow keys moving between them. To add a panel, add a tab and a tabpanel in `index.html` and its controls as a new file in this folder, imported from `main.ts`. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
+| `settings/` | The settings modal, opened from the gear button in the action cluster. `index.ts` is the modal (open, close, the tabs) and the Board panel: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session. `conditions.ts` is the Conditions panel (below). The tabs down the left are one tab stop, with the arrow keys moving between them. To add a panel, add a tab and a tabpanel in `html/settings.html` and its controls as a new file in this folder, imported from `main.ts`. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
 | `input/pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
 | `input/touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
 | `ui/popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |

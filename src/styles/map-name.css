@@ -1,0 +1,79 @@
+/* ── Map name (top-centre, click to rename) ───────────────────── */
+#map-title {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: inline-grid;
+  /* Stay clear of the brand mark (left) and the right rail: about 440px each side. */
+  max-width: max(140px, min(520px, calc(100vw - 880px)));
+}
+
+/* A hidden copy of the text and the input share one grid cell, so the box is as wide as the text. */
+#map-title-mirror,
+#map-name {
+  grid-area: 1 / 1;
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+#map-title-mirror {
+  visibility: hidden;
+  white-space: pre;
+  overflow: hidden;
+}
+
+#map-name {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  text-overflow: ellipsis;
+  color: #4a3f2e;
+  background: transparent;
+  cursor: text;
+}
+
+#map-name::placeholder {
+  color: #6b5f50; /* 4.9:1 on the parchment */
+  opacity: 1;
+}
+
+#map-title:hover #map-name {
+  border-color: rgba(74, 63, 46, 0.3);
+}
+
+#map-name:focus {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: transparent;
+}
+
+/* The gold focus ring is for the dark chrome; on the parchment it would be 1.8:1. */
+#map-name:focus-visible {
+  outline: 2px solid #4a3f2e;
+  outline-offset: 0;
+}
+
+/* A pencil that appears on hover or focus, outside the box so the name stays centred. */
+.map-title-edit {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 6px;
+  transform: translateY(-50%);
+  color: #4a3f2e;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+#map-title:hover .map-title-edit,
+#map-title:focus-within .map-title-edit {
+  opacity: 0.6;
+}

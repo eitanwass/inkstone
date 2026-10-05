@@ -1,0 +1,92 @@
+/* ── Modals ────────────────────────────────────────────────── */
+#modal-overlay,
+.input-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+#modal,
+.input-modal {
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 280px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+#modal p,
+.input-modal p {
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.input-modal input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #25211d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.input-modal input:focus {
+  border-color: var(--accent-dim);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  padding: 7px 16px;
+  background: #2a2520;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.btn-secondary:hover {
+  background: #35302a;
+}
+
+.btn-primary {
+  padding: 7px 16px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: #f5ecd0; /* the gold accent alone is too faint on this fill (2.5:1) */
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.btn-primary:hover {
+  background: #6a5228;
+}
+
+.btn-danger {
+  padding: 7px 16px;
+  background: #3a1515;
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  color: #e06060;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.btn-danger:hover {
+  background: #501c1c;
+}

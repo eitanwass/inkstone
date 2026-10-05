@@ -1,0 +1,100 @@
+/* ── Context menus ─────────────────────────────────────────── */
+#context-menu,
+#token-context-menu,
+#token-conditions-menu,
+#canvas-context-menu {
+  position: fixed;
+  background: #1e1b17;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  min-width: 160px;
+  padding: 4px 0;
+  animation: ctx-pop 0.1s ease;
+}
+
+@keyframes ctx-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.ctx-item:hover {
+  background: var(--bg-toolbar-hover);
+}
+
+.ctx-icon {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
+}
+
+.ctx-shortcut {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text-label);
+}
+/* The Conditions submenu: a list that may be long, so it scrolls; each row has its badge and a tick. */
+#token-conditions-menu {
+  min-width: 190px;
+  max-height: min(420px, calc(100vh - 16px));
+  overflow-y: auto;
+}
+
+.ctx-cond {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.ctx-cond .ctx-name {
+  flex: 1;
+}
+.ctx-cond .ctx-tick {
+  width: 14px;
+  color: var(--accent);
+  font-weight: 700;
+  visibility: hidden;
+}
+.ctx-cond[aria-checked="true"] .ctx-tick {
+  visibility: visible;
+}
+.ctx-submenu-row.open {
+  background: var(--bg-toolbar-hover);
+}
+#token-conditions-menu:focus {
+  outline: none;
+}
+#token-conditions-menu:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ctx-item.ctx-danger {
+  color: #e06060;
+}
+.ctx-item.ctx-danger:hover {
+  background: #3a1515;
+}
+
+.ctx-divider {
+  border-top: 1px solid var(--border);
+  margin: 3px 0;
+}

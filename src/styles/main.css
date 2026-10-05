@@ -1,0 +1,20 @@
+/* The stylesheet, in cascade order: each file is one part of the page. Keep responsive.css last. */
+@import "./base.css";
+@import "./brand.css";
+@import "./map-name.css";
+@import "./hud.css";
+@import "./panels.css";
+@import "./right-rail.css";
+@import "./toolbar.css";
+@import "./popovers.css";
+@import "./token-card.css";
+@import "./zoom.css";
+@import "./hint.css";
+@import "./shortcuts.css";
+@import "./changelog.css";
+@import "./settings.css";
+@import "./conditions.css";
+@import "./menus.css";
+@import "./modals.css";
+@import "./toast.css";
+@import "./responsive.css";

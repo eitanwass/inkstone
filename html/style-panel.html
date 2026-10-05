@@ -1,0 +1,42 @@
+  <!-- Style controls: contextual, appears above the tool dock for tools that use stroke/fill -->
+  <div id="style-panel" class="floating-panel hidden" role="group" aria-label="Style">
+    <div class="style-group" id="style-group-stroke">
+      <span class="style-tag">Stroke</span>
+      <div class="color-swatches" id="stroke-swatches">
+        <button class="swatch active" aria-pressed="true" data-color="#e8dcc8" style="background:#e8dcc8" title="Parchment"></button>
+        <button class="swatch" aria-pressed="false" data-color="#8b5e3c" style="background:#8b5e3c" title="Brown"></button>
+        <button class="swatch" aria-pressed="false" data-color="#4a7c59" style="background:#4a7c59" title="Forest"></button>
+        <button class="swatch" aria-pressed="false" data-color="#5b7fa6" style="background:#5b7fa6" title="Water"></button>
+        <button class="swatch" aria-pressed="false" data-color="#c9a84c" style="background:#c9a84c" title="Gold"></button>
+        <button class="swatch" aria-pressed="false" data-color="#a04040" style="background:#a04040" title="Blood"></button>
+        <button class="swatch swatch-add" aria-label="Custom color" aria-haspopup="dialog" id="stroke-custom-add" title="Custom color"><svg width="10" height="10"><use href="/icons.svg#icon-plus"></use></svg></button>
+      </div>
+    </div>
+
+    <div class="panel-divider" id="style-divider-width"></div>
+    <div class="style-group" id="style-group-width">
+      <span class="style-tag">Size</span>
+      <input type="range" id="stroke-width" min="1" max="20" value="4" class="slider" aria-label="Size" />
+      <span id="stroke-width-val">4</span>
+    </div>
+
+    <div class="panel-divider" id="style-divider-fill"></div>
+    <div class="style-group" id="style-group-fill">
+      <span class="style-tag">Fill</span>
+      <div class="color-swatches" id="fill-swatches">
+        <button class="swatch" aria-pressed="false" data-color="transparent" style="background:transparent;border:1px dashed #666" title="None"></button>
+        <button class="swatch" aria-pressed="false" data-color="#433b31" style="background:#433b31" title="Dark"></button>
+        <button class="swatch" aria-pressed="false" data-color="#564837" style="background:#564837" title="Dungeon"></button>
+        <button class="swatch" aria-pressed="false" data-color="#364c3f" style="background:#364c3f" title="Forest"></button>
+        <button class="swatch" aria-pressed="false" data-color="#333e4e" style="background:#333e4e" title="Water"></button>
+        <button class="swatch active" aria-pressed="true" data-color="#463b29" style="background:#463b29" title="Earth"></button>
+        <button class="swatch swatch-add" aria-label="Custom color" aria-haspopup="dialog" id="fill-custom-add" title="Custom color"><svg width="10" height="10"><use href="/icons.svg#icon-plus"></use></svg></button>
+      </div>
+    </div>
+
+    <div class="panel-divider" id="style-divider-preview"></div>
+    <div class="style-group" id="style-group-preview">
+      <span class="style-tag">Preview</span>
+      <span id="label-preview-text">Label</span>
+    </div>
+  </div>

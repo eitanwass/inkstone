@@ -8,7 +8,7 @@ export function qs<T extends HTMLElement = HTMLElement>(root: ParentNode, select
 }
 
 // getElementById that throws when the element is missing, so callers get a
-// typed element instead of a nullable one. The ids all come from index.html,
+// typed element instead of a nullable one. The ids all come from index.html and html/,
 // so a miss is a programming error worth failing loudly on.
 export function byId<T extends HTMLElement = HTMLElement>(id: string): T {
   const el = document.getElementById(id);

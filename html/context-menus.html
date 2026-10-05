@@ -1,0 +1,44 @@
+  <!-- Context menu -->
+  <div id="context-menu" class="hidden">
+    <div class="ctx-item" id="ctx-copy">
+      <span class="ctx-label"><span class="ctx-icon">❏</span> Copy</span>
+      <span class="ctx-shortcut">Ctrl+C</span>
+    </div>
+    <div class="ctx-item" id="ctx-duplicate">
+      <span class="ctx-label"><span class="ctx-icon">⧉</span> Duplicate</span>
+      <span class="ctx-shortcut">Ctrl+D</span>
+    </div>
+    <div class="ctx-item" id="ctx-delete">
+      <span class="ctx-label"><span class="ctx-icon">⌫</span> Delete</span>
+      <span class="ctx-shortcut">Del</span>
+    </div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item" id="ctx-bring-front">↑ Bring to Front</div>
+    <div class="ctx-item" id="ctx-send-back">↓ Send to Back</div>
+  </div>
+
+  <!-- Canvas context menu (right-click on empty space) -->
+  <div id="canvas-context-menu" class="hidden">
+    <div class="ctx-item" id="ctx-paste">
+      <span class="ctx-label"><span class="ctx-icon">❏</span> Paste</span>
+      <span class="ctx-shortcut">Ctrl+V</span>
+    </div>
+  </div>
+
+  <!-- The token menu's "Conditions" submenu: every condition, ticked if the token has it (built in src/ui/context-menu.ts) -->
+  <div id="token-conditions-menu" class="hidden" role="menu" aria-label="Conditions" tabindex="0"></div>
+
+  <!-- Token context menu -->
+  <div id="token-context-menu" class="hidden">
+    <div class="ctx-item ctx-danger" id="ctx-token-delete">🗑 Remove Token</div>
+    <div class="ctx-item" id="ctx-token-rename">✏ Rename</div>
+    <div class="ctx-item" id="ctx-token-color">🎨 Change Color</div>
+    <div class="ctx-item ctx-submenu-row" id="ctx-token-conditions">
+      <span class="ctx-label"><span class="ctx-icon">⚑</span> Conditions</span>
+      <span class="ctx-shortcut">›</span>
+    </div>
+    <div class="ctx-item" id="ctx-token-duplicate">
+      <span class="ctx-label"><span class="ctx-icon">⧉</span> Duplicate</span>
+      <span class="ctx-shortcut">Ctrl+D</span>
+    </div>
+  </div>

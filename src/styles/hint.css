@@ -1,0 +1,113 @@
+/* ── First-visit hint: a welcome on an empty map ─────────────────── */
+#first-visit-hint {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* the map underneath stays drawable */
+  z-index: 40;
+  color: #5e5242; /* ink, a shade lighter: 5.9:1 on parchment */
+  animation: hint-in 0.5s ease 0.3s both;
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hint-welcome {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 48px));
+  text-align: center;
+  user-select: none;
+}
+
+.hint-welcome h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #4a3f2e;
+}
+
+.hint-welcome p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.hint-keys {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-size: 13px;
+}
+
+.hint-keys kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  margin-right: 4px;
+  text-align: center;
+  font: 600 12px / 1.5 monospace;
+  color: #4a3f2e;
+  border: 1px solid #8f8370;
+  border-radius: 4px;
+}
+
+.hint-welcome .hint-note {
+  margin: 18px 0 0;
+  font-size: 12.5px;
+}
+
+/* The arrow and its label point at the Share button, top-right, under the action cluster. */
+.hint-share {
+  position: absolute;
+  top: calc(80px + env(safe-area-inset-top, 0px));
+  right: calc(124px + env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13px;
+  user-select: none;
+}
+
+.hint-share svg {
+  margin-right: 12px;
+}
+
+/* The Share popover opens right there, and there is nothing to share on a site with no relay. */
+body:has(#btn-share[aria-expanded="true"]) .hint-share,
+.sharing-unavailable .hint-share {
+  display: none;
+}
+
+/* The arrow and its label point at the ? button, bottom-right. */
+.hint-help {
+  position: absolute;
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13px;
+  user-select: none;
+}
+
+.hint-help svg {
+  margin-right: 6px;
+}
+
+/* While the shortcut list is open, it sits where the arrow points. */
+body:has(#btn-shortcuts[aria-expanded="true"]) .hint-help {
+  display: none;
+}

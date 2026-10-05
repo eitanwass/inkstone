@@ -1,0 +1,117 @@
+/* ── Right rail (top-right): action cluster, then the live indicator ── */
+#right-rail {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* .floating-panel is position: fixed; inside the rail it flows with it. */
+#action-cluster {
+  position: relative;
+}
+
+/* The Live pill (while a map is shared) and the save indicator share a row, indicator on the right. */
+#status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A dark chip like the Live pill: gold would not read on the parchment (1.8:1). Yellow
+   spinner while saving, green check once saved, red X if the browser refused. */
+#save-status {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: default;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+
+#save-status .save-icon {
+  display: none;
+  grid-area: 1 / 1;
+}
+#save-status[data-state="saving"] .save-saving,
+#save-status[data-state="saved"] .save-saved,
+#save-status[data-state="failed"] .save-failed {
+  display: block;
+}
+
+#save-status[data-state="saving"] {
+  color: var(--accent);
+}
+#save-status[data-state="saved"] {
+  color: #5fbf85;
+}
+#save-status[data-state="failed"] {
+  color: #f0686d;
+  border-color: #f0686d;
+}
+
+#save-status .save-saving {
+  animation: save-spin 0.9s linear infinite;
+}
+@keyframes save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shown while a map is shared. Red = live, like a broadcast badge. */
+#collab-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 20px; /* same height as the save indicator beside it */
+  padding: 0 12px 0 10px;
+  box-sizing: border-box;
+  background: var(--bg-toolbar);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5484d;
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+#collab-status[data-state="reconnecting"] .live-dot {
+  background: #d9a441;
+  animation: none;
+}
+#collab-status[data-state="connecting"] .live-dot {
+  background: var(--text-muted);
+  animation: none;
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(229, 72, 77, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 72, 77, 0);
+  }
+}

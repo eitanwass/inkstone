@@ -5,7 +5,7 @@
 // are about how you read the map, not part of it), apply as they are changed, and are not
 // shared with a live session.
 //
-// To add a panel: a tab button and a tabpanel section in index.html, then the code for its
+// To add a panel: a tab button and a tabpanel section in html/settings.html, then the code for its
 // controls here.
 
 import { byId } from '../core/dom';

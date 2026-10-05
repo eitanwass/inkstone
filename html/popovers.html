@@ -1,0 +1,27 @@
+  <!-- Custom color popovers (opened from the "+" swatch) -->
+  <div id="stroke-color-popover" class="color-popover hidden" role="dialog" aria-label="Custom stroke colors">
+    <div class="color-popover-label">Previously picked</div>
+    <div class="color-popover-swatches"></div>
+    <button class="color-popover-new">New color…</button>
+  </div>
+  <div id="fill-color-popover" class="color-popover hidden" role="dialog" aria-label="Custom fill colors">
+    <div class="color-popover-label">Previously picked</div>
+    <div class="color-popover-swatches"></div>
+    <button class="color-popover-new">New color…</button>
+  </div>
+
+  <!-- Collaboration popovers (opened from the Share / Join buttons) -->
+  <div id="share-popover" class="collab-popover hidden" role="dialog" aria-label="Share this map">
+    <div class="collab-popover-label">Session code</div>
+    <div class="collab-popover-row">
+      <input type="text" id="share-code-input" class="collab-code-input" readonly />
+      <button class="btn-primary" id="share-copy-link">Copy Link</button>
+    </div>
+  </div>
+  <div id="join-popover" class="collab-popover hidden" role="dialog" aria-label="Join a shared map">
+    <div class="collab-popover-label">Enter session code or link</div>
+    <div class="collab-popover-row">
+      <input type="text" id="join-code-input" class="collab-code-input" placeholder="Paste code or link" />
+      <button class="btn-primary" id="join-connect-btn">Connect</button>
+    </div>
+  </div>

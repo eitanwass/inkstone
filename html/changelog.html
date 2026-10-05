@@ -1,0 +1,14 @@
+  <!-- What's new: a modal over a blurred page, opened from the changelog button; filled from CHANGELOG.md -->
+  <div id="changelog-overlay" class="hidden">
+    <div id="changelog-modal" role="dialog" aria-modal="true" aria-labelledby="changelog-title" tabindex="-1">
+      <div id="changelog-header">
+        <h2 id="changelog-title">What's new</h2>
+        <button class="icon-btn" id="changelog-close" aria-label="Close">
+          <svg width="18" height="18"><use href="/icons.svg#icon-close"></use></svg>
+        </button>
+      </div>
+      <div id="changelog-body" role="region" aria-label="Release notes" tabindex="0">
+        <div id="changelog-list"></div>
+      </div>
+    </div>
+  </div>

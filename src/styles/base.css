@@ -1,0 +1,91 @@
+/* ── Reset & base ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-toolbar: #1a1714;
+  --bg-toolbar-hover: #25211d;
+  --bg-toolbar-active: #2e2820;
+  --border: #3a3228;
+  --accent: #c9a84c;
+  --accent-dim: #7a6230;
+  --text-primary: #e8dcc8;
+  --text-muted: #a89885;
+  --text-label: #8f8370;
+  --danger: #a04040;
+  --canvas-bg: #e9e4da;
+  --dot-color: rgba(180, 170, 155, 0.55);
+  --grid-size: 40px;
+  --panel-chamfer: 9px;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: "Inter Variable", system-ui, sans-serif;
+  background: var(--canvas-bg);
+}
+
+button {
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+/* The browser's default placeholder gray is too faint on the dark inputs. */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── Layout: canvas is full-bleed, chrome floats above it ───── */
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#grid-canvas {
+  z-index: 1;
+}
+#main-canvas {
+  z-index: 2;
+}
+#interaction-canvas {
+  z-index: 3;
+  cursor: crosshair;
+  /* Pinch-zoom/pan and long-press are handled ourselves in pointer.js —
+     touch-action: none stops the browser's own scroll/zoom/callout from
+     racing our gesture handling for the same touch. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

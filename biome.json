@@ -9,7 +9,8 @@
       "*.js",
       "*.ts",
       "*.json",
-      "!**/package-lock.json"
+      "!**/package-lock.json",
+      "!**/*.css"
     ]
   },
   "formatter": {
