@@ -175,7 +175,9 @@ labels are the smallest text in the app.
 
 Icons are `<symbol>`s in `public/icons.svg`, drawn on a **20×20** grid with a
 **1.4** stroke, round caps and joins, `currentColor`, no fills unless the shape
-needs one. Use them with `<svg><use href="/icons.svg#icon-name"></use></svg>` so
+needs one (the token's centre and the eraser's rubbing end are filled at 50%). Every
+icon is drawn as outline strokes, not font text, so it looks the same on every
+system. Use them with `<svg><use href="/icons.svg#icon-name"></use></svg>` so
 they inherit colour (muted on dark, primary on hover, gold when active).
 
 Sizes: 18px in the action cluster, 20px on the tool dock, 10px inside swatches.
