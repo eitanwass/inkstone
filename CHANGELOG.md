@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 - 2026-10-05
+
+- See everyone's pointers live in a shared map: each person's cursor appears as an
+  arrow in their own colour with their name, and moves smoothly as they move it. It
+  disappears when they leave the map or disconnect.
+
 ## 0.6.15 - 2026-10-05
 
 - In a shared map you can now see who is here: the "Live" pill shows how many people

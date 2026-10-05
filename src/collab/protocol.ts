@@ -94,3 +94,18 @@ export function parseMessage(data: unknown): Message | null {
   }
   return null;
 }
+
+// What the cursor relay sends (see party/cursors.js): where someone's pointer is, in world units, or that
+// it has gone. `cid` is their tab, `id` the person.
+export type CursorMessage =
+  | { type: 'cursor'; cid: string; id: string; x: number; y: number }
+  | { type: 'gone'; cid: string };
+
+export function parseCursorMessage(data: unknown): CursorMessage | null {
+  if (!isObject(data) || !isId(data.cid)) return null;
+  if (data.type === 'gone') return { type: 'gone', cid: data.cid };
+  const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  return data.type === 'cursor' && isId(data.id) && finite(data.x) && finite(data.y)
+    ? { type: 'cursor', cid: data.cid, id: data.id, x: data.x, y: data.y }
+    : null;
+}

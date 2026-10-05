@@ -1,0 +1,40 @@
+/* ── Other people's pointers: over the map, under the panels, never in the way ── */
+#cursors {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+/* Added once a cursor has its first position, so it appears there instead of sliding in from a corner. */
+.cursor.glide {
+  transition: transform 0.08s linear;
+}
+
+.cursor svg {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.cursor-name {
+  position: absolute;
+  left: 12px;
+  top: 16px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #1a1714;
+  color: #e8dcc8;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cursor-name:empty {
+  display: none;
+}

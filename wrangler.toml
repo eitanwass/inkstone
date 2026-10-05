@@ -6,6 +6,10 @@ compatibility_date = "2025-07-18"
 name = "ROOMS"
 class_name = "InkstoneRoom"
 
+[[durable_objects.bindings]]
+name = "CURSORS"
+class_name = "CursorRoom"
+
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["InkstoneRoom"]
+new_sqlite_classes = ["InkstoneRoom", "CursorRoom"]

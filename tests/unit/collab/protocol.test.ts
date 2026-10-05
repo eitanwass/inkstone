@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseMessage } from '../../../src/collab/protocol';
+import { parseCursorMessage, parseMessage } from '../../../src/collab/protocol';
 
 const room = { type: 'rect', id: 'a', x: 0, y: 0, w: 80, h: 40 };
 
@@ -167,5 +167,32 @@ describe('a presence message', () => {
     expect(parseMessage({ type: 'presence', people: [] })).toBeNull();
     expect(parseMessage({ type: 'presence', count: -1, people: [] })).toBeNull();
     expect(parseMessage({ type: 'presence', count: 1 })).toBeNull();
+  });
+});
+
+describe('a cursor message', () => {
+  it('is a position with who and which tab, or a cursor that has gone', () => {
+    expect(parseCursorMessage({ type: 'cursor', cid: 'c1', id: 'a1', x: 3, y: -4 })).toEqual({
+      type: 'cursor',
+      cid: 'c1',
+      id: 'a1',
+      x: 3,
+      y: -4,
+    });
+    expect(parseCursorMessage({ type: 'gone', cid: 'c1' })).toEqual({ type: 'gone', cid: 'c1' });
+  });
+
+  it('is null when anything is missing or wrong', () => {
+    for (const data of [
+      null,
+      { type: 'cursor', cid: 'c1', id: 'a1', x: 'a', y: 1 },
+      { type: 'cursor', cid: 'c1', id: 'a1', x: Number.NaN, y: 1 },
+      { type: 'cursor', cid: 'c 1', id: 'a1', x: 1, y: 1 },
+      { type: 'cursor', cid: 'c1', x: 1, y: 1 },
+      { type: 'gone' },
+      { type: 'other', cid: 'c1' },
+    ]) {
+      expect(parseCursorMessage(data)).toBeNull();
+    }
   });
 });

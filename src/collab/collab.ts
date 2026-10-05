@@ -34,6 +34,7 @@ import { showPeople } from '../ui/people';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
 import { applyChanges, type Change, diff, ensureIds, ID_RE } from './changes';
+import { connectCursors } from './cursors';
 import { type Message, parseMessage } from './protocol';
 import { resolveRelayHost } from './relay-host';
 
@@ -284,6 +285,7 @@ function connect(sessionId: string): void {
   caughtUp = false;
   unsentEdits = false;
   showPeople(null, author.id);
+  connectCursors(RELAY_HOST, sessionId, clientId, author.id);
   let everOpened = false;
   let live = false;
   setStatus('connecting');

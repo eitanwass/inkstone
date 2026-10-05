@@ -31,6 +31,8 @@
 // `/parties/<name>/<room>`, which is the URL shape preserved below so the
 // frontend needed zero changes.
 
+export { CursorRoom } from './cursors.js';
+
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const SAVE_DELAY_MS = 2000; // edits come in bursts; one write per burst
 const STORAGE_BATCH = 128; // Durable Object storage takes at most this many keys per call
@@ -466,10 +468,14 @@ export class InkstoneRoom {
 }
 
 // partysocket's default URL shape is /parties/<party-name>/<room-id>
-// (party-name defaults to "main") — route purely on the trailing room id.
+// (party-name defaults to "main") — route purely on the trailing room id. The cursors socket
+// (see cursors.js) is at /cursors/<room-id>, and goes to its own Durable Object.
 export default {
   async fetch(request, env) {
-    const match = new URL(request.url).pathname.match(/^\/parties\/[^/]+\/([^/]+)/);
+    const { pathname } = new URL(request.url);
+    const cursors = pathname.match(/^\/cursors\/([^/]+)/);
+    if (cursors) return env.CURSORS.get(env.CURSORS.idFromName(cursors[1])).fetch(request);
+    const match = pathname.match(/^\/parties\/[^/]+\/([^/]+)/);
     if (!match) return new Response('Not found', { status: 404 });
     const [, roomId] = match;
     const room = env.ROOMS.get(env.ROOMS.idFromName(roomId));

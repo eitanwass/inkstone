@@ -275,6 +275,8 @@ chain, so there are no circular imports to reason about.
 | `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |
 | `core/identicon.ts` | Pure: a person's sigil from a seed (their author id): the logo's compass bezel with a tick per fold, a ring of two-tone nib-shaped petals turned 3 to 8 times, dots or strokes between them, a ring or dot at the centre, in one of the token colours. Returns shapes as path data with a role (light, dark, line, bezel); `ui/people.ts` draws them as SVG nodes. |
 | `ui/people.ts` | Who is connected: "· N" beside the Live pill and a column of sigils under it (`#people`, you first with a gold ring, then "+N" past 8). Fed by the relay's `presence` message (one per person, however many tabs; sent when someone arrives or leaves), cleared while disconnected. Names are still the "Guest 1234" placeholder. |
+| `collab/cursors.ts` | The cursors socket: a **second WebSocket** per session, to `/cursors/<room>` and its own Durable Object (`CursorRoom`, `party/cursors.js`), so pointers never share a connection with the map. Sends our pointer (world units) at most every 50ms (the latest position, so it ends where it stopped), drops positions instead of queueing them when the socket is backed up, sends `hide` when the pointer leaves the map, and never shows an error. Started from `connect()` in collab.ts. |
+| `ui/cursors.ts` | Other people's pointers: DOM elements in `#cursors` (an arrow in the person's sigil colour and their name from the presence list), kept in world units and placed again after every redraw, with a CSS glide between positions. Not drawn on the canvas, so a moving pointer never redraws the map. |
 | `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
@@ -601,6 +603,14 @@ needs an id of letters, digits, `_` and `-` and a known type) or is over its lim
 characters an element (they no longer carry pictures), 2,000 elements, 900,000 in all, kept under Cloudflare's 1 MiB per
 message), since what it stores lasts. It can't import `changes.ts`, so its checks are kept in
 step by hand. Tested in `tests/unit/party/`.
+
+**Cursors have their own socket and relay.** `party/cursors.js` (`CursorRoom`, routed from the Worker's
+`fetch` at `/cursors/<room>`, declared in the `v1` migration in wrangler.toml) keeps nothing (no storage, log or alarm): it forwards
+each client's `{ type: 'cursor', x, y }` to the others as `{ type: 'cursor', cid, id, x, y }`, drops positions faster
+than 25ms apart from one client, and says `{ type: 'gone', cid }` when a pointer leaves the map or the client leaves.
+It is separate from `InkstoneRoom` on purpose: cursors are frequent and worth nothing a moment later, so they must
+never delay a change to the map, and losing the cursor socket costs only the pointers. Tested in
+`tests/unit/party/cursors.test.ts` and `tests/e2e/cursors.spec.js`.
 
 **Connection loss.** `partysocket` reconnects on its own; `collab.ts` surfaces
 it. The status pill (`#collab-status`, in the top-right rail under the action cluster, red dot

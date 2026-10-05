@@ -43,6 +43,10 @@ function avatar(seed: string, size: number): SVGSVGElement {
 }
 
 const list = byId('people');
+let names = new Map<string, string>();
+
+// A connected person's name, if the room has told us (cursors are labelled with it).
+export const personName = (id: string): string | undefined => names.get(id);
 const count = byId('collab-count');
 
 // Shows `count` people (you first), or nothing when `null` (not connected).
@@ -51,6 +55,7 @@ export function showPeople(
   selfId: string,
 ): void {
   list.replaceChildren();
+  names = new Map(room?.people.map((p) => [p.id, p.name]));
   count.textContent = room ? `· ${room.count}` : '';
   byId('collab-status').title = room
     ? `${room.count} ${room.count === 1 ? 'person' : 'people'} connected`
