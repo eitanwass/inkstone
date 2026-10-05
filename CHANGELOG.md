@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.11 - 2026-10-05
+
+- Labels are easier to work with. Double-click a label (or select it and press Enter, or
+  right-click it and choose Edit Text) to change its text right where it is, with no
+  dialog. Select a label and a small card appears next to it with a size slider and
+  its color.
+- The text tool is quicker. Click to place a label and type straight away, with its
+  card beside it; click an existing label to edit it; or drag an area and its height
+  becomes the font size. A label with no text is never added. The toolbar no longer
+  shows stroke and font for the text tool: they are in the label's card, and the next
+  label starts with the size and color you last used.
+
 ## 0.6.10 - 2026-10-05
 
 - Token pictures are lighter. A picture is now stored once, however many tokens use
