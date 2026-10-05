@@ -48,10 +48,18 @@ function withStyleFlags<T extends TextStyled>(el: T): T {
   return clean;
 }
 
+// The same for locked, which any type can be.
+function withLayerFlags<T extends BoardElement>(el: T): T {
+  const clean = { ...el };
+  if (clean.locked !== true) delete clean.locked;
+  return clean;
+}
+
 // A valid element with anything inside it that isn't valid taken out, rather than the element
 // dropped: a token's bad conditions are cleaned (see parseConditions) and a picture id that isn't one removed,
 // and the token stays.
-function tidy(el: BoardElement): BoardElement {
+function tidy(input: BoardElement): BoardElement {
+  const el = withLayerFlags(input);
   if (el.type === 'label') return withStyleFlags(el);
   if (el.type !== 'token') return el;
   const { conditions: raw, image: rawImage, ...rest } = withStyleFlags(el);

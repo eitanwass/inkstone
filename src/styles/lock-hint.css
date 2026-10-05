@@ -1,0 +1,19 @@
+/* ── The lock on a locked element the pointer is over: it fades in ─────────── */
+#lock-hint {
+  position: fixed;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #e8dcc8;
+  background: #1e1b17;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+#lock-hint.shown {
+  opacity: 0.6;
+}

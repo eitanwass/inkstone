@@ -44,6 +44,7 @@ import type {
   Point,
 } from '../core/types';
 import { label } from './label';
+import { isInteractive } from './layer';
 import { rect } from './rect';
 import { token } from './token';
 import { wall } from './wall';
@@ -78,8 +79,18 @@ export function hitElement(el: BoardElement, wx: number, wy: number): boolean {
   return typeOf(el)?.hit(el, wx, wy) ?? false;
 }
 
-// Topmost element at a world point, as an index into state.elements.
+// Topmost element at a world point, as an index into state.elements. A locked element is not
+// there to be hit: the click goes to whatever is under it.
 export function hitTest(wx: number, wy: number): number | null {
+  for (let i = state.elements.length - 1; i >= 0; i--) {
+    if (isInteractive(state.elements[i]) && hitElement(state.elements[i], wx, wy)) return i;
+  }
+  return null;
+}
+
+// Topmost element at a world point, locked or not: what the right-click menu and the hover hint need, since
+// a locked element is still there to be pointed at.
+export function hitTestAny(wx: number, wy: number): number | null {
   for (let i = state.elements.length - 1; i >= 0; i--) {
     if (hitElement(state.elements[i], wx, wy)) return i;
   }
@@ -90,6 +101,7 @@ export function hitTest(wx: number, wy: number): number | null {
 // otherwise {pieces, highlight} (see erase above). Whole-element types leave
 // no pieces and no highlight.
 export function eraseTarget(el: BoardElement, cellX: number, cellY: number): EraseTarget | null {
+  if (!isInteractive(el)) return null; // a locked element is out of the eraser's reach
   const type = typeOf(el);
   if (type?.erase) return type.erase(el, cellX, cellY);
   return type?.occupiesCell?.(el, cellX, cellY) ? { pieces: [], highlight: null } : null;

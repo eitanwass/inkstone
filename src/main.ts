@@ -25,6 +25,7 @@ import './ui/changelog';
 import './settings';
 import './settings/conditions';
 import './ui/label-card';
+import './ui/lock-hint';
 import './ui/label-editor';
 import './ui/token-card';
 import { setImageLoadedListener } from './elements/token-image';

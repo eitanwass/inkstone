@@ -168,3 +168,23 @@ describe('text style flags', () => {
     }
   });
 });
+
+describe('the locked flag', () => {
+  const rect = (flags: Record<string, unknown>) => ({ type: 'rect', x: 0, y: 0, w: 40, h: 40, ...flags });
+
+  it('is kept when exactly true, on any type', () => {
+    for (const el of [
+      rect({ locked: true }),
+      { type: 'wall', x1: 0, y1: 0, x2: 40, y2: 0, locked: true },
+      { type: 'token', x: 0, y: 0, locked: true },
+      { type: 'label', x: 0, y: 0, text: 'Hall', locked: true, bold: true },
+    ]) {
+      expect(parseElements([el])).toEqual([el]);
+    }
+  });
+
+  it('is left off when false or anything else, but the element stays', () => {
+    for (const locked of [false, 'yes', 1, null])
+      expect(parseElements([rect({ locked })])).toEqual([rect({})]);
+  });
+});

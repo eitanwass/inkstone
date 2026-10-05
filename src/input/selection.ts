@@ -8,6 +8,7 @@ import { GRID, state } from '../core/state';
 import type { BoardElement, Point } from '../core/types';
 import { drawMain } from '../draw/render';
 import { getElementBounds, snapshotCoords, translateElement } from '../elements';
+import { isInteractive } from '../elements/layer';
 import { nextTokenName } from '../elements/token-names';
 import { showToast } from '../ui/toast';
 import { pushHistory, showUndoToast } from './history';
@@ -151,6 +152,7 @@ export function finishBoxSelect(): void {
 
   const hits: number[] = [];
   state.elements.forEach((el, i) => {
+    if (!isInteractive(el)) return;
     const b = getElementBounds(el);
     if (b && rectsOverlap(box.x, box.y, box.w, box.h, b.x, b.y, b.w, b.h)) hits.push(i);
   });

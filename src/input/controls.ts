@@ -11,6 +11,7 @@ import { GRID, state } from '../core/state';
 import type { Bounds } from '../core/types';
 import { drawMain, setView } from '../draw/render';
 import { getElementBounds, translateElement } from '../elements';
+import { isInteractive } from '../elements/layer';
 import { editLabel } from '../ui/label-editor';
 import { closePopover } from '../ui/popover';
 import { focusTokenName } from '../ui/token-card';
@@ -117,7 +118,8 @@ export function nudgeSelected(cellsX: number, cellsY: number): void {
   pushHistory();
 }
 
+// Everything that can be clicked: not what is locked.
 export function selectAll(): void {
-  state.selected = state.elements.map((_, i) => i);
+  state.selected = state.elements.flatMap((el, i) => (isInteractive(el) ? [i] : []));
   drawMain();
 }

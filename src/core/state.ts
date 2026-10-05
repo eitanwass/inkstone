@@ -72,7 +72,6 @@ interface AppState {
   // What a new label starts as: the size, colour and text style of the last one that was set in a label's
   // card (kept for this visit only).
   labelStyle: { fontSize: number; color: string } & Required<TextStyled>;
-  // The label whose text is being edited in place: its field is on top of it, so it isn't drawn
   editingLabel: LabelElement | null;
 }
 

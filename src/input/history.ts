@@ -13,6 +13,7 @@ import { storageGet, storageRemove, storageSet } from '../core/storage';
 import type { BoardElement } from '../core/types';
 import { parseElements } from '../core/validate';
 import { drawMain } from '../draw/render';
+import { isInteractive } from '../elements/layer';
 import { addImage } from '../elements/token-image';
 import { normalizeMapName } from '../ui/map-name-text';
 import { showToast } from '../ui/toast';
@@ -177,7 +178,7 @@ export function applyRemoteChanges(changes: Change[]): void {
   state.elements = applyChanges(state.elements, changes);
   state.selected = selectedIds.flatMap((id) => {
     const i = state.elements.findIndex((el) => el.id === id);
-    return i < 0 ? [] : [i];
+    return i < 0 || !isInteractive(state.elements[i]) ? [] : [i]; // locked by someone else: let go
   });
   history.stack = history.stack.map((snapshot) => applyChanges(snapshot, structuredClone(changes)));
   const rename = changes.findLast((c) => c.t === 'name');

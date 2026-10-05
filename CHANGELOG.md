@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.13 - 2026-10-05
+
+- Lock an element so it stays put: right-click it and choose Lock, and a background
+  room can no longer be dragged by accident. Clicks, selecting, erasing and Select All
+  all pass through a locked element to what is under it. Hover over a locked element
+  and a faded lock fades in on its corner; right-click it to unlock.
+- A new, clearer eraser icon, and redrawn label and wall icons to match the rest.
+
 ## 0.6.12 - 2026-10-05
 
 - Bold, italic and a background plate for labels. Select a label and use the three

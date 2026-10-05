@@ -22,6 +22,10 @@ interface ElementStyle {
   // Names the element to other people in a session (see collab/changes.ts). Given the first time the
   // map is saved or sent, so it is missing on a new element until then.
   id?: string;
+  // Locked: it can't be selected, moved, erased or deleted by clicking, and clicks go to what is under it
+  // (a background room that must stay put). Present only when on, and kept in the map (and synced and
+  // undone): see elements/layer.ts.
+  locked?: boolean;
   strokeColor?: string;
   fillColor?: string;
   strokeWidth?: number;

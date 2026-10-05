@@ -47,6 +47,18 @@
   text-align: center;
 }
 
+.ctx-icon svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* The menu of a locked element is the usual one, with what can't be done to it faded out. */
+.ctx-item.disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
 .ctx-shortcut {
   font-size: 10px;
   font-family: monospace;

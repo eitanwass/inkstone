@@ -11,9 +11,11 @@ import { byId } from '../core/dom';
 import { state } from '../core/state';
 import type { Point, TokenElement } from '../core/types';
 import { drawMain } from '../draw/render';
-import { hitTest } from '../elements';
+import { hitTest, hitTestAny } from '../elements';
+import { isLocked } from '../elements/layer';
 import { editSelectedText } from '../input/controls';
 import { pushHistory, showUndoToast } from '../input/history';
+import { lockElements } from '../input/layers';
 import {
   bringSelectedToFront,
   clipboard,
@@ -29,6 +31,7 @@ import { chooseTokenColor, nameToken } from './token-card';
 // What the open menu acts on: the right-clicked token, or the spot to paste at.
 let tokenMenuTarget: number | null = null;
 let pasteAnchor: Point | null = null;
+let lockedTarget: number | null = null; // the locked element the open menu is for, if it is for one
 
 function tokenAt(idx: number | null): TokenElement | null {
   const el = idx === null ? undefined : state.elements[idx];
@@ -52,7 +55,14 @@ export function openContextMenuAt(clientX: number, clientY: number): void {
   const world = clientToWorld(clientX, clientY);
   const idx = hitTest(world.x, world.y);
 
-  if (idx !== null && state.elements[idx].type === 'token') {
+  // A locked element can't be clicked, but it can be right-clicked: it gets its usual menu with
+  // everything faded out but Unlock.
+  const seen = hitTestAny(world.x, world.y);
+  lockedTarget = seen !== null && isLocked(state.elements[seen]) ? seen : null;
+  if (lockedTarget !== null) {
+    if (state.elements[lockedTarget].type === 'token') showTokenContextMenu(clientX, clientY, lockedTarget);
+    else showElementContextMenu(clientX, clientY);
+  } else if (idx !== null && state.elements[idx].type === 'token') {
     showTokenContextMenu(clientX, clientY, idx);
   } else if (idx !== null) {
     if (!state.selected.includes(idx)) state.selected = [idx];
@@ -91,17 +101,39 @@ function placeMenu(menu: HTMLElement, cx: number, cy: number): void {
   if (cy > maxTop) menu.style.top = `${Math.max(8, maxTop)}px`;
 }
 
+// Fades out every item of a menu but the lock row (which becomes Unlock) when it is for a locked element,
+// and gives them all back otherwise.
+function showLockState(menu: HTMLElement, lockRow: HTMLElement): void {
+  const locked = lockedTarget !== null;
+  for (const item of menu.querySelectorAll<HTMLElement>('.ctx-item')) {
+    const off = locked && item !== lockRow;
+    item.classList.toggle('disabled', off);
+    item.setAttribute('aria-disabled', String(off));
+  }
+  lockRow.querySelector('use')?.setAttribute('href', `/icons.svg#icon-${locked ? 'unlock' : 'lock'}`);
+  const text = lockRow.querySelector('.ctx-text');
+  if (text) text.textContent = locked ? 'Unlock' : 'Lock';
+}
+
 function showElementContextMenu(cx: number, cy: number): void {
-  // "Edit Text" is for a single label, which is what a right-click on one selects.
-  const only = state.selected.length === 1 ? state.elements[state.selected[0]] : undefined;
+  // "Edit Text" is for a single label, which is what a right-click on one selects (or the locked one).
+  const only =
+    lockedTarget !== null
+      ? state.elements[lockedTarget]
+      : state.selected.length === 1
+        ? state.elements[state.selected[0]]
+        : undefined;
   byId('ctx-edit-text').classList.toggle('hidden', only?.type !== 'label');
-  placeMenu(byId('context-menu'), cx, cy);
+  const menu = byId('context-menu');
+  showLockState(menu, byId('ctx-lock'));
+  placeMenu(menu, cx, cy);
 }
 
 function showTokenContextMenu(cx: number, cy: number, idx: number): void {
   const menu = byId('token-context-menu');
   // A token with no name is offered one; a named token a new name.
   byId('ctx-token-rename').textContent = tokenAt(idx)?.name ? '✏ Rename' : '✏ Add name';
+  showLockState(menu, byId('ctx-token-lock'));
   placeMenu(menu, cx, cy);
   tokenMenuTarget = idx;
 }
@@ -186,6 +218,15 @@ document.addEventListener('click', hideContextMenus);
 
 // ── Context menu actions (act on the current selection) ───────
 byId('ctx-edit-text').addEventListener('click', editSelectedText);
+// The lock row locks what is selected, or unlocks the locked element the menu was opened on.
+byId('ctx-lock').addEventListener('click', () => {
+  if (lockedTarget !== null) lockElements([lockedTarget], false);
+  else lockElements(state.selected, true);
+});
+// The token menu is for the one token it was opened on, whatever else is selected.
+byId('ctx-token-lock').addEventListener('click', () => {
+  if (tokenMenuTarget !== null) lockElements([tokenMenuTarget], lockedTarget === null);
+});
 byId('ctx-copy').addEventListener('click', copySelection);
 
 byId('ctx-paste').addEventListener('click', () => {
