@@ -59,7 +59,10 @@ forgetting that a token's center is the clicked cell's origin *plus*
 `GRID/2`, not the click point itself. [.github/workflows/test.yml](.github/workflows/test.yml)
 runs this suite on every push/PR to `main`.
 
-Live collaboration (see Collaboration below) needs a second process:
+Live collaboration (see Collaboration below) needs a second process. **`npm run dev:live`
+(`scripts/dev-live.mjs`) starts both** (the app with `--host`, and the relay), prefixing each
+line, and Ctrl+C stops both. A browser keeps a map and a person per origin, so to be two people
+open `localhost:5173` and `127.0.0.1:5173` (or a private window), not two tabs of one. On its own,
 `npm run party:dev` runs the relay locally via `wrangler dev` on port 8787
 (the client defaults to `localhost:8787` via `VITE_RELAY_HOST` — see
 `.env.example`). `npm run party:deploy` (`wrangler deploy`) pushes it to

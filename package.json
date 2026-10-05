@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:live": "node scripts/dev-live.mjs",
     "typecheck": "tsc",
     "check:changelog": "node scripts/check-changelog.mjs",
     "build:icons": "node scripts/build-icons.mjs",

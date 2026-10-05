@@ -139,6 +139,10 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   cursor: default;
   user-select: none;
+  transition: transform 0.15s ease-out;
+}
+.person:hover {
+  transform: translateX(-5px);
 }
 .person svg {
   display: block;
