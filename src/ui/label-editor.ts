@@ -4,9 +4,9 @@
 // Enter or clicking away keeps it (one undo step, sent to a live session once); Escape puts the old
 // text back. Blank or unchanged text is no edit: a label with no text would be invisible.
 //
-// The text tool uses the same field to place a label: a click puts a new, empty label there and opens it
-// (placeLabel), with its card (label-card.ts) beside it. It joins the map, and the undo history, only
-// when it has text; blank, or Escape, and it was never there.
+// The text tool uses the same field: a click on a label opens it, and a click anywhere else puts a new,
+// empty label there and opens that (textToolClick), with its card (label-card.ts) beside it. It joins the
+// map, and the undo history, only when it has text; blank, or Escape, and it was never there.
 //
 // The label itself isn't drawn by the canvas while it is edited (see state.editingLabel), and the
 // field follows it as the map is panned or zoomed. It is positioned from render.ts's onMainDrawn hook,
@@ -17,6 +17,7 @@ import { byId } from '../core/dom';
 import { DEFAULT_FONT_SIZE, FONT_FAMILY, state } from '../core/state';
 import type { LabelElement } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
+import { hitTest } from '../elements';
 import { pushHistory } from '../input/history';
 
 const field = byId<HTMLInputElement>('label-editor');
@@ -51,8 +52,22 @@ function place(): void {
 export const isPendingLabel = (label: LabelElement): boolean =>
   editing?.isNew === true && editing.label === label;
 
+// What a click with the text tool does: on a label, it opens that label to edit (as double-clicking it
+// with the select tool does); anywhere else, it places a new one.
+export function textToolClick(x: number, y: number): void {
+  if (editing) commit(); // the one being typed into before is kept first
+  const idx = hitTest(x, y);
+  const hit = idx === null ? undefined : state.elements[idx];
+  if (hit?.type === 'label') {
+    state.selected = [state.elements.indexOf(hit)];
+    editLabel(hit);
+  } else {
+    placeLabel(x, y);
+  }
+}
+
 // Puts a new, empty label where the text tool was clicked, selects it, and opens it to type into.
-export function placeLabel(x: number, y: number): void {
+function placeLabel(x: number, y: number): void {
   if (editing) commit();
   const label: LabelElement = {
     type: 'label',

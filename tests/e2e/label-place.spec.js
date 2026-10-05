@@ -158,6 +158,57 @@ test('a label with no text yet is not sent to a shared session, and is, once it 
   expect(sent.filter((m) => m.type === 'changes')).toHaveLength(1);
 });
 
+test('clicking an existing label opens it to edit, as the select tool does, and places nothing new', async ({
+  page,
+}) => {
+  await clickAt(page, 320, 320);
+  await page.keyboard.type('Throne Room');
+  await page.keyboard.press('Enter');
+  await page.mouse.click(900, 700); // done with it, and starts another label, which is blank and so goes
+  await page.keyboard.press('Escape');
+  expect(await texts(page)).toEqual(['Throne Room']);
+
+  await clickAt(page, 332, 328); // on the label
+  await expect(field(page)).toBeVisible();
+  await expect(field(page)).toHaveValue('Throne Room');
+  await expect(field(page)).toBeFocused();
+  await expect(card(page)).toBeVisible(); // it is selected, so its card shows
+  await page.keyboard.type('Treasury'); // the text was selected, so this replaces it
+  await page.keyboard.press('Enter');
+  expect(await texts(page)).toEqual(['Treasury']); // changed, not added to
+
+  await page.click('#btn-undo');
+  expect(await texts(page)).toEqual(['Throne Room']);
+});
+
+test('clicking an existing label while another is being typed keeps that one and opens this one', async ({
+  page,
+}) => {
+  await clickAt(page, 320, 320);
+  await page.keyboard.type('First');
+  await page.keyboard.press('Enter');
+  await clickAt(page, 640, 480);
+  await page.keyboard.type('Second');
+  await clickAt(page, 332, 328); // back on the first, mid-way through the second
+  await expect(field(page)).toHaveValue('First');
+  expect(await texts(page)).toEqual(['First', 'Second']);
+});
+
+test('a click on a room (not a label) with the text tool places a label on it', async ({ page }) => {
+  await page.click('#tool-rect');
+  const a = toScreen(320, 320);
+  const b = toScreen(560, 480);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 5 });
+  await page.mouse.up();
+  await page.click('#tool-text');
+  await clickAt(page, 440, 400); // inside the room
+  await page.keyboard.type('Armoury');
+  await page.keyboard.press('Enter');
+  expect((await boardElements(page)).map((e) => e.type)).toEqual(['rect', 'label']);
+});
+
 test('a plain click while panning or with another tool places nothing', async ({ page }) => {
   await page.click('#tool-select');
   await clickAt(page, 320, 320);

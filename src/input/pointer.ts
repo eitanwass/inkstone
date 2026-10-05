@@ -21,7 +21,7 @@ import { drawMain, setView } from '../draw/render';
 import { hitTest } from '../elements';
 import { nextTokenColor } from '../elements/token';
 import { hideContextMenus } from '../ui/context-menu';
-import { placeLabel } from '../ui/label-editor';
+import { textToolClick } from '../ui/label-editor';
 import { hideConditionsTip, updateConditionsTip } from '../ui/token-card';
 import { editSelectedText, zoomAround } from './controls';
 import { eraseAtCell, updateEraseHover } from './erase';
@@ -281,7 +281,7 @@ function onPointerUp(e: PointerEvent): void {
   if (pendingLabelAt) {
     const at = pendingLabelAt;
     pendingLabelAt = null;
-    if (state.tool === 'text') placeLabel(at.x, at.y);
+    if (state.tool === 'text') textToolClick(at.x, at.y);
     return;
   }
 
