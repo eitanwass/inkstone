@@ -7,24 +7,24 @@
 import '@fontsource-variable/inter'; // the UI and map-text font
 import '@fontsource/eb-garamond/500.css'; // the wordmark
 import { version } from '../package.json';
-import { gridCanvas, iCanvas, mainCanvas } from './canvas';
-import { resetView } from './controls';
-import { byId } from './dom';
-import { drawGrid } from './grid';
-import { loadPersistedBoard, pushHistory } from './history';
-import { drawMain } from './render';
-import { FONT_FAMILY, state } from './state';
-import { setTool } from './toolbar';
+import { gridCanvas, iCanvas, mainCanvas } from './core/canvas';
+import { byId } from './core/dom';
+import { FONT_FAMILY, state } from './core/state';
+import { drawGrid } from './draw/grid';
+import { drawMain } from './draw/render';
+import { resetView } from './input/controls';
+import { loadPersistedBoard, pushHistory } from './input/history';
+import { setTool } from './input/toolbar';
 
-import './color-swatches';
-import './shortcuts';
-import './view-actions';
-import './map-name';
-import './collab';
-import './changelog';
+import './ui/color-swatches';
+import './input/shortcuts';
+import './ui/view-actions';
+import './ui/map-name';
+import './collab/collab';
+import './ui/changelog';
 import './settings';
 import './settings/conditions';
-import './token-card';
+import './ui/token-card';
 
 byId('version-label').textContent = `v${version}`;
 

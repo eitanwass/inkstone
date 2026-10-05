@@ -87,7 +87,7 @@ See [.env.example](.env.example).
 | `npm run preview` | Serve the production bundle |
 | `npm test` | Unit tests, then end-to-end tests |
 | `npm run test:unit` | Vitest unit tests ([tests/unit/](tests/unit/)) |
-| `npm run test:e2e` | Playwright tests that drive the real UI ([tests/](tests/)) |
+| `npm run test:e2e` | Playwright tests that drive the real UI ([tests/e2e/](tests/e2e/)) |
 | `npm run typecheck` | `tsc` in strict mode |
 | `npm run lint` / `npm run format` | Biome: check / fix |
 | `npm run check:changelog` | Fails if CHANGELOG.md doesn't cover the current version |

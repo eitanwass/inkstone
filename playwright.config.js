@@ -1,8 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests',
-  testIgnore: '**/unit/**', // Vitest unit tests, run by npm run test:unit
+  testDir: './tests/e2e',
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',

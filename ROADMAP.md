@@ -39,7 +39,7 @@ Each item is meant to ship on its own.
   - ~~More panels can be added later (see `src/settings/`).~~
 - **Token polish** (M)
   - ~~Place tokens without a name dialog: a plain disc straight away.~~
-  - ~~A card above the selected token, with a name field (`src/token-card.ts`).~~
+  - ~~A card above the selected token, with a name field (`src/ui/token-card.ts`).~~
   - Image on the token. Store each image once, downscaled, and let tokens point at it,
     so whole-map sync and saving don't carry copies; offer images already used.
   - HP and AC in the card, as plain numbers everyone sees (hiding them from players needs roles).

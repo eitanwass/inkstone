@@ -6,7 +6,7 @@ version, with live swatches and specimens, is in
 [style-guide.html](style-guide.html).
 
 Where something here is a *value* (a colour, a size), the code is the source of
-truth: [style.css](../style.css) for the interface, [src/state.ts](../src/state.ts)
+truth: [style.css](../style.css) for the interface, [src/core/state.ts](../src/core/state.ts)
 for the type constants used on the canvas. If they disagree, fix this document.
 
 ## 1. Brand

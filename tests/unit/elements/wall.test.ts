@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { scale } from '../../../src/core/measure';
+import { state } from '../../../src/core/state';
+import type { WallElement } from '../../../src/core/types';
 import { wall } from '../../../src/elements/wall';
-import { scale } from '../../../src/measure';
-import { state } from '../../../src/state';
-import type { WallElement } from '../../../src/types';
 
 const horizontal: WallElement = { type: 'wall', x1: 0, y1: 20, x2: 120, y2: 20, strokeWidth: 4 };
 

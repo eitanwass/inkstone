@@ -3,11 +3,11 @@
 // variable sizing have no radius, so every reader falls back to
 // DEFAULT_TOKEN_RADIUS.
 
-import { mCtx } from '../canvas';
-import { dist } from '../geometry';
-import { formatDistance } from '../measure';
-import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID, state } from '../state';
-import type { ElementBehavior, TokenElement } from '../types';
+import { mCtx } from '../core/canvas';
+import { dist } from '../core/geometry';
+import { formatDistance } from '../core/measure';
+import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID, state } from '../core/state';
+import type { ElementBehavior, TokenElement } from '../core/types';
 import { crossOut, drawBadges, isDead } from './badges';
 
 const DEFAULT_COLOR = '#e05c5c';

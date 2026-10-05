@@ -31,7 +31,7 @@
 //
 // To add a type: create its file, then add it to ELEMENT_TYPES.
 
-import { state } from '../state';
+import { state } from '../core/state';
 import type {
   BoardElement,
   Bounds,
@@ -42,7 +42,7 @@ import type {
   EraseTarget,
   Handle,
   Point,
-} from '../types';
+} from '../core/types';
 import { label } from './label';
 import { rect } from './rect';
 import { token } from './token';

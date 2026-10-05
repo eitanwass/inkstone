@@ -1,7 +1,7 @@
 // ── Collab relay (Cloudflare Worker + Durable Object) ───────────
 // One Durable Object instance per session id. Pure relay, no merge logic —
 // last message received wins, matching the client's last-write-wins sync
-// model (see src/collab.js). `lastState` is kept in memory only so a client
+// model (see src/collab/collab.ts). `lastState` is kept in memory only so a client
 // joining an already-active session gets caught up; it's not a durable
 // store, since every client's own localStorage already has a copy.
 //

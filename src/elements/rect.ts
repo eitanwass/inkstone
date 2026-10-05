@@ -2,10 +2,10 @@
 // Stored as x/y/w/h plus an optional rotation in radians, rotating around its
 // own center. See index.js for what each method is for.
 
-import { rectCornerLocal, rotatePoint } from '../geometry';
-import { formatDistance } from '../measure';
-import { GRID } from '../state';
-import type { Corner, Dimension, ElementBehavior, Point, RectElement } from '../types';
+import { rectCornerLocal, rotatePoint } from '../core/geometry';
+import { formatDistance } from '../core/measure';
+import { GRID } from '../core/state';
+import type { Corner, Dimension, ElementBehavior, Point, RectElement } from '../core/types';
 
 const center = (el: RectElement): Point => ({ x: el.x + el.w / 2, y: el.y + el.h / 2 });
 

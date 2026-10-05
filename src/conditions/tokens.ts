@@ -3,11 +3,11 @@
 // of each condition (name, color, icon), so these just add and remove copies; every change is one
 // undo step and goes to a live session like any other edit.
 
-import { pushHistory } from '../history';
-import { drawMain } from '../render';
-import { state } from '../state';
-import { showToast } from '../toast';
-import type { TokenElement } from '../types';
+import { state } from '../core/state';
+import type { TokenElement } from '../core/types';
+import { drawMain } from '../draw/render';
+import { pushHistory } from '../input/history';
+import { showToast } from '../ui/toast';
 import { type Condition, MAX_PER_TOKEN } from './index';
 
 export const hasCondition = (token: TokenElement, id: string): boolean =>

@@ -1,9 +1,9 @@
 // ── Text label ────────────────────────────────────────────────
 
-import { mCtx } from '../canvas';
-import { cellOf } from '../geometry';
-import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../state';
-import type { ElementBehavior, LabelElement } from '../types';
+import { mCtx } from '../core/canvas';
+import { cellOf } from '../core/geometry';
+import { DEFAULT_FONT_SIZE, FONT_FAMILY } from '../core/state';
+import type { ElementBehavior, LabelElement } from '../core/types';
 
 const DEFAULT_COLOR = '#e8dcc8';
 const fontSizeOf = (el: LabelElement) => el.fontSize || DEFAULT_FONT_SIZE;

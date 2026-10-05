@@ -2,10 +2,10 @@
 // A line segment x1,y1 → x2,y2. Has no rotation field: "rotating" a wall
 // rotates both endpoints around their shared midpoint.
 
-import { clipSegmentToCell, dist, rotatePoint } from '../geometry';
-import { formatDistance, gridDistance } from '../measure';
-import { GRID, state } from '../state';
-import type { ElementBehavior, Point, WallCoords, WallElement } from '../types';
+import { clipSegmentToCell, dist, rotatePoint } from '../core/geometry';
+import { formatDistance, gridDistance } from '../core/measure';
+import { GRID, state } from '../core/state';
+import type { ElementBehavior, Point, WallCoords, WallElement } from '../core/types';
 
 const MIN_ERASE_SLIVER = 0.04; // drop leftovers under ~4% of the wall's length
 

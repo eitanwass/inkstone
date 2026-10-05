@@ -6,8 +6,8 @@
 // greyed and crossed out instead of badged (see crossOut).
 
 import { type Condition, DEAD_ID, ICONS } from '../conditions';
-import { FONT_FAMILY } from '../state';
-import type { TokenElement } from '../types';
+import { FONT_FAMILY } from '../core/state';
+import type { TokenElement } from '../core/types';
 
 const SHOWN = 3;
 const FOLD_BELOW_ZOOM = 0.55;

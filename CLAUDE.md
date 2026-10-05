@@ -20,7 +20,7 @@ unmodified rather than processing.
 
 Vite strips types without checking them, so `npm run typecheck` is what
 actually enforces them (CI runs it). Shared types live in
-[src/types.ts](src/types.ts); `dom.ts` has `byId`/`qs`, which throw on a
+[src/types.ts](src/core/types.ts); `dom.ts` has `byId`/`qs`, which throw on a
 missing element so callers get non-null typed elements. Biome handles
 linting, formatting and import order: `npm run lint` checks (CI runs it),
 `npm run format` fixes. Style is 2-space indent, single quotes, semicolons,
@@ -29,23 +29,23 @@ pin LF line endings.
 
 There are two test suites, and `npm test` runs both (unit first). **Unit
 tests** (Vitest, `npm run test:unit`) live in `tests/unit/` (mirroring
-`src/`, as `*.test.ts`) and cover pure logic with no DOM: geometry, the rect and
+`src/`'s folders, as `*.test.ts`) and cover pure logic with no DOM: geometry, the rect and
 wall element types, `validate.ts`, the changelog parser. They run in
 milliseconds, so prefer them for math and parsing. A module that imports
 `canvas.ts` (or anything else that touches the DOM at load, like the token and
 label types) can't load under Vitest's Node environment, so those are covered
 by the e2e suite instead. The **Playwright e2e suite**
-(the `*.spec.js` files in [tests/](tests/), `npm run test:e2e`; the config
+(the `*.spec.js` files in [tests/e2e/](tests/e2e/), `npm run test:e2e`; the config
 auto-starts the dev server and ignores `tests/unit/`) drives the real UI (clicking toolbar buttons, dragging on
 the canvas) rather than calling module internals, since there's no exposed
 JS API and DOM/canvas interaction is what actually exercises the code worth
-regression-testing. Collab connection behavior (`tests/connection.spec.js`) uses
+regression-testing. Collab connection behavior (`tests/e2e/connection.spec.js`) uses
 `page.routeWebSocket` as a stand-in relay, which must be registered *before*
 the page loads, plus a fake clock stepped a second at a time (one big jump
 would expire the socket's own connection timeout before the real, async
 open arrives). Touch gestures are tested by dispatching touch-type
 `PointerEvent`s via the `touch()` helper (Playwright's touchscreen API only
-does taps). [tests/helpers.js](tests/helpers.js) has the shared
+does taps). [tests/e2e/helpers.js](tests/e2e/helpers.js) has the shared
 setup (`resetBoard`, world→screen conversion matching `resetView()`'s pan
 formula, element-placement helpers). When adding a feature, prefer deriving
 test coordinates from the actual persisted element data
@@ -98,7 +98,7 @@ Don't edit `public/logo.svg`, `favicon.svg`, `favicon.ico`,
 and run `npm run build:icons`, which regenerates all of them
 (`scripts/build-icons.mjs`; it rasterizes with Playwright's Chromium and builds
 the `.ico` itself). The generated files are committed, so a normal build never
-needs the script. `tests/icons.spec.js` fails if `public/` drifts from the
+needs the script. `tests/e2e/icons.spec.js` fails if `public/` drifts from the
 sources, if an icon isn't served, or if a home-screen icon has transparency.
 `index.html` links the icons and `public/site.webmanifest` (name, colors,
 home-screen icons).
@@ -158,7 +158,7 @@ caught up) fixes just case 1.
 [design/DESIGN.md](design/DESIGN.md) is the design guide (brand, logo, colour,
 type, shape, motion, tone), with a visual version in
 [design/style-guide.html](design/style-guide.html). Match it when adding UI. It
-describes values that live in the code, so `tests/design-docs.spec.js` fails if
+describes values that live in the code, so `tests/e2e/design-docs.spec.js` fails if
 a `:root` token, a swatch colour, a token colour or the bundled fonts change
 without the guide changing too (and if a link in it breaks).
 
@@ -205,7 +205,7 @@ function reads, including those of its dependencies, must be in `includeFiles`.
 - Text must stay at least 4.5:1 against its background: `--text-muted` and
   `--text-label` are set for that on the dark panels (don't darken them), and
   `.btn-primary` uses a light label on the gold fill.
-- `tests/accessibility.spec.js` runs axe on the main screen and with popovers
+- `tests/e2e/accessibility.spec.js` runs axe on the main screen and with popovers
   and dialogs open, and must stay clean. It runs with reduced motion on, so
   axe doesn't sample the popovers mid fade-in.
 - Never call `localStorage` directly; use `storage.ts`, because it throws when
@@ -214,6 +214,11 @@ function reads, including those of its dependencies, must be in `includeFiles`.
   `inkstone-custom-*`; the old `tavernmap-custom-*` keys are migrated on load.
 
 ## Module layout
+
+Under `src/`: `core/` (state, types, DOM/storage helpers, pure math and validation), `draw/`
+(everything that paints the canvases), `input/` (pointer, keyboard, selection, history, tools),
+`ui/` (popovers, dialogs, cards and other page chrome), `collab/` (live sync), plus `elements/`,
+`conditions/`, `settings/` and `main.ts`. The table below lists files by path.
 
 No framework, no virtual DOM, no state-management library — every module
 imports the same `state` object from `state.ts` and mutates its properties
@@ -224,48 +229,48 @@ chain, so there are no circular imports to reason about.
 
 | File | Responsibility |
 |---|---|
-| `state.ts` | The shared `state` object and the `GRID` constant. |
-| `types.ts` | Shared types: the `BoardElement` union, `ElementBehavior`, drag/hover shapes. |
-| `dom.ts` | `byId` / `qs`: typed element lookups that throw if the element is missing. |
-| `validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements. |
-| `canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
-| `geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
+| `core/state.ts` | The shared `state` object and the `GRID` constant. |
+| `core/types.ts` | Shared types: the `BoardElement` union, `ElementBehavior`, drag/hover shapes. |
+| `core/dom.ts` | `byId` / `qs`: typed element lookups that throw if the element is missing. |
+| `core/validate.ts` | `parseElements`: checks board data from localStorage and the collab relay, dropping malformed elements. |
+| `core/canvas.ts` | Canvas element/context references, plus client→canvas→world coordinate helpers. |
+| `core/geometry.ts` | Pure math: coordinate conversion, rotation, segment/cell clipping. |
 | `elements/` | One file per element type (`rect`, `wall`, `token`, `label`) plus `index.ts`, the registry and dispatchers (bounds, hit-testing, erase, handles, move). |
-| `handles.ts` | Resize/rotate handle geometry and drag math. |
-| `grid.ts` | The dot grid (live background and PNG export). |
-| `render.ts` | Everything that draws to the main canvas. |
-| `history.ts` | Undo/redo stack + localStorage persistence. |
-| `selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
-| `erase.ts` | Erase tool targeting + hover preview. |
-| `measure.ts` | Pure measuring rules: `scale` (unit, size of a square, and the D&D diagonal rule; 5 ft with the rule on by default; the Board settings panel's one input), `UNITS` (the choices and each one's usual square), `validPerCell` / `parseScale` (checking a typed or stored size; the rule stays on unless stored as exactly `false`), `gridDistance` (with the D&D rule, the default: the DMG 1-2-1-2 count, the longer side plus half the shorter, rounded down; with it off, the true straight line, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
+| `draw/handles.ts` | Resize/rotate handle geometry and drag math. |
+| `draw/grid.ts` | The dot grid (live background and PNG export). |
+| `draw/render.ts` | Everything that draws to the main canvas. |
+| `input/history.ts` | Undo/redo stack + localStorage persistence. |
+| `input/selection.ts` | Move, delete, duplicate, copy/paste, reorder, rubber-band select. |
+| `input/erase.ts` | Erase tool targeting + hover preview. |
+| `core/measure.ts` | Pure measuring rules: `scale` (unit, size of a square, and the D&D diagonal rule; 5 ft with the rule on by default; the Board settings panel's one input), `UNITS` (the choices and each one's usual square), `validPerCell` / `parseScale` (checking a typed or stored size; the rule stays on unless stored as exactly `false`), `gridDistance` (with the D&D rule, the default: the DMG 1-2-1-2 count, the longer side plus half the shorter, rounded down; with it off, the true straight line, so a 45° line is √2 times a straight one), `formatDistance`. Used by the ruler and by each element type's optional `dimensions`. |
 | `settings/` | The settings modal, opened from the gear button in the action cluster. `index.ts` is the modal (open, close, the tabs) and the Board panel: unit and size of a square, applied as they're changed and kept under `inkstone-board-settings` in this browser, not shared with a session. `conditions.ts` is the Conditions panel (below). The tabs down the left are one tab stop, with the arrow keys moving between them. To add a panel, add a tab and a tabpanel in `index.html` and its controls as a new file in this folder, imported from `main.ts`. While any `aria-modal` dialog is open, `shortcuts.ts` ignores keys, so arrows and letters don't act on the map behind it. |
-| `pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
-| `touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
-| `popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
-| `changelog.ts` | The "What's new" modal (about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
-| `changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
-| `storage.ts` | Never-throwing `localStorage` wrappers. All reads and writes go through here. |
-| `map-name.ts` | The editable map name at the top of the page (see "The map's name"). |
-| `map-name-text.ts` | Pure rules for map names: `normalizeMapName`, `mapFileSlug`. |
-| `focus.ts` | `trapFocus` / `restoreFocus` for modals. |
-| `modal.ts` | The generic confirm dialog. |
-| `context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
-| `dialogs.ts` | The text-label placement dialog. |
-| `token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
+| `input/pointer.ts` | Mouse/Alt-pan/Escape orchestration — ties the above together per active tool. |
+| `input/touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
+| `ui/popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
+| `ui/changelog.ts` | The "What's new" modal (about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
+| `ui/changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
+| `core/storage.ts` | Never-throwing `localStorage` wrappers. All reads and writes go through here. |
+| `ui/map-name.ts` | The editable map name at the top of the page (see "The map's name"). |
+| `ui/map-name-text.ts` | Pure rules for map names: `normalizeMapName`, `mapFileSlug`. |
+| `ui/focus.ts` | `trapFocus` / `restoreFocus` for modals. |
+| `ui/modal.ts` | The generic confirm dialog. |
+| `ui/context-menu.ts` | Right-click menus (element, token, empty-canvas paste). |
+| `ui/dialogs.ts` | The text-label placement dialog. |
+| `elements/token-names.ts` | Pure: `nextTokenName(name, taken)`, the numbering for duplicated tokens. A name ending in a number ("Goblin 1") gets the next number after the highest one in use with the same words, ignoring capitals; leading zeros are kept; other names, and any result over 20 characters, stay as they were. `duplicateSelected` (selection.ts) uses it, counting copies made in the same go as taken. Paste does not rename. |
 | `conditions/index.ts` | Pure: what a condition is (`{ id, name, color, icon }`), the icon library (`ICONS`, built from the standalone SVG files in `src/conditions/icons/`, one per icon and named for it: a 24-unit box with one `<path>`, line styling on the `<svg>`, `stroke-dasharray` on the path for a dashed one. They are read at build time with `import.meta.glob` and `parseIconSvg` takes the path out, which is drawn on the canvas as a `Path2D` and in the page as an `<svg>` path. To add an icon, add a file there: it appears in the Settings icon picker, and a test checks each file is a clean single-path SVG), the sixteen `DEFAULT_CONDITIONS` (the 5e conditions plus Dead), and the checks (`isCondition`, `parseConditions`) used for anything read from storage or from a session. |
 | `conditions/library.ts` | The conditions a person can choose from: the defaults plus their own custom ones, kept in this browser under `inkstone-conditions` (ids start `custom-`, so nothing can pose as a default). `draftProblem` says in words why a draft can't be used (name missing or taken, any capitals, defaults included). |
 | `conditions/tokens.ts` | Putting conditions on tokens and taking them off (`toggleCondition`, one undo step each; at most 12 per token), and `refreshCondition`, which brings the copies on tokens up to date when a custom condition is edited. |
 | `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a person or someone in their session typed. |
 | `settings/conditions.ts` | The Conditions panel in Settings: your own conditions (add, edit, delete) with a live preview, a color and icon picker, and the defaults listed for reference. |
-| `token-card.ts` | The card above a selected token (its name, color and conditions for now; image, HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
-| `toolbar.ts` | Tool switching + the contextual style panel. |
-| `color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
-| `controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
-| `view-actions.ts` | Reset View button, Clear All, Export PNG. |
-| `shortcuts.ts` | Global keyboard shortcuts (bindings only; the commands they run are in `controls.ts` and `selection.ts`). |
-| `hint.ts` | The first-visit welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; hides for good (`inkstone-hint-seen`) once anything is drawn. It is `pointer-events: none`, so it never blocks drawing. |
-| `toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
-| `collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
+| `ui/token-card.ts` | The card above a selected token (its name, color and conditions for now; image, HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
+| `input/toolbar.ts` | Tool switching + the contextual style panel. |
+| `ui/color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
+| `input/controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
+| `ui/view-actions.ts` | Reset View button, Clear All, Export PNG. |
+| `input/shortcuts.ts` | Global keyboard shortcuts (bindings only; the commands they run are in `controls.ts` and `selection.ts`). |
+| `ui/hint.ts` | The first-visit welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; hides for good (`inkstone-hint-seen`) once anything is drawn. It is `pointer-events: none`, so it never blocks drawing. |
+| `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
+| `collab/collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 To add an element type, add a file in `elements/` and register it in

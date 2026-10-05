@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { RectElement } from '../../../src/core/types';
 import { rect } from '../../../src/elements/rect';
-import type { RectElement } from '../../../src/types';
 
 const room: RectElement = { type: 'rect', x: 0, y: 0, w: 80, h: 40 };
 const turned: RectElement = { ...room, rotation: Math.PI / 2 };

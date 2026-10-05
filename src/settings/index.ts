@@ -8,12 +8,12 @@
 // To add a panel: a tab button and a tabpanel section in index.html, then the code for its
 // controls here.
 
-import { byId } from '../dom';
-import { restoreFocus, trapFocus } from '../focus';
-import { formatDistance, gridDistance, parseScale, scale, UNITS, validPerCell } from '../measure';
-import { drawMain } from '../render';
-import { GRID } from '../state';
-import { storageGet, storageSet } from '../storage';
+import { byId } from '../core/dom';
+import { formatDistance, gridDistance, parseScale, scale, UNITS, validPerCell } from '../core/measure';
+import { GRID } from '../core/state';
+import { storageGet, storageSet } from '../core/storage';
+import { drawMain } from '../draw/render';
+import { restoreFocus, trapFocus } from '../ui/focus';
 
 const STORAGE_KEY = 'inkstone-board-settings';
 

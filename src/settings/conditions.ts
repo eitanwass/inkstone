@@ -8,8 +8,8 @@ import { type Condition, DEFAULT_CONDITIONS, ICON_NAMES } from '../conditions';
 import { conditionBadge, iconGlyph } from '../conditions/icon';
 import { addCustom, customConditions, draftProblem, removeCustom, updateCustom } from '../conditions/library';
 import { refreshCondition } from '../conditions/tokens';
-import { byId } from '../dom';
-import { showToast } from '../toast';
+import { byId } from '../core/dom';
+import { showToast } from '../ui/toast';
 
 // A choice of colors that read well behind a white icon, plus any color of their own.
 const COLORS = [

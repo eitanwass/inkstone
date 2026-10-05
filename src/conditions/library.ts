@@ -3,7 +3,7 @@
 // browser (under `inkstone-conditions`), not in the map: a token carries its own copy of whatever
 // conditions it has (see index.ts), so a map shows right on anyone's screen.
 
-import { storageGet, storageSet } from '../storage';
+import { storageGet, storageSet } from '../core/storage';
 import {
   type Condition,
   CUSTOM_PREFIX,
