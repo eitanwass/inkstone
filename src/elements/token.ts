@@ -9,6 +9,7 @@ import { formatDistance } from '../core/measure';
 import { DEFAULT_TOKEN_RADIUS, FONT_FAMILY, GRID, state } from '../core/state';
 import type { ElementBehavior, TokenElement } from '../core/types';
 import { crossOut, drawBadges, isDead } from './badges';
+import { imageFor } from './token-image';
 
 const DEFAULT_COLOR = '#e05c5c';
 const DEAD_COLOR = '#8b857a'; // a dead token is drawn grey, whatever color it had
@@ -72,21 +73,35 @@ export const token: ElementBehavior<TokenElement> = {
     ctx.fill();
     ctx.restore();
 
+    // Picture, cropped to the disc (greyed when dead, where the browser can)
+    const picture = el.image ? imageFor(el.image) : null;
+    if (picture) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(el.x, el.y, r, 0, Math.PI * 2);
+      ctx.clip();
+      if (dead) ctx.filter = 'grayscale(1)';
+      ctx.drawImage(picture, el.x - r, el.y - r, r * 2, r * 2);
+      ctx.restore();
+    }
+
     // Rim
+    // With a picture the token's color is the outline: a thick ring, inside the disc so it frames the picture.
     ctx.beginPath();
-    ctx.arc(el.x, el.y, r, 0, Math.PI * 2);
-    ctx.strokeStyle = lighten(color, 60);
-    ctx.lineWidth = 2;
+    ctx.arc(el.x, el.y, picture ? r - 2 : r, 0, Math.PI * 2);
+    ctx.strokeStyle = picture ? color : lighten(color, 60);
+    ctx.lineWidth = picture ? 4 : 2;
     ctx.stroke();
 
-    // A token with no name is a plain disc: no initials, no label.
+    // A token with no name is a plain disc: no initials, no label. A picture replaces the initials.
     if (el.name) {
-      // Initials
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(r * 0.85)}px ${FONT_FAMILY}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(el.name.slice(0, 2).toUpperCase(), el.x, el.y + 1);
+      if (!picture) {
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(r * 0.85)}px ${FONT_FAMILY}`;
+        ctx.fillText(el.name.slice(0, 2).toUpperCase(), el.x, el.y + 1);
+      }
 
       // Name below — outlined so it reads on the light canvas background
       ctx.font = `${nameFontSize(r)}px ${FONT_FAMILY}`;

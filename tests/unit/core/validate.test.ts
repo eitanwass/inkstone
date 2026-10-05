@@ -169,3 +169,28 @@ describe("a token's conditions", () => {
     expect((t as { conditions: unknown[] }).conditions).toHaveLength(12);
   });
 });
+
+describe('token images', () => {
+  const PNG = 'data:image/png;base64,iVBORw0KGgo=';
+  const withImage = (image: unknown) => ({ type: 'token', x: 0, y: 0, image });
+  const imageOf = (image: unknown) => (parseElements([withImage(image)]) as { image?: string }[])[0].image;
+
+  it('keeps a small raster picture', () => {
+    expect(imageOf(PNG)).toBe(PNG);
+    expect(imageOf('data:image/webp;base64,AAAA')).toBeDefined();
+  });
+
+  it('removes anything else, but keeps the token', () => {
+    const bad = [
+      'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+      'https://example.com/a.png',
+      'javascript:alert(1)',
+      `data:image/png;base64,${'A'.repeat(100_000)}`,
+      42,
+    ];
+    for (const image of bad) {
+      expect(parseElements([withImage(image)])).toHaveLength(1);
+      expect(imageOf(image)).toBeUndefined();
+    }
+  });
+});

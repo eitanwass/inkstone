@@ -192,8 +192,8 @@
     </div>
   </section>
 
-  <!-- The token card: details of the selected token, above it (see src/ui/token-card.ts): its name, color
-       and conditions so far; image, HP and AC are meant to go here too. -->
+  <!-- The token card: details of the selected token, above it (see src/ui/token-card.ts): its name, color,
+       image and conditions so far; HP and AC are meant to go here too. -->
   <div id="token-card" class="hidden" role="group" aria-label="Token details">
     <input id="token-name-field" type="text" maxlength="20" placeholder="Name" aria-label="Token name" autocomplete="off" spellcheck="false" enterkeyhint="done" />
     <!-- Color: the token palette as swatches (built in src/ui/token-card.ts), then any color -->
@@ -201,6 +201,19 @@
       <label class="token-swatch token-swatch-custom" title="Custom color">
         <input type="color" id="token-color-custom" aria-label="Custom color" />
       </label>
+    </div>
+    <!-- Image: a picture shown in the disc (cropped to a square and shrunk, see src/elements/token-image.ts) -->
+    <div id="token-image" role="group" aria-label="Token image">
+      <span class="tc-label">Image</span>
+      <button type="button" id="token-image-pick" class="tc-add" aria-label="Add image">
+        <span id="token-image-text">+ Add</span>
+        <img id="token-image-preview" alt="" hidden />
+        <svg class="tc-pencil" width="14" height="14" aria-hidden="true"><use href="/icons.svg#icon-edit"></use></svg>
+      </button>
+      <button type="button" id="token-image-remove" class="tc-remove" aria-label="Remove image" title="Remove image" hidden>
+        <svg width="10" height="10" aria-hidden="true"><use href="/icons.svg#icon-close"></use></svg>
+      </button>
+      <input type="file" id="token-image-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
     </div>
     <!-- Conditions: the ones it has as removable pills, and a picker of all the ones to choose from -->
     <div id="token-conditions" role="group" aria-label="Token conditions">

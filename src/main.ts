@@ -25,7 +25,9 @@ import './ui/changelog';
 import './settings';
 import './settings/conditions';
 import './ui/token-card';
+import { setImageLoadedListener } from './elements/token-image';
 
+setImageLoadedListener(drawMain);
 byId('version-label').textContent = `v${version}`;
 
 function resize() {

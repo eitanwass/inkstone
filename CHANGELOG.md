@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.8 - 2026-10-05
+
+- Tokens can have a picture. Click a token, then "+ Add" under Image in its card
+  and choose a file; it is cropped to a square and shown inside the token, with
+  the token's color as its outline. Click the picture to change it, or the red
+  X beside it to remove it. Pictures are shared with everyone in a live session.
+
 ## 0.6.7 - 2026-10-04
 
 - Conditions on tokens: Prone, Poisoned, Stunned and the rest of the fifteen

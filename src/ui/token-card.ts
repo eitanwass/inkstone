@@ -18,8 +18,10 @@ import type { Point, TokenElement } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
 import { PALETTE } from '../elements/token';
+import { shrinkImage } from '../elements/token-image';
 import { pushHistory } from '../input/history';
 import { setTool } from '../input/toolbar';
+import { showToast } from './toast';
 
 const card = byId('token-card');
 const nameField = byId<HTMLInputElement>('token-name-field');
@@ -95,6 +97,44 @@ customInput.addEventListener('change', () => {
   else setColor(customInput.value); // a browser that sends only 'change'
 });
 customInput.addEventListener('blur', finishPicking);
+
+// ── Image ──────────────────────────────────────────────────────
+// A picture in the disc: chosen from a file, cropped and shrunk, kept as one undo step.
+const imageFile = byId<HTMLInputElement>('token-image-file');
+const imagePick = byId<HTMLButtonElement>('token-image-pick');
+const imageRemove = byId<HTMLButtonElement>('token-image-remove');
+const imagePreview = byId<HTMLImageElement>('token-image-preview');
+
+function showImage(token: TokenElement): void {
+  imagePreview.hidden = imageRemove.hidden = !token.image;
+  imagePick.classList.toggle('has-image', !!token.image);
+  imagePick.setAttribute('aria-label', token.image ? 'Change image' : 'Add image');
+  if (token.image && imagePreview.getAttribute('src') !== token.image) imagePreview.src = token.image;
+}
+
+function setImage(token: TokenElement, image: string | undefined): void {
+  if (!state.elements.includes(token)) return; // gone while the file was being read
+  token.image = image;
+  drawMain();
+  pushHistory();
+}
+
+imagePick.addEventListener('click', () => imageFile.click());
+imageRemove.addEventListener('click', () => {
+  const token = cardToken();
+  if (token) setImage(token, undefined);
+});
+imageFile.addEventListener('change', async () => {
+  const token = cardToken();
+  const file = imageFile.files?.[0];
+  imageFile.value = ''; // so choosing the same file again still counts
+  if (!token || !file) return;
+  try {
+    setImage(token, await shrinkImage(file));
+  } catch {
+    showToast("Couldn't read that image");
+  }
+});
 
 // ── Conditions ─────────────────────────────────────────────────
 // What the token is under, as pills with a remove button, and a picker of every condition there is
@@ -285,6 +325,7 @@ function update(): void {
   if (editing && editing.token !== token) commit(); // another token was chosen: keep this one's name first
   if (!editing && document.activeElement !== nameField) nameField.value = token.name ?? '';
   showColor(token);
+  showImage(token);
   showConditions(token);
   place(token);
 }

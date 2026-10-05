@@ -624,6 +624,20 @@ canvas {
   cursor: pointer;
 }
 
+#token-image { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--panel-line); padding-top: 9px; }
+#token-image .tc-label { margin-right: auto; }
+/* With a picture the button is the picture: click it to change it (a pencil shows on hover), and a small red X beside it removes it. */
+#token-image-pick.has-image { position: relative; width: 30px; height: 30px; padding: 0; border-radius: 50%; overflow: hidden; }
+#token-image-pick.has-image #token-image-text { display: none; }
+#token-image-preview[hidden] { display: none; }
+#token-image-preview { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tc-pencil { display: none; position: absolute; inset: 0; margin: auto; padding: 8px; box-sizing: content-box; width: 14px; height: 14px; background: rgba(0, 0, 0, 0.55); color: #fff; }
+#token-image-pick.has-image:hover .tc-pencil, #token-image-pick.has-image:focus-visible .tc-pencil { display: block; }
+.tc-remove { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: none; border-radius: 50%; background: #c0392b; color: #fff; cursor: pointer; }
+.tc-remove[hidden] { display: none; }
+.tc-remove:hover { background: #e04a3a; }
+.tc-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* The names of a hovered token's conditions, beside the pointer. */
 #token-tip {
   position: fixed;

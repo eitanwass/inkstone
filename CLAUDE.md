@@ -262,7 +262,8 @@ chain, so there are no circular imports to reason about.
 | `conditions/tokens.ts` | Putting conditions on tokens and taking them off (`toggleCondition`, one undo step each; at most 12 per token), and `refreshCondition`, which brings the copies on tokens up to date when a custom condition is edited. |
 | `conditions/icon.ts` | A condition's round badge (and a bare icon) as `<svg>` built from DOM nodes, never an HTML string: names and colors are text a person or someone in their session typed. |
 | `settings/conditions.ts` | The Conditions panel in Settings: your own conditions (add, edit, delete) with a live preview, a color and icon picker, and the defaults listed for reference. |
-| `ui/token-card.ts` | The card above a selected token (its name, color and conditions for now; image, HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
+| `elements/token-image.ts` | A token's picture: `shrinkImage` (center-crop to a 128px square, webp or jpeg data URL) and `imageFor` (decoded-image cache; `main.ts` registers the repaint). Stored as `image` on the token, so it saves, undoes and syncs with the map (one more reason snapshots grow; the relay's 1 MiB message limit is the ceiling). `isTokenImage` (validate.ts) only accepts small png/jpeg/webp data URLs from storage or a session, and a bad one is removed while the token stays. With a picture the token's color is the outline. |
+| `ui/token-card.ts` | The card above a selected token (its name, color, image and conditions for now; HP and AC to come): placement, editing, the conditions picker, the hover list of a token's conditions, and the ways in (Enter, double-click, "Add name"/"Rename"/"Change Color" in the token menu). |
 | `input/toolbar.ts` | Tool switching + the contextual style panel. |
 | `ui/color-swatches.ts` | Stroke/fill swatch rows and the custom-color popover. |
 | `input/controls.ts` | The commands a user gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
@@ -323,7 +324,7 @@ following it as the map is panned or zoomed and gone while it is dragged. It hol
 field and the token's color (the eight `PALETTE` swatches from `elements/token.ts`, plus a
 ring that opens the browser's own picker for any color; a choice applies at once as one
 undo step, and the token's right-click "Change Color" just selects it and moves to these
-swatches). Image, HP and AC are meant to join it (as plain numbers everyone sees;
+swatches). HP and AC are meant to join it (as plain numbers everyone sees;
 hiding them from players needs roles). The card never takes focus by itself, so Delete and
 the arrows still act on the token; click its field, double-click the token, press Enter, or
 choose "Add name" (or "Rename") from the token's right-click menu to type. Enter or

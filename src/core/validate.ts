@@ -40,13 +40,26 @@ function isElement(value: unknown): value is BoardElement {
   );
 }
 
+// A token's picture must be a small raster data URL. Anyone in a session can send one, so SVG (which
+// can carry script) and anything large are refused.
+const MAX_IMAGE_LENGTH = 100_000;
+export const isTokenImage = (v: unknown): v is string =>
+  isStr(v) &&
+  v.length <= MAX_IMAGE_LENGTH &&
+  /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(v);
+
 // A valid element with anything inside it that isn't valid taken out, rather than the element
-// dropped: a token's bad conditions are cleaned (see parseConditions), and the token stays.
+// dropped: a token's bad conditions are cleaned (see parseConditions) and a bad picture removed,
+// and the token stays.
 function tidy(el: BoardElement): BoardElement {
-  if (el.type !== 'token' || el.conditions === undefined) return el;
-  const { conditions: _dropped, ...rest } = el;
-  const conditions = parseConditions(el.conditions);
-  return conditions.length ? { ...rest, conditions } : rest;
+  if (el.type !== 'token') return el;
+  const { conditions: raw, image: rawImage, ...rest } = el;
+  const conditions = raw === undefined ? [] : parseConditions(raw);
+  return {
+    ...rest,
+    ...(conditions.length ? { conditions } : {}),
+    ...(isTokenImage(rawImage) ? { image: rawImage } : {}),
+  };
 }
 
 // The valid elements in data, or null if data isn't a list at all. Invalid
