@@ -265,6 +265,30 @@ test('adjusting: drag to move, corner to resize, arrows nudge, Done finishes', a
   expect((await pictures(page))[0].x).toBe(nudged.x);
 });
 
+test('a turned picture resizes like any other: the opposite corner stays and the proportions hold', async ({
+  page,
+}) => {
+  await addPicture(page, 800, 400);
+  await page.locator('#adjust-squares').fill('10');
+  await page.locator('#adjust-squares').press('Enter');
+  const toScreen = await worldToScreenFn(page);
+  for (const turns of [1, 2, 3]) {
+    await page.click('#adjust-rotate-right');
+    const [before] = await pictures(page);
+    expect(before.rotation).toBe(turns);
+    const se = toScreen(before.x + before.w, before.y + before.h);
+    await page.mouse.move(se.x, se.y);
+    await page.mouse.down();
+    await page.mouse.move(se.x + 60, se.y + 30, { steps: 6 });
+    await page.mouse.up();
+    const [after] = await pictures(page);
+    expect([after.x, after.y]).toEqual([before.x, before.y]); // the corner opposite the one dragged stays
+    expect(after.w).toBeGreaterThan(before.w);
+    expect(after.w).toBeLessThan(before.w + 100); // not a jump
+    expect(after.w / after.h).toBeCloseTo(before.w / before.h, 5);
+  }
+});
+
 test('adjusting: Shift snaps a move and a resize to the grid', async ({ page }) => {
   await addPicture(page, 800, 400);
   const toScreen = await worldToScreenFn(page);

@@ -81,7 +81,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       return {
         center,
         startAngle: Math.atan2(world.y - center.y, world.x - center.x),
-        startRotation: 'rotation' in el ? el.rotation || 0 : 0,
+        startRotation: el.type === 'rect' ? el.rotation || 0 : 0,
         startCoords: snapshotCoords(el),
       };
     },
@@ -98,7 +98,9 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
   // what stops a rotated rect drifting as it's resized.
   resize: {
     start(el, handle) {
-      const rotation = 'rotation' in el ? el.rotation || 0 : 0;
+      // Only a room is turned by an angle (radians). A background picture's `rotation` is a count of quarter turns,
+      // and its box is already the shape shown, so for resizing it is not turned at all.
+      const rotation = el.type === 'rect' ? el.rotation || 0 : 0;
       const anchorId = ({ nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' } as Record<Corner, Corner>)[
         handle.id as Corner
       ];
