@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.9 - 2026-10-05
+
+- Shared maps are kept for a week after the last person leaves, so you can open the
+  link again later and find the map as it was. Opening the link counts as a visit
+  and keeps it another week.
+- Live sessions are steadier. Two people editing different things at once no
+  longer overwrite each other, renaming the map never overwrites anyone's drawing,
+  and an undo only undoes your own edits, keeping what others did.
+- If your connection drops and comes back, you catch up with what changed while
+  you were away and your own changes made in the meantime are kept. If someone
+  else changed the same thing first, their version wins and you are told.
+
 ## 0.6.8 - 2026-10-05
 
 - Tokens can have a picture. Click a token, then "+ Add" under Image in its card

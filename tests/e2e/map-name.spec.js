@@ -158,9 +158,17 @@ test.describe('the name in a shared session', () => {
     const sent = [];
     await page.routeWebSocket(/\/parties\//, (ws) => {
       connections.push(ws);
-      ws.onMessage((message) => sent.push(JSON.parse(message)));
-      // Like the real relay: a room nobody has used yet is told it is fresh, and the app gives it its map.
-      ws.send(JSON.stringify({ type: 'doc', fresh: true, name: '', elements: [] }));
+      ws.onMessage((raw) => {
+        const message = JSON.parse(raw);
+        // Like the real relay: a client that says hello to a room nobody has used yet is told it is
+        // fresh, and gives it its map, which is acknowledged.
+        if (message.type === 'hello') {
+          ws.send(JSON.stringify({ type: 'doc', fresh: true, epoch: '', rev: 0, name: '', elements: [] }));
+          return;
+        }
+        sent.push(message);
+        if (message.type === 'doc') ws.send(JSON.stringify({ type: 'ack', epoch: 'e1', rev: 0, fix: [] }));
+      });
     });
     await resetBoard(page);
     await page.click('#btn-share');
@@ -181,7 +189,7 @@ test.describe('the name in a shared session', () => {
 
     await page.keyboard.press('Enter');
     await expect.poll(() => sent.length).toBe(2);
-    expect(sent[1]).toEqual({ type: 'changes', changes: [{ t: 'name', name: 'The Sunken Crypt' }] });
+    expect(sent[1]).toEqual({ type: 'changes', base: 0, changes: [{ t: 'name', name: 'The Sunken Crypt' }] });
   });
 
   test('cancelling a rename sends nothing', async ({ page }) => {
@@ -195,7 +203,9 @@ test.describe('the name in a shared session', () => {
 
   test("a peer's rename arrives without becoming an undo step", async ({ page }) => {
     const { connections } = await loadWithRelay(page);
-    connections[0].send(JSON.stringify({ type: 'changes', changes: [{ t: 'name', name: 'From a friend' }] }));
+    connections[0].send(
+      JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'name', name: 'From a friend' }] }),
+    );
 
     await expect(page.locator('#map-name')).toHaveValue('From a friend');
     expect(await page.title()).toBe('From a friend – Inkstone');
@@ -207,7 +217,7 @@ test.describe('the name in a shared session', () => {
     const { connections } = await loadWithRelay(page);
     await rename(page, 'Mine');
 
-    connections[0].send(JSON.stringify({ type: 'changes', changes: [{ t: 'set', el: room }] }));
+    connections[0].send(JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'set', el: room }] }));
     await expect.poll(() => boardElements(page)).toHaveLength(1);
     await expect(page.locator('#map-name')).toHaveValue('Mine');
   });
@@ -221,6 +231,7 @@ test.describe('the name in a shared session', () => {
     connections[0].send(
       JSON.stringify({
         type: 'changes',
+        rev: 1,
         changes: [
           { t: 'name', name: 42 },
           { t: 'set', el: room },
@@ -236,7 +247,9 @@ test.describe('the name in a shared session', () => {
     await page.click('#map-name');
     await page.keyboard.type('Half writ');
 
-    connections[0].send(JSON.stringify({ type: 'changes', changes: [{ t: 'name', name: 'Peer name' }] }));
+    connections[0].send(
+      JSON.stringify({ type: 'changes', rev: 1, changes: [{ t: 'name', name: 'Peer name' }] }),
+    );
     await page.waitForTimeout(300);
     await expect(page.locator('#map-name')).toHaveValue('Half writ'); // untouched while you type
     expect(await page.title()).toBe('Peer name – Inkstone'); // but the shared name is known

@@ -5,8 +5,12 @@
 // time we and the room agreed (registered via setHistoryListener — see
 // history.ts for why that's a callback, not a direct import; the changes
 // are in changes.ts, the messages we get back in protocol.ts). Each element
-// has an id, so edits to different elements never collide; two people editing
-// the *same* element at the same instant just have one of them win.
+// has an id, so edits to different elements never collide. The room is the
+// source of truth: it numbers every accepted batch of changes (a revision),
+// and refuses a change to something someone else changed after the revision
+// we built on; it then sends us its version, so we settle on the same map.
+// After a drop, we say the last revision we have and are sent what changed;
+// our own offline edits are sent on top, and refused where they conflict.
 //
 // A room is only ever created when the user clicks "Share" — opening the
 // app cold never talks to the relay. "Join" lets a user key in another
@@ -21,13 +25,14 @@
 import PartySocket from 'partysocket';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
+import { storageGet, storageSet } from '../core/storage';
 import type { BoardElement } from '../core/types';
 import { applyRemoteChanges, applyRemoteDocument, setHistoryListener } from '../input/history';
 import { refreshMapName } from '../ui/map-name';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
-import { applyChanges, diff, ensureIds } from './changes';
-import { parseMessage } from './protocol';
+import { applyChanges, type Change, diff, ensureIds, ID_RE } from './changes';
+import { type Message, parseMessage } from './protocol';
 import { resolveRelayHost } from './relay-host';
 
 // Null in a production build that wasn't given a relay (see relay-host.ts):
@@ -52,15 +57,47 @@ function requireSharing(): boolean {
 
 let socket: PartySocket | null = null;
 
-// True when an edit was made while the connection was down, so it never
-// reached the room. (PartySocket reconnects by itself; the relay then sends
-// its copy of the map and applyRemoteDocument makes that the local map.)
+// This tab (new on each page load; the relay doesn't count a client's own earlier batches as
+// conflicts) and the person, kept in this browser so the room's log can say who changed what. The
+// name is a placeholder until it can be edited.
+const clientId = crypto.randomUUID().replaceAll('-', '').slice(0, 12);
+const AUTHOR_KEY = 'inkstone-author';
+
+function loadAuthor(): { id: string; name: string } {
+  const saved = parseJson(storageGet(AUTHOR_KEY) ?? '') as { id?: unknown; name?: unknown } | null;
+  if (
+    typeof saved?.id === 'string' &&
+    ID_RE.test(saved.id) &&
+    typeof saved.name === 'string' &&
+    saved.name.length <= 40
+  ) {
+    return { id: saved.id, name: saved.name };
+  }
+  const author = {
+    id: crypto.randomUUID().replaceAll('-', '').slice(0, 12),
+    name: `Guest ${1000 + Math.floor(Math.random() * 9000)}`,
+  };
+  storageSet(AUTHOR_KEY, JSON.stringify(author));
+  return author;
+}
+const author = loadAuthor();
+
+// True when an edit was made while we couldn't send it (the connection was down, or the room had
+// not yet told us where it stands). It is sent once we are caught up, as part of the difference
+// between the map and `synced`.
 let unsentEdits = false;
 
 // What we believe the room holds: the base each change is measured from. Only set once the room has
-// told us (or accepted from us) the whole map, and nothing is sent before then, so a joiner's old
-// local map can't leak into a room it has not caught up with.
+// told us (or accepted from us) the whole map, so a joiner's old local map can't leak into a room it
+// has not caught up with.
 let synced: { elements: BoardElement[]; name: string } | null = null;
+
+// Which life of the room and which revision `synced` is at.
+let room = { epoch: '', rev: 0 };
+
+// Whether the room has answered our hello on this connection. Nothing is sent before it has, since
+// the room ignores a client it has not met, and what we sent would count as sent.
+let caughtUp = false;
 
 const remember = () => {
   synced = { elements: structuredClone(state.elements), name: state.mapName };
@@ -68,14 +105,14 @@ const remember = () => {
 
 function broadcastState() {
   if (!socket) return;
-  if (socket.readyState !== WebSocket.OPEN || !synced) {
+  if (socket.readyState !== WebSocket.OPEN || !synced || !caughtUp) {
     unsentEdits = true;
     return;
   }
   ensureIds(state.elements);
   const changes = diff(synced.elements, state.elements, synced.name, state.mapName);
   if (!changes.length) return;
-  socket.send(JSON.stringify({ type: 'changes', changes }));
+  socket.send(JSON.stringify({ type: 'changes', base: room.rev, changes }));
   remember();
 }
 
@@ -102,15 +139,97 @@ function setStatus(status: keyof typeof STATUS_TEXT | null): void {
 
 const UNREACHABLE_AFTER_MS = 8000;
 
-// On connecting the relay sends the whole map. A room nobody has used yet (a new one, or one that
-// expired) is marked `fresh`, and then our own map becomes the room's; otherwise the room's map is
-// the truth and replaces ours, which is also what happens on every reconnect.
+function sendHello(sock: PartySocket): void {
+  const since = synced && room.epoch ? { epoch: room.epoch, since: room.rev } : {};
+  sock.send(JSON.stringify({ type: 'hello', cid: clientId, author, ...since }));
+}
+
+// Applies changes that came from the room to the map and to what we know the room holds.
+function applyFromRoom(changes: Change[]): void {
+  if (!synced) return;
+  applyRemoteChanges(changes);
+  const rename = changes.findLast((c) => c.t === 'name');
+  synced = {
+    elements: applyChanges(synced.elements, structuredClone(changes)),
+    name: rename?.t === 'name' ? rename.name : synced.name,
+  };
+}
+
+function onMessage(sock: PartySocket, message: Message): void {
+  switch (message.type) {
+    case 'doc': {
+      const wasInRoom = synced !== null;
+      if (message.fresh) {
+        // A room nobody has used yet (a new one, or one that expired): our map becomes the room's.
+        ensureIds(state.elements);
+        sock.send(JSON.stringify({ type: 'doc', name: state.mapName, elements: state.elements }));
+        remember();
+        room = { epoch: '', rev: 0 }; // the ack brings the epoch
+      } else {
+        // Nothing to be caught up from (a first visit, or the room's log doesn't reach back to our
+        // last revision): the room's map replaces ours.
+        if (wasInRoom && unsentEdits) {
+          showToast('Reconnected — changes you made while offline were replaced by the shared map');
+        }
+        applyRemoteDocument(message.name, message.elements);
+        remember();
+        room = { epoch: message.epoch, rev: message.rev };
+      }
+      caughtUp = true;
+      unsentEdits = false;
+      break;
+    }
+    case 'catchup': {
+      if (!synced) return;
+      // What we changed while away (measured before the room's changes arrive), then the room's
+      // changes, which win; ours go on top and are refused where they conflict.
+      ensureIds(state.elements);
+      const ours = diff(synced.elements, state.elements, synced.name, state.mapName);
+      const base = room.rev;
+      applyFromRoom(message.changes);
+      room = { epoch: message.epoch, rev: message.rev };
+      caughtUp = true;
+      unsentEdits = false;
+      if (ours.length) {
+        sock.send(JSON.stringify({ type: 'changes', base, changes: ours }));
+        remember();
+        showToast('Reconnected — your changes while offline were added to the shared map');
+      }
+      break;
+    }
+    case 'changes':
+      if (!synced || !caughtUp) return;
+      if (message.rev !== room.rev + 1) {
+        // One went missing: ask to be caught up.
+        caughtUp = false;
+        sendHello(sock);
+        return;
+      }
+      applyFromRoom(message.changes);
+      room.rev = message.rev;
+      break;
+    case 'ack':
+      if (!synced) return;
+      room = { epoch: message.epoch || room.epoch, rev: message.rev };
+      if (message.fix.length) {
+        applyFromRoom(message.fix);
+        showToast('Someone else changed that first, so their version was kept');
+      }
+      break;
+  }
+  refreshMapName();
+}
+
+// On connecting we say hello (who we are and, if we have been here before, the last revision we
+// have) and the room answers with what we need: the whole map, or just what changed since.
 function connect(sessionId: string): void {
   if (!RELAY_HOST) return;
   if (socket) socket.close();
   const current = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket = current;
   synced = null;
+  room = { epoch: '', rev: 0 };
+  caughtUp = false;
   unsentEdits = false;
   let everOpened = false;
   let live = false;
@@ -125,36 +244,14 @@ function connect(sessionId: string): void {
   current.addEventListener('open', () => {
     live = true;
     setStatus('live');
-    if (!everOpened) {
-      showToast('Connected — this map is now shared live');
-    } else if (unsentEdits) {
-      showToast('Reconnected — changes you made while offline were replaced by the shared map');
-    } else {
-      showToast('Reconnected');
-    }
+    showToast(everOpened ? 'Reconnected' : 'Connected — this map is now shared live');
     everOpened = true;
-    unsentEdits = false;
+    caughtUp = false;
+    sendHello(current);
   });
   current.addEventListener('message', (evt) => {
     const message = parseMessage(parseJson(evt.data));
-    if (!message) return;
-    if (message.type === 'doc') {
-      if (message.fresh) {
-        ensureIds(state.elements);
-        current.send(JSON.stringify({ type: 'doc', name: state.mapName, elements: state.elements }));
-      } else {
-        applyRemoteDocument(message.name, message.elements);
-      }
-      remember();
-    } else if (synced) {
-      applyRemoteChanges(message.changes);
-      const rename = message.changes.findLast((c) => c.t === 'name');
-      synced = {
-        elements: applyChanges(synced.elements, structuredClone(message.changes)),
-        name: rename?.t === 'name' ? rename.name : synced.name,
-      };
-    }
-    refreshMapName();
+    if (message) onMessage(current, message);
   });
   current.addEventListener('close', () => {
     if (socket !== current || !everOpened) return; // replaced by another session, or never connected
@@ -162,7 +259,7 @@ function connect(sessionId: string): void {
     // Each failed retry also fires 'close'; only announce the drop once.
     if (live) showToast('Connection lost — reconnecting…');
     live = false;
-    synced = null;
+    caughtUp = false;
   });
 }
 

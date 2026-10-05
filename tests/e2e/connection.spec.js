@@ -3,28 +3,37 @@ import { boardElements, placeRoom, resetBoard, worldToScreenFn } from './helpers
 
 // Loads the app with a fake clock (so the socket's reconnect delay can be
 // stepped through deterministically) and a stand-in for the relay. The relay
-// accepts every connection and records it; like the real one, it hands a client
-// that connects to a room with saved state a copy of it straight away.
+// accepts every connection and records it, and answers like the real one: the
+// first connection finds a fresh room, which the app gives its map (acknowledged
+// as revision 0); a later one is caught up with `catchup`, and an edit sent
+// is acknowledged with `fix`, the room's version of what it refused.
 //
 // The WebSocket route must exist before the page loads, so this replaces the
 // usual resetBoard call.
-async function loadWithMockRelay(page, { roomState = null, onMessage = null } = {}) {
+async function loadWithMockRelay(page, { catchup = () => [], fix = () => [], onMessage = null } = {}) {
   await page.clock.install();
   const connections = [];
+  let rev = 0;
   await page.routeWebSocket(/\/parties\//, (ws) => {
+    const index = connections.length;
     connections.push(ws);
-    if (onMessage) ws.onMessage((message) => onMessage(connections.indexOf(ws), message));
-    // Like the real relay: the first connection finds a fresh room (and the app gives it its map);
-    // a later one is sent the room's map.
-    const first = connections.length === 1;
-    ws.send(
-      JSON.stringify({
-        type: 'doc',
-        fresh: first,
-        name: '',
-        elements: first ? [] : (roomState?.elements ?? []),
-      }),
-    );
+    ws.onMessage((raw) => {
+      const message = JSON.parse(raw);
+      onMessage?.(index, message);
+      if (message.type === 'hello') {
+        ws.send(
+          JSON.stringify(
+            index === 0
+              ? { type: 'doc', fresh: true, epoch: '', rev: 0, name: '', elements: [] }
+              : { type: 'catchup', epoch: 'e1', rev: ++rev, changes: catchup() },
+          ),
+        );
+      } else if (message.type === 'doc') {
+        ws.send(JSON.stringify({ type: 'ack', epoch: 'e1', rev: 0, fix: [] }));
+      } else if (message.type === 'changes') {
+        ws.send(JSON.stringify({ type: 'ack', epoch: 'e1', rev: ++rev, fix: fix() }));
+      }
+    });
   });
   await resetBoard(page);
   return connections;
@@ -58,8 +67,13 @@ test('the status follows the connection: live, reconnecting, live again', async 
   await expect(page.locator('#toast')).toHaveText('Reconnected');
 });
 
-test('edits made while offline are replaced by the shared map, and the user is told', async ({ page }) => {
-  const connections = await loadWithMockRelay(page, { roomState: { elements: [] } });
+test('edits made while offline are sent on reconnect, on top of what the room changed', async ({ page }) => {
+  const peerToken = { type: 'token', id: 'peer-token', x: 400, y: 400 };
+  const sent = [];
+  const connections = await loadWithMockRelay(page, {
+    catchup: () => [{ t: 'set', el: peerToken }], // someone added a token while we were away
+    onMessage: (connection, message) => sent.push({ connection, message }),
+  });
   await page.click('#btn-share');
   await expect(page.locator('#collab-status')).toHaveText('Live');
 
@@ -69,29 +83,62 @@ test('edits made while offline are replaced by the shared map, and the user is t
 
   const toScreen = await worldToScreenFn(page);
   await placeRoom(page, toScreen, 160, 160, 320, 280);
-  expect(await boardElements(page)).toHaveLength(1);
+  expect((await boardElements(page)).map((e) => e.type)).toEqual(['rect']);
 
   await waitForReconnect(page);
-  await expect(page.locator('#toast')).toContainText('changes you made while offline were replaced');
-  await expect.poll(() => boardElements(page)).toEqual([]);
+  // the room's change arrived, our room is still there, and it was sent on top, built on revision 0
+  await expect.poll(async () => (await boardElements(page)).map((e) => e.type)).toEqual(['rect', 'token']);
+  const batch = sent.find((s) => s.connection === 1 && s.message.type === 'changes')?.message;
+  expect(batch.base).toBe(0);
+  expect(batch.changes.map((c) => [c.t, c.el.type])).toEqual([['set', 'rect']]);
+  await expect(page.locator('#toast')).toContainText('your changes while offline were added');
+});
+
+test('an offline edit to something someone else changed is replaced by their version', async ({ page }) => {
+  let original;
+  const peerVersion = () => ({ ...original, x: original.x + 40 });
+  const connections = await loadWithMockRelay(page, {
+    catchup: () => [{ t: 'set', el: peerVersion() }], // while we were away, someone moved it
+    fix: () => [{ t: 'set', el: peerVersion() }], // and so the room refuses our edit and says so
+  });
+  const toScreen = await worldToScreenFn(page);
+  await placeRoom(page, toScreen, 160, 160, 320, 280);
+  await page.click('#btn-share');
+  await expect(page.locator('#collab-status')).toHaveText('Live');
+  [original] = await boardElements(page);
+
+  connections[0].close();
+  await expect(page.locator('#collab-status')).toHaveText('Reconnecting…');
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await page.click('#tool-select');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Delete'); // offline, we delete it
+  expect(await boardElements(page)).toEqual([]);
+
+  await waitForReconnect(page);
+  await expect.poll(() => boardElements(page)).toEqual([peerVersion()]);
+  await expect(page.locator('#toast')).toContainText('Someone else changed that first');
 });
 
 test('a reconnect never re-seeds the room with the creator’s local board', async ({ page }) => {
   const sent = [];
   const connections = await loadWithMockRelay(page, {
-    onMessage: (connection, message) => sent.push({ connection, message }),
+    onMessage: (connection, message) => sent.push({ connection, type: message.type }),
   });
   const toScreen = await worldToScreenFn(page);
   await placeRoom(page, toScreen, 160, 160, 320, 280);
 
   await page.click('#btn-share'); // the creator seeds the room once, on first connect
   await expect(page.locator('#collab-status')).toHaveText('Live');
-  await expect.poll(() => sent.filter((s) => s.connection === 0).length).toBe(1);
+  await expect
+    .poll(() => sent.filter((s) => s.connection === 0).map((s) => s.type))
+    .toEqual(['hello', 'doc']);
 
   connections[0].close();
   await waitForReconnect(page);
   await expect(page.locator('#collab-status')).toHaveText('Live');
-  expect(sent.filter((s) => s.connection === 1)).toHaveLength(0);
+  // it only says hello: nothing to seed, and nothing changed while it was away
+  expect(sent.filter((s) => s.connection === 1).map((s) => s.type)).toEqual(['hello']);
 });
 
 test('the red live indicator appears under the action cluster only while the map is shared', async ({

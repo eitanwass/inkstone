@@ -261,7 +261,7 @@ chain, so there are no circular imports to reason about.
 | `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the user's next click or key press, so Undo can never act on a map that has since changed. |
 | `collab/collab.ts` | Live multi-user sync over a Durable Object room (see Collaboration below). |
 | `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |
-| `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `changes`), dropping a bad change on its own. |
+| `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 To add an element type, add a file in `elements/` and register it in
@@ -515,25 +515,50 @@ tested). Every element has a stable `id` (`ensureIds`, called by `pushHistory` a
 sending; a duplicate or paste arrives with its original's id and is given a new one).
 Every local `pushHistory()`/`undo()`/`redo()` calls `broadcastState`, which `diff`s the
 map against `synced` (what the room is believed to hold) and sends
-`{ type: 'changes', changes }`: `set` (an element, new or edited; new ids go last),
+`{ type: 'changes', base, changes }`: `set` (an element, new or edited; new ids go last),
 `del` (an id), `order` (all ids, only when the order isn't what adding and removing gives
 anyway) and `name`. So undo stays whole-snapshot (see below) while the traffic is just the
-difference, and two people editing *different* elements never collide; the same element
-at the same instant is last-write-wins. Token images no longer travel on every edit.
+difference, and two people editing *different* elements never collide. Token images no longer
+travel on every edit.
 
-The relay sends one other kind of message, `{ type: 'doc', fresh, name, elements }`, the whole
-map, to each client as it connects (`protocol.ts` checks both kinds on arrival, dropping a bad
-change on its own). A room nobody has used yet (new, or expired) is `fresh`: the client
-then gives it its own map (a `doc` message from the client, which the relay accepts only
-while the room is fresh, so the first to arrive wins and a late or stale one just gets the
-room's map back). Otherwise the room's map replaces the local one (`applyRemoteDocument`,
-which also makes it the new start of the undo history). Nothing is sent before the room has
-told us its map (`synced` is null), so a joiner's old local board can't leak into a room.
+**Revisions: the room is the source of truth.** The relay numbers every accepted batch of
+changes (`rev`) and keeps a log of the last 100 (`LOG_LIMIT` in party/server.js), one small
+entry each: `{ rev, cid, by: { id, name }, at, ids, order, name }`, which says who sent it and
+which elements it touched, not what it put in them (so the log is tiny, and is the start of a
+"who changed what" view). A batch carries `base`, the revision the client built it on. The relay
+refuses a change to something that a revision *after* `base`, by another tab (`cid`; a client's
+own earlier batches don't count), touched: the same element, the order, or the name. It then
+sends the sender `{ type: 'ack', epoch, rev, fix }`, where `fix` is the room's version of what
+was refused (the element as it is, or a deletion), and the client applies it, with a toast ("Someone
+else changed that first, so their version was kept"). What was accepted is forwarded to the others
+as `{ type: 'changes', rev, changes }`; a client that sees a revision other than the one after the
+last it has asks to be caught up. A client built on a revision older than the log reaches is refused
+whole. The relay's author is a placeholder: `collab.ts` keeps `{ id, name: 'Guest 1234' }` per
+browser (`inkstone-author`), and a `cid` per page load.
 
-A peer's changes are applied with `applyRemoteChanges` (history.ts), which does *not* make an
-undo step, so Ctrl+Z undoes your own last edit, not whatever a peer just did. They are applied
-to every step of your undo stack too, so undoing your own edit later keeps their work, and
-your selection is kept by id (unless they deleted what you had selected).
+**Connecting.** The client says `{ type: 'hello', cid, author, epoch?, since? }` as soon as the
+socket opens (the relay ignores a client it hasn't met, and the client sends nothing until the
+relay has answered: `caughtUp`). `epoch` names one life of the room (a new one after it expires and
+is made again) and `since` is the last revision the client has, sent only if it has been in this
+room before. The relay answers with one of:
+- `catchup`: the room's *current* version of whatever was touched since `since` (a `set` or
+  `del` per element, the order and the name if touched), built from the log. A client that was
+  offline first works out what it changed itself (`diff` against `synced`), applies the catchup (the
+  room wins), then sends its own changes on top, built on `since`, which the relay accepts or refuses
+  as above. So a flaky connection loses only what truly conflicted.
+- `doc`: the whole map, when it can't catch the client up (first visit, another epoch, or the log no
+  longer reaches back to `since`); the room's map then replaces the local one and offline edits are
+  lost, with a toast. A reload while offline forgets `synced`, so it is this case too.
+- `doc` with `fresh: true`: nobody has used the room yet (new, or expired). The client gives it its
+  own map (a `doc` message, accepted only while the room is fresh, so the first to arrive wins and a
+  late one just gets the room's map back), acknowledged with the new epoch at revision 0.
+
+`protocol.ts` checks every message from the relay on arrival, dropping a bad change on its own. A
+peer's changes are applied with `applyRemoteChanges` (history.ts), which does *not* make an undo
+step, so Ctrl+Z undoes your own last edit, not whatever a peer just did. They are applied to every
+step of your undo stack too, so undoing your own edit later keeps their work, and your selection is
+kept by id (unless they deleted what you had selected). `applyRemoteDocument` makes the room's
+map the new start of the undo history.
 
 Because `history.ts` sits *below* `collab.ts` in the module chain (per the
 one-directional dependency rule above), it can't import `collab.ts` to
@@ -543,9 +568,9 @@ function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
 
 **The room is kept.** The relay keeps the map in the Durable Object's storage, one row per
-element (`el:<id>`) plus `order` and `meta` (the name), so an edit writes only the rows it
+element (`el:<id>`), one per log entry (`log:<rev>`) plus `order` and `meta` (name, epoch, revision), so an edit writes only the rows it
 changed (once per burst of edits, and at once when the last person leaves). Whoever opens the
-link later, even after everyone has left, gets the map as it was. A room is deleted a week
+link later, even after everyone has left, gets the map as it was. A room (and its log) is deleted a week
 after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms
 don't fill the free plan. The relay drops any message that isn't well formed (an element
 needs an id of letters, digits, `_` and `-` and a known type) or is over its limits (150,000
@@ -558,13 +583,11 @@ it. The status pill (`#collab-status`, in the top-right rail under the action cl
 for live) goes `Connecting…` → `Live`, and on a
 drop to `Reconnecting…` (with a toast, announced once, not on every retry
 attempt). If the relay can't be reached for 8 seconds on the first connect, a
-toast says so. The policy for edits made while offline is **the shared map
-wins**: the relay sends its copy on reconnect and `applyRemoteDocument` makes
-it the local map, so offline edits are replaced. `broadcastState` notes
-`unsentEdits` when it can't send, and the reconnect toast says so when that
-happened. (Making the local map win instead would overwrite peers' work, and
-needs care around the relay's catch-up message.) Messages from the relay go
-through `parseElements` first (see `validate.ts`).
+toast says so. The policy for edits made while offline is **the room wins where they
+conflict**: on reconnect the client is caught up (see "Connecting"), its offline edits are sent on top, and
+any the room refuses (someone else changed the same element, the order or the name first) are replaced
+by the room's version. `broadcastState` notes `unsentEdits` when it can't send. Messages from the relay go
+through `parseMessage` (see `protocol.ts`).
 
 The relay address comes from `resolveRelayHost` (`relay-host.ts`): the
 `VITE_RELAY_HOST` build variable, else `localhost:8787` **only on the dev
