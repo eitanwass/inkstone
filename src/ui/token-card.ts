@@ -21,13 +21,12 @@ import { PALETTE } from '../elements/token';
 import { addImage, getImageData, shrinkImage } from '../elements/token-image';
 import { pushHistory } from '../input/history';
 import { setTool } from '../input/toolbar';
+import { cardPosition } from './card-placement';
 import { showToast } from './toast';
 
 const card = byId('token-card');
 const nameField = byId<HTMLInputElement>('token-name-field');
 
-const GAP_PX = 14; // between the token and the card
-const KEEP_CLEAR_OF_TOP_PX = 96; // the map name and the action cluster
 const NAME_LABEL_PX = 28; // a name is written just under its token
 
 // ── Colour ─────────────────────────────────────────────────────
@@ -294,19 +293,16 @@ function place(token: TokenElement): void {
   const radius = (token.radius || DEFAULT_TOKEN_RADIUS) * state.zoom;
   const x = screen.left + state.panX + token.x * state.zoom;
   const y = screen.top + state.panY + token.y * state.zoom;
-  const { offsetWidth: width, offsetHeight: height } = card;
-
-  // Above the token, or below it (and its name) if the top of the screen is in the way. A tall card
-  // (the picker open) may fit on neither side, so it goes where there is more room, and is then kept on
-  // the screen even if that means covering part of the token.
-  const above = y - radius - GAP_PX - height;
-  const below = y + radius + GAP_PX + NAME_LABEL_PX;
-  const roomAbove = y - radius - GAP_PX - (screen.top + KEEP_CLEAR_OF_TOP_PX);
-  const roomBelow = screen.top + window.innerHeight - below - 8;
-  let top = above >= screen.top + KEEP_CLEAR_OF_TOP_PX ? above : below;
-  if (top === below && roomBelow < height && roomAbove > roomBelow) top = above;
-  top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
-  const left = Math.max(8, Math.min(x - width / 2, window.innerWidth - width - 8));
+  const { left, top } = cardPosition({
+    centerX: x,
+    top: y - radius,
+    bottom: y + radius + NAME_LABEL_PX,
+    width: card.offsetWidth,
+    height: card.offsetHeight,
+    screenTop: screen.top,
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+  });
   card.style.left = `${left}px`;
   card.style.top = `${top}px`;
 }

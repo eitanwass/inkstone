@@ -1,5 +1,6 @@
 /* ── The token card: details of the selected token, floating above it ── */
-#token-card {
+#token-card,
+#label-card {
   position: fixed;
   z-index: 90;
   display: flex;
@@ -378,3 +379,37 @@
   outline: none;
 }
 
+/* The label card: a column, like the token's: a size slider, then a row of colours. */
+#label-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 232px;
+  max-width: calc(100vw - 16px);
+}
+
+.lc-size {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lc-size .slider {
+  flex: 1;
+  min-width: 0;
+}
+
+#label-size-value {
+  min-width: 2ch;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+#label-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px;
+}
