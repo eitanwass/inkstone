@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.0 - 2026-10-05
+
+- Fit to grid: a new button in the Adjust image panel finds the squares printed on a
+  scanned or downloaded map and sizes and moves the picture so they line up with the
+  grid. If the picture's squares are wider than tall (common with generated maps), it is
+  stretched until they are square. If no grid is found, nothing changes and you are told.
+- The Adjust image panel is easier to read: the controls are in the order you use them
+  (rotate, size, opacity), with Replace, Remove and Done below, and the keys that work on
+  the map are listed beside them.
+- Fixed resizing a background image after it has been rotated, which made it jump or
+  stretch when a corner was dragged.
+
 ## 0.8.1 - 2026-10-05
 
 - Rotate a background image by 90 degrees when it is the wrong way round: the Adjust image

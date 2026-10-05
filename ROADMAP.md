@@ -66,7 +66,8 @@ Each item is meant to ship on its own.
   - Still to do: drop a file onto the page to open it. (S)
 - ~~**Import an image as a background** (a scanned or downloaded map to draw over).~~
   - ~~Right-click the map: "Add image…" (drawn behind the grid dots) and a background colour. An Adjust image panel with opacity, width in squares and moving and resizing on the map (Shift snaps to the grid), shared with the session.~~
-  - **Fit it to the grid automatically**: find the scan's own squares and set the size and position so they line up with the dots, so nobody does it by eye. (M)
+  - ~~**Fit it to the grid automatically**: a "Fit to grid" button in the Adjust image panel finds the scan's own squares (measured across and down separately, since generated maps often have squares that are not square) and sizes and moves the picture so they are ours.~~
+    - Still to do: a scan that is skewed by a degree or more (needs a rotation search), and faint dot grids. (S)
   - Drop or paste a picture onto the page, and keep big pictures in IndexedDB instead of the small localStorage. (M)
 - **Export options**: PNG with or without grid, transparent background, print
   layout at one-inch squares. (M)

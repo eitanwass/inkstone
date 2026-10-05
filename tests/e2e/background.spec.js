@@ -319,6 +319,116 @@ test('adjusting: Shift snaps a move and a resize to the grid', async ({ page }) 
   expect(sized.w / sized.h).toBeCloseTo(2, 5);
 });
 
+// A scan with a printed grid (`period` pixels a square, first lines at `offset`) and rooms and labels over it.
+async function gridPng(
+  page,
+  { width = 1200, height = 800, period = 53.3, periodY = period, offset = [17.5, 9.2], grid = true } = {},
+) {
+  const base64 = await page.evaluate(
+    ({ width, height, period, periodY, offset, grid }) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#e4d8bd';
+      ctx.fillRect(0, 0, width, height);
+      if (grid) {
+        ctx.strokeStyle = 'rgba(70, 60, 40, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let x = offset[0]; x < width; x += period) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+        }
+        for (let y = offset[1]; y < height; y += periodY) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#2b2418';
+      ctx.fillStyle = '#2b2418';
+      ctx.lineWidth = 7;
+      ctx.font = '22px serif';
+      for (let i = 0; i < 14; i++) {
+        ctx.strokeRect(
+          40 + ((i * 197) % (width - 300)),
+          30 + ((i * 131) % (height - 200)),
+          150 + ((i * 37) % 120),
+          90 + ((i * 53) % 80),
+        );
+        ctx.fillText(`Room ${i}`, 60 + ((i * 251) % (width - 200)), 80 + ((i * 97) % (height - 120)));
+      }
+      return canvas.toDataURL('image/png').split(',')[1];
+    },
+    { width, height, period, periodY, offset, grid },
+  );
+  return Buffer.from(base64, 'base64');
+}
+
+async function addGridPicture(page, options) {
+  await openMenu(page);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#ctx-bg-add')]);
+  await chooser.setFiles({ name: 'scan.png', mimeType: 'image/png', buffer: await gridPng(page, options) });
+  await expect.poll(async () => (await pictures(page)).length).toBe(1);
+  await expect(page.locator('#adjust-panel')).toBeVisible();
+}
+
+test('Fit to grid: the picture is sized so its squares are ours, and its lines land on ours', async ({
+  page,
+}) => {
+  await addGridPicture(page, { width: 1200, period: 53.3, offset: [17.5, 9.2] });
+  const [before] = await pictures(page);
+  await page.click('#adjust-fit');
+  await expect(page.locator('#toast')).toContainText('Fitted to the grid');
+  const [after] = await pictures(page);
+  const scale = 40 / 53.3; // world units per picture pixel
+  expect(Math.abs(after.w - 1200 * scale)).toBeLessThan(1200 * scale * 0.004); // 22.5 squares across
+  expect(after.w / after.h).toBeCloseTo(before.w / before.h, 5);
+  // the first vertical and horizontal lines are on grid lines, within a pixel
+  const off = (v) => Math.min(((v % 40) + 40) % 40, 40 - (((v % 40) + 40) % 40));
+  expect(off(after.x + 17.5 * scale)).toBeLessThan(1.5);
+  expect(off(after.y + 9.2 * scale)).toBeLessThan(1.5);
+  await expect(page.locator('#adjust-squares')).toHaveValue(String(Math.round((after.w / 40) * 100) / 100));
+  await finish(page);
+  await page.keyboard.press('Control+z'); // one undo step
+  await expect.poll(async () => (await pictures(page))[0].w).toBe(before.w);
+});
+
+test('Fit to grid stretches a picture whose squares are wider than tall, so they come out square', async ({
+  page,
+}) => {
+  await addGridPicture(page, { width: 1200, height: 800, period: 50, periodY: 56, offset: [12, 20] });
+  const [before] = await pictures(page);
+  await page.click('#adjust-fit');
+  await expect(page.locator('#toast')).toContainText('Fitted to the grid');
+  const [after] = await pictures(page);
+  expect(Math.abs(after.w - (1200 * 40) / 50)).toBeLessThan(((1200 * 40) / 50) * 0.006); // 24 squares across
+  expect(Math.abs(after.h - (800 * 40) / 56)).toBeLessThan(((800 * 40) / 56) * 0.006); // 14.3 down
+  expect(after.w / after.h).not.toBeCloseTo(before.w / before.h, 1); // its proportions changed
+});
+
+test('Fit to grid works on a turned picture, and keeps it turned', async ({ page }) => {
+  await addGridPicture(page, { width: 1200, height: 800, period: 61.7, offset: [20, 30] });
+  await page.click('#adjust-rotate-right');
+  const [turned] = await pictures(page);
+  await page.click('#adjust-fit');
+  await expect(page.locator('#toast')).toContainText('Fitted to the grid');
+  const [after] = await pictures(page);
+  expect(after.rotation).toBe(1);
+  // now 800 pixels across and 1200 down (turned), 61.7 pixels a square
+  expect(Math.abs(after.w - (800 * 40) / 61.7)).toBeLessThan(((800 * 40) / 61.7) * 0.004);
+  expect(after.w / after.h).toBeCloseTo(turned.w / turned.h, 5);
+});
+
+test('Fit to grid on a picture with no grid says so and changes nothing', async ({ page }) => {
+  await addGridPicture(page, { grid: false });
+  const [before] = await pictures(page);
+  await page.click('#adjust-fit');
+  await expect(page.locator('#toast')).toContainText("Couldn't find a grid");
+  expect((await pictures(page))[0]).toEqual(before);
+});
+
 test('while adjusting, the rest of the map can not be touched, there is no map menu, and Escape finishes', async ({
   page,
 }) => {

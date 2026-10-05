@@ -13,12 +13,13 @@
 import { iCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
 import { screenToWorld, snapToGrid } from '../core/geometry';
+import { detectGrid, fitToGrid, toGray } from '../core/grid-detect';
 import { GRID, state } from '../core/state';
 import type { BackgroundElement } from '../core/types';
 import { DEFAULT_MAP_COLOR } from '../draw/grid';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { backgroundOf } from '../elements/background';
-import { addImage, imagesSaved, shrinkPicture } from '../elements/token-image';
+import { addImage, imageFor, imagesSaved, shrinkPicture } from '../elements/token-image';
 import { pushHistory } from '../input/history';
 import { setTool } from '../input/toolbar';
 import { showToast } from './toast';
@@ -38,6 +39,8 @@ export const MAP_COLORS = [
   { name: 'Slate', hex: '#46525e' },
   { name: 'Night', hex: '#1c1f26' },
 ] as const;
+
+const round = (n: number, places: number) => String(Math.round(n * 10 ** places) / 10 ** places);
 
 export const background = (): BackgroundElement | undefined => backgroundOf(state.elements);
 export const hasPicture = (): boolean => !!background()?.image;
@@ -164,6 +167,42 @@ export function rotatePicture(turns: 1 | -1): void {
   pushHistory();
 }
 
+// ── Fitting it to the grid ─────────────────────────────────────
+// Looks for a square grid printed on the picture (core/grid-detect.ts) and, if there is one, sizes and moves the
+// picture so its squares are exactly ours with its lines on ours. It looks at the picture as it is shown (turned
+// as it is turned), so the lines it finds are the ones in the box. The size and place it ends up in are one undo
+// step; when no grid is found nothing changes and the toast says so.
+export function fitPictureToGrid(): void {
+  const bg = background();
+  const picture = bg?.image ? imageFor(bg.image) : null;
+  if (!bg || !picture) {
+    showToast('The picture is still loading. Try again in a moment.');
+    return;
+  }
+  const turns = bg.rotation ?? 0;
+  const [width, height] =
+    turns % 2 ? [picture.naturalHeight, picture.naturalWidth] : [picture.naturalWidth, picture.naturalHeight];
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return;
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate((turns * Math.PI) / 2);
+  ctx.drawImage(picture, -picture.naturalWidth / 2, -picture.naturalHeight / 2);
+  const fit = detectGrid(toGray(ctx.getImageData(0, 0, width, height).data, width, height), width, height);
+  if (!fit) {
+    showToast("Couldn't find a grid on this picture. Size it by hand with the corners or the width.");
+    return;
+  }
+  Object.assign(bg, fitToGrid(fit, bg, { width, height }, GRID));
+  drawMain();
+  pushHistory();
+  showToast(
+    `Fitted to the grid: ${round(width / fit.periodX, 1)} × ${round(height / fit.periodY, 1)} squares.`,
+  );
+}
+
 // ── Opacity and size of the picture ────────────────────────────
 // How strongly the picture shows, as it is dragged (`keepBackground` makes the undo step).
 function setOpacity(opacity: number): void {
@@ -192,8 +231,6 @@ const opacityInput = byId<HTMLInputElement>('adjust-opacity');
 const opacityText = byId('adjust-opacity-text');
 const squaresInput = byId<HTMLInputElement>('adjust-squares');
 const sizeText = byId('adjust-size');
-
-const round = (n: number, places: number) => String(Math.round(n * 10 ** places) / 10 ** places);
 
 // Brings the panel's controls in line with the picture (a field being typed in is left alone). Also run after
 // every redraw, so dragging a corner shows the new width and an undo shows what it undid.
@@ -232,6 +269,7 @@ export function stopAdjusting(): void {
 byId('adjust-done').addEventListener('click', stopAdjusting);
 byId('adjust-replace').addEventListener('click', chooseBackgroundPicture);
 byId('adjust-remove').addEventListener('click', removePicture);
+byId('adjust-fit').addEventListener('click', fitPictureToGrid);
 byId('adjust-rotate-left').addEventListener('click', () => rotatePicture(-1));
 byId('adjust-rotate-right').addEventListener('click', () => rotatePicture(1));
 document.addEventListener('keydown', (e) => {
