@@ -15,6 +15,23 @@
   position: relative;
 }
 
+/* The rarer buttons are plain members of the bar; only phones make them a dropdown (responsive.css). */
+#action-more {
+  display: contents;
+  position: static;
+}
+#action-more::before {
+  content: none;
+}
+#btn-more {
+  display: none;
+}
+@media (max-width: 640px) {
+  #btn-more {
+    display: flex;
+  }
+}
+
 /* The Live pill (while a map is shared) and the save indicator share a row, indicator on the right. */
 #status-row {
   display: flex;

@@ -99,13 +99,17 @@ body.tool-ruler #interaction-canvas {
     display: none;
   } /* these point at keys and the ? button, which a phone lacks */
 
-  #map-title {
-    top: calc(74px + env(safe-area-inset-top, 0px));
-    left: calc(14px + env(safe-area-inset-left, 0px));
-    max-width: calc(100vw - 28px - 40px);
-  }
+  /* The name shares the top row with the action bar (about 150px wide); the Live pill and
+     save indicator sit below the bar, so sharing needs no extra room. */
+  #map-title,
   body.is-sharing #map-title {
-    max-width: calc(100vw - 28px - 130px - 40px);
+    top: calc(21px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    max-width: calc(100vw - 28px - 150px - 8px);
+  }
+  #btn-library {
+    top: calc(66px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
   }
 
   .floating-panel {
@@ -127,6 +131,60 @@ body.tool-ruler #interaction-canvas {
     top: calc(14px + env(safe-area-inset-top, 0px));
     right: calc(14px + env(safe-area-inset-right, 0px));
   }
+  /* Ten buttons are wider than a phone: the bar keeps undo, redo and "more", and the rest
+     drop down from "more" over the players (nothing else on the page moves). The bar's
+     chamfered plate moves to ::after because its clip-path would cut the dropdown off. */
+  #action-cluster {
+    clip-path: none;
+    background: none;
+    box-shadow: none;
+  }
+  #action-cluster::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg-toolbar);
+    clip-path: polygon(
+      var(--panel-chamfer) 0,
+      calc(100% - var(--panel-chamfer)) 0,
+      100% var(--panel-chamfer),
+      100% calc(100% - var(--panel-chamfer)),
+      calc(100% - var(--panel-chamfer)) 100%,
+      var(--panel-chamfer) 100%,
+      0 calc(100% - var(--panel-chamfer)),
+      0 var(--panel-chamfer)
+    );
+  }
+  #action-more {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    grid-template-columns: repeat(3, auto);
+    gap: 2px;
+  }
+  #action-more::before {
+    content: "";
+  }
+  #action-cluster.open #action-more {
+    display: grid;
+  }
+  #action-more .panel-divider {
+    display: none;
+  }
+
+  /* Players sit in a compact row, not a column, so they stay short. */
+  #players {
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    max-width: calc(100vw - 28px);
+  }
+  .player {
+    width: 28px;
+    height: 28px;
+  }
   #tool-dock {
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
@@ -137,7 +195,11 @@ body.tool-ruler #interaction-canvas {
      it wide enough to sit under the centered welcome/action toast — drop
      the toast below that row instead of letting them overlap. */
   #toast {
-    top: calc(120px + env(safe-area-inset-top, 0px));
+    top: calc(104px + env(safe-area-inset-top, 0px));
+  }
+  .hint-library {
+    top: calc(110px + env(safe-area-inset-top, 0px)); /* follows the library button */
+    left: calc(21px + env(safe-area-inset-left, 0px));
   }
 
   /* Popovers/modals size to their anchor button or to viewport center, so
