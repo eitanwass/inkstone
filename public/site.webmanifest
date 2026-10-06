@@ -2,7 +2,7 @@
   "name": "Inkstone",
   "short_name": "Inkstone",
   "description": "A battle-map editor for tabletop RPGs",
-  "start_url": "/",
+  "start_url": "/draw/",
   "display": "standalone",
   "background_color": "#e9e4da",
   "theme_color": "#1a1714",

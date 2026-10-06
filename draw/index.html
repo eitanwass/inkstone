@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Inkstone</title>
+  <meta name="description" content="Inkstone is a battle-map editor for tabletop RPGs. Draw rooms, drop tokens, and share the map live with your table." />
+
+  <!-- Link previews (Discord, Slack, iMessage, ...). The image has to be an absolute URL,
+       so %SITE_URL% is filled in at build time (see vite.config.ts). -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Inkstone" />
+  <meta property="og:title" content="Inkstone: a battle-map editor for tabletop RPGs" />
+  <meta property="og:description" content="Draw rooms, drop tokens, and share the map live with your table." />
+  <meta property="og:url" content="%SITE_URL%/draw/" />
+  <meta property="og:image" content="%SITE_URL%/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Inkstone logo and a small map: a room with two tokens on a parchment grid." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#1a1714" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+
+<body>
+  <header>
+  <!-- @include html/brand.html -->
+
+  <!-- @include html/right-rail.html -->
+
+  </header>
+
+  <nav aria-label="Drawing tools">
+  <!-- @include html/style-panel.html -->
+
+  <!-- @include html/tool-dock.html -->
+
+  <!-- @include html/adjust-panel.html -->
+
+  </nav>
+
+  <footer>
+  <!-- @include html/first-visit-hint.html -->
+
+  <!-- @include html/label-editor.html -->
+
+  <!-- @include html/label-card.html -->
+
+  <!-- @include html/lock-hint.html -->
+
+  <!-- @include html/token-card.html -->
+
+  <!-- @include html/zoom-controls.html -->
+
+  <!-- @include html/shortcuts.html -->
+  <!-- @include html/hud.html -->
+
+  </footer>
+
+  <!-- Canvas container -->
+  <main id="canvas-container">
+    <canvas id="grid-canvas"></canvas>
+    <canvas id="main-canvas"></canvas>
+    <canvas id="interaction-canvas" role="application" aria-label="Map canvas. Press V, R, W, T, L, E or M to choose a tool."></canvas>
+  </main>
+
+  <!-- Other players's pointers (see src/ui/cursors.ts) -->
+  <div id="cursors" aria-hidden="true"></div>
+
+  <!-- The right-click menus: all in one labelled region, so none of them sits outside a landmark -->
+  <div role="region" aria-label="Context menus">
+
+  <!-- @include html/context-menus.html -->
+
+  </div>
+
+  <!-- @include html/dialogs.html -->
+
+  <!-- @include html/popovers.html -->
+
+  <!-- @include html/changelog.html -->
+
+  <!-- @include html/settings.html -->
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

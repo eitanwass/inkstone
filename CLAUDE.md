@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A single-page D&D battle-map editor ("Inkstone"). Vanilla HTML/CSS and strict TypeScript (ES
-modules, no framework) bundled with Vite. [index.html](index.html) at
-the root is the page shell, and a small Vite plugin in `vite.config.ts` pastes each
+modules, no framework) bundled with Vite. [draw/index.html](draw/index.html) is
+the editor's page shell (the editor lives at `/draw/`; the home page is `/`, see "The home page"), and a small Vite plugin in `vite.config.ts` pastes each
 `<!-- @include html/name.html -->` with that file's contents (so the markup lives in
 [html/](html/), one file per part of the page: tool dock, token card, settings...). The CSS is in
 [src/styles/](src/styles/), one file per part, pulled together in order by `main.css`
@@ -26,7 +26,7 @@ map's room and everyone connected to it.
 `npm run dev` (Vite dev server), `npm run typecheck` (`tsc --noEmit`, strict),
 `npm run build` (typecheck, then production bundle to `dist/`),
 `npm run preview`. The entry point is `<script type="module" src="src/main.ts">`
-in [index.html](index.html) — it must stay `type="module"`, and `public/`
+in [draw/index.html](draw/index.html) — it must stay `type="module"`, and `public/`
 holds static assets (`icons.svg`, `logo.svg`) that Vite copies through
 unmodified rather than processing.
 
@@ -115,7 +115,7 @@ and run `npm run build:icons`, which regenerates all of them
 the `.ico` itself). The generated files are committed, so a normal build never
 needs the script. `tests/e2e/icons.spec.js` fails if `public/` drifts from the
 sources, if an icon isn't served, or if a home-screen icon has transparency.
-`index.html` links the icons and `public/site.webmanifest` (name, colors,
+`draw/index.html` links the icons and `public/site.webmanifest` (name, colors,
 home-screen icons).
 
 ## The map's name
@@ -152,6 +152,28 @@ Deliberate design points:
   is set while the pill shows). The toast sits below the name for the same reason.
   Focus uses an ink-coloured outline, not the gold one, which is 1.8:1 on parchment.
 
+## The home page
+
+`/` is a landing page ([index.html](index.html), [src/styles/home.css](src/styles/home.css),
+[src/home.ts](src/home.ts)); the editor is at `/draw/` (Vite builds both: `build.rollupOptions.input` in
+vite.config.ts). The top half is a map made in the editor (`public/home-map.jpg`), held still while a
+dark sheet with the headline, the "Start drawing" button and the features slides over it; the footer says
+the site is free and links to a "Buy me a coffee" page (**the address in `index.html` is a placeholder**
+to replace). The menu lists Public creations, Docs and Contact as "Soon" (plain `<span>`s: make one a link
+when its page exists). Animations (the entrance, scroll reveals, the map easing back) are CSS easing plus
+`home.ts`'s IntersectionObserver and one scroll listener; with `prefers-reduced-motion` or no script
+everything is just there.
+
+- **The picture is made by the editor.** `npm run build:home-map` (`scripts/build-home-map.mjs`) puts the map
+  described in that file (the same elements the editor saves, token pictures painted on a canvas and kept
+  through the editor's own image store) into the browser's storage, draws it with the real app and
+  screenshots it. Don't edit the JPG by hand; change the script and run it again. Walls are `wall` elements
+  with gaps for doorways laid over floors (rooms whose outline takes their own colour).
+- **Old invite links keep working.** `/?session=…` is sent on to `/draw/?session=…` by a script in the head of
+  `index.html`. Links to share are made from the editor's own address, so they point at `/draw/`.
+- Tests: `tests/e2e/home.spec.js` (the button, the map, the menu, the support link, the old
+  invite redirect, the phone menu, axe). The e2e helpers start at `/draw/`.
+
 ## Design system and share preview
 
 [design/DESIGN.md](design/DESIGN.md) is the design guide (brand, logo, colour,
@@ -167,10 +189,10 @@ wordmark, and the system monospace for the HUD numbers. Fonts are imported in
 `main.ts`, so nothing is fetched from Google. Canvas text doesn't wait for fonts
 the way page text does, so `main.ts` also loads the font explicitly and repaints.
 
-The link preview (`og:` and `twitter:` tags in `index.html`, image
+The link preview (`og:` and `twitter:` tags in `index.html` and `draw/index.html`, image
 `public/og-image.png`) is rendered by `npm run build:og` from
 `design/share-preview/template.html`; don't edit the PNG by hand. Chat apps need
-an **absolute** image URL, so `index.html` uses a `%SITE_URL%` placeholder that
+an **absolute** image URL, so both pages use a `%SITE_URL%` placeholder that
 `vite.config.ts` fills in at build time using `resolveSiteUrl` (`scripts/site-url.ts`):
 `SITE_URL`, else Vercel's `VERCEL_PROJECT_PRODUCTION_URL` (a bare domain, no
 protocol), else nothing (relative, fine for local dev). Either may be written
@@ -303,7 +325,7 @@ To add an element type, add a file in `elements/` and register it in
 ## Architecture
 
 Three-layer canvas stack (`#grid-canvas`, `#main-canvas`, `#interaction-canvas`,
-absolutely positioned over each other in [index.html](index.html)):
+absolutely positioned over each other in [draw/index.html](draw/index.html)):
 - **grid-canvas** — dot grid background, redrawn on pan/zoom/resize (`drawGrid`).
 - **main-canvas** — all committed elements plus the in-progress preview shape
   (`drawMain` → `drawElement`).

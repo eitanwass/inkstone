@@ -4,7 +4,7 @@ import { resetBoard } from './helpers.js';
 // A production build with no VITE_RELAY_HOST. The dev server always has a
 // relay to fall back to, so this serves collab.ts with its dev flag turned off
 // (and fails loudly if Vite ever changes how it injects that flag).
-async function loadAsProductionWithoutRelay(page, { url = '/' } = {}) {
+async function loadAsProductionWithoutRelay(page, { url = '/draw/' } = {}) {
   await page.route(/[/]src[/]collab[/]collab[.]ts/, async (route) => {
     const response = await route.fetch();
     const body = await response.text();

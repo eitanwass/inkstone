@@ -39,7 +39,7 @@ test('the style guide shows every colour token', () => {
 
 test('the drawing palettes and token colours in the app are documented', () => {
   const swatches = [
-    ...[read('index.html'), readAll('html')].join('\n').matchAll(/data-color="(#[0-9a-f]{6})"/gi),
+    ...[read('draw/index.html'), readAll('html')].join('\n').matchAll(/data-color="(#[0-9a-f]{6})"/gi),
   ].map((m) => m[1]);
   const tokenColors = [
     ...read('src/elements/token.ts')

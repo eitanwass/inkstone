@@ -7,7 +7,7 @@
 // A fresh browser: nothing saved. The player already has a name, so sharing and joining don't stop to
 // ask for one ({ named: false } for the tests of that).
 export async function resetBoard(page, { named = true } = {}) {
-  await page.goto('/');
+  await page.goto('/draw/');
   await page.evaluate((named) => {
     localStorage.clear();
     try {

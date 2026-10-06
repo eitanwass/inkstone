@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 import { resolveSiteUrl } from './scripts/site-url';
 
 export default defineConfig({
+  // Two pages: the home page (index.html) and the editor (draw/index.html).
+  build: {
+    rollupOptions: { input: { home: 'index.html', draw: 'draw/index.html' } },
+  },
   plugins: [
     {
       // Pastes html/*.html into index.html wherever it has `<!-- @include html/name.html -->`, so the page

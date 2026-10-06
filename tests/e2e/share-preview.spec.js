@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test';
 const TEMPLATE = pathToFileURL(resolve('design/share-preview/template.html')).href;
 
 test('the page has the tags chat apps read for a link preview', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/draw/');
   const meta = (selector) => page.locator(selector).getAttribute('content');
 
   expect(await meta('meta[name="description"]')).toMatch(/battle-map editor/);

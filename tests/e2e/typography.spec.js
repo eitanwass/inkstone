@@ -9,7 +9,7 @@ test('fonts are bundled with the app, not fetched from a third party', async ({ 
     if (url.origin !== new URL(baseURL).origin && !url.protocol.startsWith('data'))
       external.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/draw/');
   await page.waitForSelector('#tool-rect');
   await page.waitForFunction(() => document.fonts.check('14px "Inter Variable"'));
   await page.waitForFunction(() => document.fonts.check('500 25px "EB Garamond"'));
@@ -19,7 +19,7 @@ test('fonts are bundled with the app, not fetched from a third party', async ({ 
 });
 
 test('the UI is set in Inter and the wordmark in upright EB Garamond', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/draw/');
   await page.waitForSelector('#tool-rect');
 
   const body = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
@@ -36,13 +36,13 @@ test('the UI is set in Inter and the wordmark in upright EB Garamond', async ({ 
 });
 
 test('the HUD numbers stay in the system monospace', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/draw/');
   const family = await page.locator('#cursor-pos').evaluate((el) => getComputedStyle(el).fontFamily);
   expect(family).toBe('monospace');
 });
 
 test('text drawn on the map uses the same font as the UI', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/draw/');
   await page.waitForSelector('#tool-rect');
   await page.waitForFunction(() => document.fonts.check('14px "Inter Variable"'));
   // The field a label is typed into is real text in the canvas's font stack.

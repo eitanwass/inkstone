@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Inkstone</title>
-  <meta name="description" content="Inkstone is a battle-map editor for tabletop RPGs. Draw rooms, drop tokens, and share the map live with your table." />
+  <title>Inkstone: a battle-map editor for tabletop RPGs</title>
+  <meta name="description" content="Inkstone is a free battle-map editor for tabletop RPGs. Draw rooms, drop tokens, and share the map live with your table. No account, nothing to install." />
 
   <!-- Link previews (Discord, Slack, iMessage, ...). The image has to be an absolute URL,
        so %SITE_URL% is filled in at build time (see vite.config.ts). -->
@@ -25,71 +25,132 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#1a1714" />
-  <link rel="stylesheet" href="/src/styles/main.css" />
+  <link rel="stylesheet" href="/src/styles/home.css" />
+  <script>
+    // Invite links used to point at the editor's old address (/?session=...): send them on.
+    if (new URLSearchParams(location.search).has('session')) {
+      location.replace('/draw/' + location.search + location.hash);
+    }
+    // The entrance animations only hide things when this script runs to show them again.
+    document.documentElement.classList.add('js');
+  </script>
 </head>
 
 <body>
-  <header>
-  <!-- @include html/brand.html -->
+  <header class="site-header">
+    <nav class="site-nav" aria-label="Main">
+      <a class="brand" href="/" aria-label="Inkstone, home">
+        <img src="/logo.svg" alt="" width="30" height="30" />
+        <span>Inkstone</span>
+      </a>
 
-  <!-- @include html/right-rail.html -->
-
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-links">Menu</button>
+      <ul class="site-links" id="site-links">
+        <li><a href="#features">Features</a></li>
+        <!-- Not built yet: shown so people know they are coming. Make one a link when its page exists. -->
+        <li><span class="soon" title="Coming soon">Public creations <small>Soon</small></span></li>
+        <li><span class="soon" title="Coming soon">Docs <small>Soon</small></span></li>
+        <li><span class="soon" title="Coming soon">Contact <small>Soon</small></span></li>
+        <li><a class="nav-cta" href="/draw/">Start drawing</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <nav aria-label="Drawing tools">
-  <!-- @include html/style-panel.html -->
+  <main>
+    <!-- The top half: a map made in the editor, held still while the page scrolls over it. -->
+    <section class="hero" aria-label="An example map">
+      <img
+        class="hero-map"
+        id="hero-map"
+        src="/home-map.jpg"
+        width="2580"
+        height="1110"
+        alt="A map drawn in Inkstone: a great hall, a tower, barracks, an armory, a garden and a pool, with a party of heroes meeting goblins and an ogre."
+        fetchpriority="high"
+      />
+      <p class="hero-caption">Drawn in Inkstone</p>
+    </section>
 
-  <!-- @include html/tool-dock.html -->
+    <div class="sheet">
+      <section class="intro">
+        <h1 class="reveal" data-reveal style="--i: 0">Draw the map.<br />Run the game.</h1>
+        <p class="lede reveal" data-reveal style="--i: 1">
+          A calm, fast battle-map editor for tabletop RPGs. Sketch rooms, drop tokens, and share it live
+          with your table.
+        </p>
+        <div class="cta-row reveal" data-reveal style="--i: 2">
+          <a class="cta" id="start" href="/draw/">
+            <span>Start drawing</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+          <p class="cta-note">Free · No account · Runs in your browser</p>
+        </div>
+      </section>
 
-  <!-- @include html/adjust-panel.html -->
+      <section class="features" id="features" aria-labelledby="features-title">
+        <h2 id="features-title" class="reveal" data-reveal>Everything a map needs, nothing it doesn't</h2>
+        <ul class="feature-grid">
+          <li class="feature reveal" data-reveal style="--i: 0">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-room"></use></svg>
+            <h3>Rooms and walls on a grid</h3>
+            <p>Everything moves, resizes and snaps to the grid. Draw as much as you want and unleash your creativity!</p>
+          </li>
+          <li class="feature reveal" data-reveal style="--i: 1">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-token"></use></svg>
+            <h3>Tokens with conditions</h3>
+            <p>Medium, Large or Huge, with names and pictures. Mark Prone, Poisoned or Dead, or invent your own conditions!</p>
+          </li>
+          <li class="feature reveal" data-reveal style="--i: 2">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-share"></use></svg>
+            <h3>Live with your table</h3>
+            <p>Share a link and everyone views and edits the same map - live!</p>
+          </li>
+          <li class="feature reveal" data-reveal style="--i: 0">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-ruler"></use></svg>
+            <h3>Measure as you draw</h3>
+            <p>A ruler in feet or squares, measuring your players' movements to the dot!</p>
+          </li>
+          <li class="feature reveal" data-reveal style="--i: 1">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-image"></use></svg>
+            <h3>Bring your own map</h3>
+            <p>Put a scanned or generated map behind the grid. "Fit to grid" to automatically line it up with the board!</p>
+          </li>
+          <li class="feature reveal" data-reveal style="--i: 2">
+            <svg width="26" height="26" aria-hidden="true"><use href="/icons.svg#icon-export"></use></svg>
+            <h3>Yours to keep - forever</h3>
+            <p>Your map is saved in your browser as you work. Export it as a PNG or save it as a file to import later on another device. No account required!</p>
+          </li>
+        </ul>
+      </section>
 
-  </nav>
-
-  <footer>
-  <!-- @include html/first-visit-hint.html -->
-
-  <!-- @include html/label-editor.html -->
-
-  <!-- @include html/label-card.html -->
-
-  <!-- @include html/lock-hint.html -->
-
-  <!-- @include html/token-card.html -->
-
-  <!-- @include html/zoom-controls.html -->
-
-  <!-- @include html/shortcuts.html -->
-  <!-- @include html/hud.html -->
-
-  </footer>
-
-  <!-- Canvas container -->
-  <main id="canvas-container">
-    <canvas id="grid-canvas"></canvas>
-    <canvas id="main-canvas"></canvas>
-    <canvas id="interaction-canvas" role="application" aria-label="Map canvas. Press V, R, W, T, L, E or M to choose a tool."></canvas>
+      <section class="final-cta reveal" data-reveal>
+        <h2>Your table is waiting.</h2>
+        <a class="cta" href="/draw/">
+          <span>Start drawing</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </a>
+      </section>
+    </div>
   </main>
 
-  <!-- Other players's pointers (see src/ui/cursors.ts) -->
-  <div id="cursors" aria-hidden="true"></div>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="free reveal" data-reveal>
+        <h2>Free, and staying that way</h2>
+        <p>
+          Inkstone has no ads, no accounts and no paywall. If it earns a place at your table, you can
+          chip in for the coffee that keeps it going.
+        </p>
+      </div>
+      <!-- Replace the address with your own page. -->
+      <a class="coffee reveal" data-reveal style="--i: 1" href="https://www.buymeacoffee.com/eitanwass" target="_blank" rel="noopener noreferrer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z" /><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M8 2.5c-.8 1 .8 1.6 0 2.8M12 2.5c-.8 1 .8 1.6 0 2.8" /></svg>
+        Buy me a coffee
+      </a>
+    </div>
+    <p class="fine-print">Made for tabletop players, by tabletop players. © Inkstone</p>
+  </footer>
 
-  <!-- The right-click menus: all in one labelled region, so none of them sits outside a landmark -->
-  <div role="region" aria-label="Context menus">
-
-  <!-- @include html/context-menus.html -->
-
-  </div>
-
-  <!-- @include html/dialogs.html -->
-
-  <!-- @include html/popovers.html -->
-
-  <!-- @include html/changelog.html -->
-
-  <!-- @include html/settings.html -->
-
-  <div id="toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="src/main.ts"></script>
+  <script type="module" src="/src/home.ts"></script>
 </body>
 </html>

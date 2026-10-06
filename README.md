@@ -25,7 +25,7 @@ You need Node 22 or newer.
 
 ```sh
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5173 (the home page; the editor is at /draw/)
 ```
 
 ## Using the editor
