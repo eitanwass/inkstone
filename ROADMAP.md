@@ -70,8 +70,17 @@ Each item is meant to ship on its own. Done items are removed (see CHANGELOG.md)
   everything, the other players don't), so it follows view-only links.
 - **Hex grids and a no-grid mode**: needed for some systems and for scanned maps. Touches the grid, the
   measuring rules and snapping.
-- **Public creations** (the "Soon" item in the home page menu): sharing maps in a gallery. It needs
-  storage and moderation, so it waits until there are consistent players and a plan for the cost.
+- **Sharing in the library** (and the "Public creations" item in the home page menu): players sharing
+  maps, models and tokens with each other. The library panel, its filters and its list format
+  (`src/core/library.ts`) are built; what is missing is somewhere to keep what players share, and
+  moderation. It waits until there are consistent players and a plan for the cost.
+- **Library tags**: each item carries a few tags (`dungeon`, `tavern`, `wilderness`, a size...), shown on its card
+  and as chips in the panel to filter by, several at once, alongside the search and the type. The panel's
+  search and types are built; this adds `tags` to `LibraryItem` and `index.json`, a tag filter in
+  `filterLibrary`, and the chips. (S)
+- **More in the library**: more sample maps (add them in `scripts/sample-maps.mjs`), then models (a
+  reusable group of elements, like a room with its furniture) and tokens, which turn the disabled
+  "Models" and "Tokens" types on.
 - **Dice roller** with shared roll history. Cheap to build, but players already have dice; do it only if
   it keeps players on the page.
 - **Accounts and cloud-saved maps**: only if players ask for it. It brings storage and cost, and it ends

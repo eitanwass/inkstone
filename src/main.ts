@@ -23,6 +23,7 @@ import './ui/background';
 import './ui/map-name';
 import './collab/collab';
 import './ui/changelog';
+import './ui/library';
 import './settings';
 import './settings/conditions';
 import './settings/profile';

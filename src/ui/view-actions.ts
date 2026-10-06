@@ -7,12 +7,13 @@ import { parseMapFile, serializeMap } from '../core/map-file';
 import { state } from '../core/state';
 import { dotColorFor, drawBackground, drawGridDots, mapColor } from '../draw/grid';
 import { drawElement, drawMain } from '../draw/render';
-import { getImageData, pictureOf, receiveImage } from '../elements/token-image';
+import { getImageData, pictureOf } from '../elements/token-image';
 import { resetView } from '../input/controls';
-import { persistMapName, pushHistory, showUndoToast } from '../input/history';
-import { mapFileName, refreshMapName } from './map-name';
-import { mapFileSlug, normalizeMapName } from './map-name-text';
+import { pushHistory, showUndoToast } from '../input/history';
+import { mapFileName } from './map-name';
+import { mapFileSlug } from './map-name-text';
 import { showConfirm } from './modal';
+import { openMap } from './open-map';
 import { showToast } from './toast';
 
 byId('btn-reset-view').addEventListener('click', resetView);
@@ -58,15 +59,7 @@ fileInput.addEventListener('change', async () => {
     showToast("That isn't an Inkstone map file.");
     return;
   }
-  for (const [id, data] of Object.entries(map.images)) receiveImage(id, data);
-  state.elements = map.elements;
-  state.selected = [];
-  state.mapName = normalizeMapName(map.name);
-  persistMapName();
-  refreshMapName();
-  drawMain();
-  pushHistory();
-  showUndoToast('Map opened');
+  openMap(map, 'Map opened');
 });
 
 byId('btn-export').addEventListener('click', () => {

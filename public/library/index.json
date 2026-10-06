@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "hall-keep",
+      "kind": "map",
+      "title": "The Hall Keep",
+      "description": "A castle: a great hall, a tower, barracks, an armory, a garden and a pool. A party meets goblins and an ogre.",
+      "file": "/library/maps/hall-keep.inkstone.json",
+      "thumbnail": "/library/thumbs/hall-keep.jpg",
+      "author": "Inkstone"
+    },
+    {
+      "id": "rusty-flagon",
+      "kind": "map",
+      "title": "The Rusty Flagon",
+      "description": "A busy tavern with a kitchen, a cellar full of rats, two guest rooms and a yard.",
+      "file": "/library/maps/rusty-flagon.inkstone.json",
+      "thumbnail": "/library/thumbs/rusty-flagon.jpg",
+      "author": "Inkstone"
+    },
+    {
+      "id": "crossroads-ambush",
+      "kind": "map",
+      "title": "Crossroads Ambush",
+      "description": "An overturned wagon at a crossroads, trees to hide in and bandits waiting.",
+      "file": "/library/maps/crossroads-ambush.inkstone.json",
+      "thumbnail": "/library/thumbs/crossroads-ambush.jpg",
+      "author": "Inkstone"
+    }
+  ]
+}

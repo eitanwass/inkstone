@@ -14,6 +14,7 @@ browser as you work.
 - Conditions on tokens (Prone, Poisoned, Dead, ...) as badges, with your own added in Settings.
 - A ruler (M) that measures in feet, and sizes shown as you draw shapes. Settings (the gear) change the unit and the size of a square, and switch D&D diagonal counting (on by default) to the true straight line.
 - Select, move, copy, paste, duplicate and reorder; undo and redo.
+- A library of sample maps to start from (the open-book button), with a search.
 - Export the map as a PNG.
 - Live co-editing: share a link and everyone edits the same map.
 - Works with touch: pinch to zoom, two fingers to pan, long-press for the menu.
@@ -90,6 +91,7 @@ See [.env.example](.env.example).
 | `npm run test:e2e` | Playwright tests that drive the real UI ([tests/e2e/](tests/e2e/)) |
 | `npm run typecheck` | `tsc` in strict mode |
 | `npm run lint` / `npm run format` | Biome: check / fix |
+| `npm run build:library` | Regenerates the library's sample maps, thumbnails and list in `public/library/` from [scripts/sample-maps.mjs](scripts/sample-maps.mjs) |
 | `npm run build:og` | Regenerates the link-preview image `public/og-image.png` from [design/share-preview/](design/share-preview/) |
 | `npm run build:icons` | Regenerates the favicon and app icons in `public/` from the SVGs in [design/logo/](design/logo/) |
 
