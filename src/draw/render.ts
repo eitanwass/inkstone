@@ -29,8 +29,13 @@ export function setView(panX: number, panY: number, zoom: number = state.zoom): 
 // redraw. Registered here rather than imported, because it sits above history.ts, which sits
 // above this file.
 const afterDraw: (() => void)[] = [];
-export function onMainDrawn(fn: () => void): void {
+// Returns a function that takes it off again, for a component that is not there for good.
+export function onMainDrawn(fn: () => void): () => void {
   afterDraw.push(fn);
+  return () => {
+    const at = afterDraw.indexOf(fn);
+    if (at >= 0) afterDraw.splice(at, 1);
+  };
 }
 
 export function drawMain() {
