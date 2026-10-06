@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
+import { analyticsTags, resolveAnalyticsToken } from './scripts/analytics';
 import { resolveSiteUrl } from './scripts/site-url';
 
 export default defineConfig({
@@ -35,6 +36,13 @@ export default defineConfig({
         order: 'pre',
         handler: (html) => html.replaceAll('%SITE_URL%', resolveSiteUrl(process.env)),
       },
+    },
+    {
+      // The page-view counter (Cloudflare Web Analytics), in a production build that has a token only.
+      // See scripts/analytics.ts.
+      name: 'inkstone-analytics',
+      apply: 'build',
+      transformIndexHtml: () => analyticsTags(resolveAnalyticsToken(process.env)),
     },
   ],
 });

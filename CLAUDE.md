@@ -80,6 +80,17 @@ automatically); no custom domain is needed, it deploys to a free
 `*.workers.dev` subdomain. `VITE_RELAY_HOST` then needs to point at that
 deployed host before running `npm run build`.
 
+## Analytics
+
+A page-view counter (**Cloudflare Web Analytics**: free, no cookies, no cross-site tracking, never sees a map) is
+added to the three pages in a **production build that has a token** only: `CF_ANALYTICS_TOKEN`, the site's token
+from Cloudflare (Analytics & Logs, Web Analytics, Add a site), set in Vercel's environment variables, then
+redeploy (changing a variable alone doesn't trigger a build). `scripts/analytics.ts` decides (a token must be 32
+hex characters, else it is dropped) and a small Vite plugin in vite.config.ts (`apply: 'build'`) adds the beacon
+script. Development, the tests and a build without a token send nothing. It counts visits and page views only:
+if events from inside the editor are ever wanted, that is a different tool (and worth saying so on the docs
+page). Tested in `tests/unit/analytics.test.ts` and `tests/e2e/analytics.spec.js`.
+
 ## Releasing
 
 The site only redeploys when the version changes. To release: bump the version
@@ -315,7 +326,7 @@ chain, so there are no circular imports to reason about.
 | `input/controls.ts` | The commands a player gives the map outside any one tool: zoom (the bottom-left panel's buttons too), fit map to screen, reset view, nudge the selection, select all, open the shortcut list (`?` button, bottom-right; its rows are static HTML in `index.html`, so update them with any new shortcut). Keyboard, wheel and buttons all call these; add new ones here rather than next to their caller. |
 | `ui/view-actions.ts` | Reset View button, Clear All, Export PNG. |
 | `input/shortcuts.ts` | Global keyboard shortcuts (bindings only; the commands they run are in `controls.ts` and `selection.ts`). |
-| `ui/hint.ts` | The welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; **shown whenever the map has no elements** (a new visitor, a cleared map, an undo back to nothing) and hidden while it has any, with nothing remembered between visits. It is `pointer-events: none`, so it never blocks drawing, and has a third callout (`.hint-library`: the open book and "Example maps", with an arrow to the library button under the logo). |
+| `ui/hint.ts` | The welcome on an empty map (`#first-visit-hint`: how to start, an arrow to the `?` button). Updated from `drawMain`; **shown whenever the map has no elements** (a new visitor, a cleared map, an undo back to nothing) and hidden while it has any, with nothing remembered between visits. It is `pointer-events: none`, so it never blocks drawing, and has a third callout (`.hint-library`: the open book and "Or start from an example map", with an arrow to the library button under the logo). |
 | `ui/toast.ts` | Toast notifications. A toast may carry one button; `showUndoToast` (history.ts) uses it for "Undo" after Clear All and deletes. Such a toast lasts 6s and vanishes on the player's next click or key press, so Undo can never act on a map that has since changed. |
 | `collab/collab.ts` | Live sync between players over a Durable Object room (see Collaboration below). |
 | `collab/changes.ts` | Pure: `ensureIds`, `diff` (what turns one map into another: `set`, `del`, `order`, `name`) and `applyChanges`. |

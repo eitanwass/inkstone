@@ -137,7 +137,7 @@ test('a callout points at the library button and says what it is for', async ({ 
   await page.setViewportSize({ width: 1280, height: 720 });
   const callout = page.locator('.hint-library');
   await expect(callout).toBeVisible();
-  await expect(callout).toContainText('Start from an example map');
+  await expect(callout).toContainText('start from an example map');
   await expect(callout.locator('use')).toHaveAttribute('href', '/icons.svg#icon-book'); // the button's own icon
   await expect(page.locator('#btn-library use')).toHaveAttribute('href', '/icons.svg#icon-book');
 
