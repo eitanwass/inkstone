@@ -12,7 +12,7 @@ import type { Point } from '../core/types';
 import { drawMain, setView } from '../draw/render';
 import { hitTest } from '../elements';
 import { hideContextMenus } from '../ui/context-menu';
-import { hideConditionsTip, updateConditionsTip } from '../ui/token-card';
+import { hideConditionsTip, updateConditionsTip } from '../ui/token-tip';
 import { editSelectedText, zoomAround } from './controls';
 import { tools } from './tools';
 import type { Tool } from './tools/types';
