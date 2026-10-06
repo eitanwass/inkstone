@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1 - 2026-10-06
+
+- Dragging a token now leaves a faded ghost where it started, with a line to where it would
+  land and the distance between the two.
+
 ## 0.9.0 - 2026-10-05
 
 - Fit to grid: a new button in the Adjust image panel finds the squares printed on a
