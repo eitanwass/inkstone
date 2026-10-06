@@ -7,7 +7,7 @@ import { mainCanvas, mCtx } from '../core/canvas';
 import { byId } from '../core/dom';
 import { normalizeRect } from '../core/geometry';
 import { formatDistance, gridDistance } from '../core/measure';
-import { state } from '../core/state';
+import { DEFAULT_TOKEN_RADIUS, state } from '../core/state';
 import type { BoardElement, Bounds, Dimension, Ruler } from '../core/types';
 import { drawElementShape, getElementBounds, getElementDimensions } from '../elements';
 import { updateFirstVisitHint } from '../ui/hint';
@@ -45,6 +45,8 @@ export function drawMain() {
     drawElement(mCtx, el, state.selected.includes(idx));
   });
 
+  const dragReadout = drawTokenMoves();
+
   const handleTarget =
     state.tool === 'select' && state.selected.length === 1 ? state.elements[state.selected[0]] : null;
   const showsHandles = hasHandles(handleTarget);
@@ -63,7 +65,7 @@ export function drawMain() {
     state.preview ?? (state.handleDrag && state.handleDrag.kind !== 'rotate' ? handleTarget : null);
   const sizeText = sized ? drawDimensions(sized) : null;
   const rulerText = state.ruler ? drawRuler(state.ruler) : null;
-  byId('measure-readout').textContent = rulerText ?? sizeText ?? '';
+  byId('measure-readout').textContent = rulerText ?? sizeText ?? dragReadout ?? '';
 
   mCtx.restore();
   updateFirstVisitHint();
@@ -283,6 +285,41 @@ function drawDimension(d: Dimension): void {
   }
   mCtx.restore();
   drawReadout(d.text, (a.x + b.x) / 2, (a.y + b.y) / 2);
+}
+
+// While tokens are being dragged: a faded ghost of each where it started, a dashed line to where
+// it would land and the distance. Returns the last distance's text for the hidden readout.
+function drawTokenMoves(): string | null {
+  const drag = state.elementDrag;
+  if (!drag?.moved) return null;
+  let text: string | null = null;
+  for (const { i, coords } of drag.snapshot) {
+    const el = state.elements[i];
+    if (el?.type !== 'token' || !('x' in coords)) continue;
+    const dx = el.x - coords.x,
+      dy = el.y - coords.y;
+    if (!dx && !dy) continue;
+    const r = el.radius || DEFAULT_TOKEN_RADIUS;
+    mCtx.save();
+    mCtx.globalAlpha = 0.35;
+    mCtx.fillStyle = el.fillColor || el.strokeColor || '#e8dcc8';
+    mCtx.strokeStyle = '#4a3f2e';
+    mCtx.lineWidth = 1.5 / state.zoom;
+    mCtx.setLineDash([4 / state.zoom, 3 / state.zoom]);
+    mCtx.beginPath();
+    mCtx.arc(coords.x, coords.y, r, 0, Math.PI * 2);
+    mCtx.fill();
+    mCtx.stroke();
+    mCtx.globalAlpha = 0.8;
+    mCtx.beginPath();
+    mCtx.moveTo(coords.x, coords.y);
+    mCtx.lineTo(el.x, el.y);
+    mCtx.stroke();
+    mCtx.restore();
+    text = formatDistance(gridDistance(dx, dy));
+    drawReadout(text, (coords.x + el.x) / 2, (coords.y + el.y) / 2 - 20 / state.zoom);
+  }
+  return text;
 }
 
 // The ruler's line, end dots and length. A pale halo under the dark line keeps it readable on
