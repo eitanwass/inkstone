@@ -90,7 +90,6 @@ See [.env.example](.env.example).
 | `npm run test:e2e` | Playwright tests that drive the real UI ([tests/e2e/](tests/e2e/)) |
 | `npm run typecheck` | `tsc` in strict mode |
 | `npm run lint` / `npm run format` | Biome: check / fix |
-| `npm run check:changelog` | Fails if CHANGELOG.md doesn't cover the current version |
 | `npm run build:og` | Regenerates the link-preview image `public/og-image.png` from [design/share-preview/](design/share-preview/) |
 | `npm run build:icons` | Regenerates the favicon and app icons in `public/` from the SVGs in [design/logo/](design/logo/) |
 

@@ -21,6 +21,12 @@
 // storage. Until a room has been written to it is "fresh", and the first client to connect gives it
 // its map (see src/collab/collab.ts).
 //
+// Connections use the WebSocket Hibernation API: the object is billed for time only while it is working, not
+// for as long as a table is open, and Cloudflare may drop it from memory between messages (and load it
+// again, from storage, when the next one comes). So nothing about a connection lives only in memory: who it
+// is is kept with the socket itself (`serializeAttachment`) and read back when needed (`sessions()`).
+// Unsaved edits can't be lost this way, because an object with a timer waiting is not dropped.
+//
 // This talks directly to the Workers API (deployed via `wrangler`) rather
 // than going through PartyKit's CLI/backend — PartyKit's hosted control
 // plane currently provisions Durable Object namespaces in a way Cloudflare's
@@ -33,6 +39,7 @@
 
 export { CursorRoom } from './cursors.js';
 
+const CURSORS_OFF_CODE = 4503; // the same as in src/collab/cursors.ts
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const SAVE_DELAY_MS = 2000; // edits come in bursts; one write per burst
 const STORAGE_BATCH = 128; // Durable Object storage takes at most this many keys per call
@@ -145,8 +152,7 @@ const wire = (c) => (c.t === 'set' ? `{"t":"set","el":${c.json}}` : JSON.stringi
 
 export class InkstoneRoom {
   constructor(state) {
-    this.state = state;
-    this.sessions = new Map(); // socket -> { cid, player }, once it has said hello
+    this.state = state; // Cloudflare's: storage, and the sockets (getWebSockets)
     this.elements = new Map(); // id -> the element's JSON text; the map's order is the room's order
     this.total = 0; // the length of all the JSON texts
     this.name = '';
@@ -284,6 +290,20 @@ export class InkstoneRoom {
     return since >= this.rev || (this.log.length > 0 && this.log[0].rev <= since + 1);
   }
 
+  // Who a client is ({ cid, player }), once it has said hello; null before that, and after it has left.
+  // Kept with the socket, so it survives the object being dropped from memory.
+  sessionOf(ws) {
+    return ws.deserializeAttachment() ?? null;
+  }
+
+  // Everyone who has said hello, as [socket, session].
+  sessions() {
+    return this.state.getWebSockets().flatMap((ws) => {
+      const session = this.sessionOf(ws);
+      return session ? [[ws, session]] : [];
+    });
+  }
+
   hello(ws, { epoch, since }) {
     const caughtUp = this.initialized && epoch === this.epoch && since !== undefined && since <= this.rev;
     if (!caughtUp || !this.covers(since)) {
@@ -299,7 +319,7 @@ export class InkstoneRoom {
   // gets when someone arrives or leaves. `count` is everyone; `players` is cut to a sensible length.
   presenceMessage() {
     const players = new Map();
-    for (const { player } of this.sessions.values())
+    for (const [, { player }] of this.sessions())
       players.set(player.id, { id: player.id, name: player.name });
     return JSON.stringify({
       type: 'presence',
@@ -310,7 +330,7 @@ export class InkstoneRoom {
 
   sendPresence() {
     const message = this.presenceMessage();
-    for (const [ws] of this.sessions) ws.send(message);
+    for (const [ws] of this.sessions()) ws.send(message);
   }
 
   // A batch of changes from a client, built on revision `base`. The room wins: a change to something
@@ -319,7 +339,7 @@ export class InkstoneRoom {
   // goes to the others; the sender is told the revision, and sent the room's version of whatever was
   // refused, so it settles on the same map.
   receive(ws, message) {
-    const session = this.sessions.get(ws);
+    const session = this.sessionOf(ws);
     const known = this.covers(message.base);
     const touched = this.touchedSince(message.base, session.cid);
     const accepted = [];
@@ -355,7 +375,7 @@ export class InkstoneRoom {
       this.logWrites.add(this.rev);
       while (this.log.length > LOG_LIMIT) this.logDeletes.add(this.log.shift().rev);
       const forward = `{"type":"changes","rev":${this.rev},"changes":[${accepted.map(wire).join(',')}]}`;
-      for (const [other] of this.sessions) if (other !== ws) other.send(forward);
+      for (const [other] of this.sessions()) if (other !== ws) other.send(forward);
     }
     const fix = this.currentAs(refused.ids, refused.order, refused.name).join(',');
     ws.send(`{"type":"ack","epoch":"${this.epoch}","rev":${this.rev},"fix":[${fix}]}`);
@@ -425,57 +445,72 @@ export class InkstoneRoom {
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  // Takes a new socket. Its messages and its end arrive at webSocketMessage / webSocketClose below,
+  // by Cloudflare's own names, whether or not the object was dropped from memory in between.
   handleSession(ws) {
-    ws.accept();
+    this.state.acceptWebSocket(ws);
+  }
 
-    ws.addEventListener('message', (evt) => {
-      const message = parseMessage(evt.data);
-      if (!message) return;
-      if (message.type === 'hello') {
-        const arrived = !this.sessions.has(ws);
-        this.sessions.set(ws, { cid: message.cid, player: message.player });
-        this.hello(ws, message);
-        if (arrived) this.sendPresence();
-        // A visit keeps the room another week.
-        if (this.initialized) this.state.storage.setAlarm(Date.now() + RETENTION_MS);
+  webSocketMessage(ws, data) {
+    const message = parseMessage(data);
+    if (!message) return;
+    if (message.type === 'hello') {
+      const arrived = !this.sessionOf(ws);
+      ws.serializeAttachment({ cid: message.cid, player: message.player });
+      this.hello(ws, message);
+      if (arrived) this.sendPresence();
+      // A visit keeps the room another week.
+      if (this.initialized) this.state.storage.setAlarm(Date.now() + RETENTION_MS);
+      return;
+    }
+    const session = this.sessionOf(ws);
+    if (!session) return; // nothing is taken from a client that hasn't said hello
+    if (message.type === 'rename') {
+      ws.serializeAttachment({ ...session, player: { ...session.player, name: message.name } });
+      this.sendPresence();
+      return;
+    }
+    if (message.type === 'getimages') {
+      for (const id of message.ids) {
+        const data = this.images.get(id);
+        if (data) ws.send(JSON.stringify({ type: 'image', id, data }));
+      }
+      return;
+    }
+    if (message.type === 'image') {
+      if (!this.addImage(message.id, message.data)) return;
+      this.imageWrites.add(message.id);
+    } else if (message.type === 'doc') {
+      if (this.initialized) {
+        ws.send(this.documentMessage()); // too late to give the room a map: here is its map
         return;
       }
-      if (!this.sessions.has(ws)) return; // nothing is taken from a client that hasn't said hello
-      if (message.type === 'rename') {
-        const session = this.sessions.get(ws);
-        session.player = { ...session.player, name: message.name };
-        this.sendPresence();
-        return;
-      }
-      if (message.type === 'getimages') {
-        for (const id of message.ids) {
-          const data = this.images.get(id);
-          if (data) ws.send(JSON.stringify({ type: 'image', id, data }));
-        }
-        return;
-      }
-      if (message.type === 'image') {
-        if (!this.addImage(message.id, message.data)) return;
-        this.imageWrites.add(message.id);
-      } else if (message.type === 'doc') {
-        if (this.initialized) {
-          ws.send(this.documentMessage()); // too late to give the room a map: here is its map
-          return;
-        }
-        this.seed(message);
-        ws.send(`{"type":"ack","epoch":"${this.epoch}","rev":0,"fix":[]}`);
-      } else if (!this.receive(ws, message)) {
-        return; // nothing was accepted, so nothing to save
-      }
-      this.saveTimer ??= setTimeout(() => this.save(), SAVE_DELAY_MS);
-    });
+      this.seed(message);
+      ws.send(`{"type":"ack","epoch":"${this.epoch}","rev":0,"fix":[]}`);
+    } else if (!this.receive(ws, message)) {
+      return; // nothing was accepted, so nothing to save
+    }
+    this.saveTimer ??= setTimeout(() => this.save(), SAVE_DELAY_MS);
+  }
 
-    const leave = () => {
-      if (this.sessions.delete(ws)) this.sendPresence();
-      if (!this.sessions.size && this.saveTimer) this.save(); // the last one out: keep what they left
-    };
-    ws.addEventListener('close', leave);
-    ws.addEventListener('error', leave);
+  webSocketClose(ws) {
+    try {
+      ws.close(1000); // answers the client's close
+    } catch {
+      // already closed
+    }
+    this.leave(ws);
+  }
+
+  webSocketError(ws) {
+    this.leave(ws);
+  }
+
+  leave(ws) {
+    if (!this.sessionOf(ws)) return; // it never said hello, or has already gone
+    ws.serializeAttachment(null); // so it no longer counts as here, though it may still be listed
+    this.sendPresence();
+    if (!this.sessions().length && this.saveTimer) this.save(); // the last one out: keep what they left
   }
 }
 
@@ -486,7 +521,18 @@ export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
     const cursors = pathname.match(/^\/cursors\/([^/]+)/);
-    if (cursors) return env.CURSORS.get(env.CURSORS.idFromName(cursors[1])).fetch(request);
+    if (cursors) {
+      // The first thing to switch off when the free plan's daily limits run low (set CURSORS_OFF to 1 in the
+      // Worker's variables): the socket is accepted and closed with this code, which tells the client to
+      // stop trying (see src/collab/cursors.ts), without waking a Durable Object.
+      if (env.CURSORS_OFF === '1' && request.headers.get('Upgrade') === 'websocket') {
+        const [client, server] = Object.values(new WebSocketPair());
+        server.accept();
+        server.close(CURSORS_OFF_CODE, 'Cursors are off');
+        return new Response(null, { status: 101, webSocket: client });
+      }
+      return env.CURSORS.get(env.CURSORS.idFromName(cursors[1])).fetch(request);
+    }
     const match = pathname.match(/^\/parties\/[^/]+\/([^/]+)/);
     if (!match) return new Response('Not found', { status: 404 });
     const [, roomId] = match;

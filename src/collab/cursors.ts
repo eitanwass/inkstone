@@ -12,7 +12,8 @@ import type { Point } from '../core/types';
 import { clearCursors, removeCursor, showCursor } from '../ui/cursors';
 import { parseCursorMessage } from './protocol';
 
-const GAP_MS = 50;
+const GAP_MS = 100; // at most 10 a second: every position sent is a billed request on the free plan
+const CURSORS_OFF_CODE = 4503; // the same as in party/server.js
 const MAX_BUFFERED = 2048; // bytes waiting to go: past this, positions are dropped
 
 let socket: PartySocket | null = null;
@@ -67,8 +68,11 @@ export function connectCursors(host: string, room: string, cid: string, id: stri
     else if (message) removeCursor(message.cid);
   });
   // Pointers we were shown may have gone while we were away; those still here are sent again.
-  current.addEventListener('close', () => {
+  current.addEventListener('close', (evt) => {
     if (socket === current) clearCursors();
+    // The relay has cursors switched off (to stay inside the free plan): stop trying, rather than ask again
+    // every few seconds, which would cost the very requests it is saving.
+    if (evt.code === CURSORS_OFF_CODE) current.close();
   });
 }
 

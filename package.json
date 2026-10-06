@@ -1,13 +1,12 @@
 {
   "name": "inkstone",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:live": "node scripts/dev-live.mjs",
     "typecheck": "tsc",
-    "check:changelog": "node scripts/check-changelog.mjs",
     "build:icons": "node scripts/build-icons.mjs",
     "build:og": "node scripts/build-og.mjs",
     "build:home-map": "node scripts/build-home-map.mjs",

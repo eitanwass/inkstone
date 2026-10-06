@@ -2,10 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InkstoneRoom, parseMessage } from '../../../party/server.js';
 
 // The relay's storage is faked with a Map; Cloudflare's own behaviour (blockConcurrencyWhile holding
-// back requests until the load is done) is relied on, not tested.
+// back requests until the load is done) is relied on, not tested. Sockets are faked the way a hibernating
+// object sees them: Cloudflare keeps them (getWebSockets) with whatever was attached to each, and calls the
+// room's webSocketMessage / webSocketClose by name. "Waking" a room is making a new InkstoneRoom on the same
+// state: nothing it remembered in memory comes with it.
 function fakeState(data = new Map<string, unknown>()) {
   const state = {
     data,
+    room: null as unknown as InstanceType<typeof InkstoneRoom>, // whichever room is awake
+    sockets: [] as FakeSocket[],
+    acceptWebSocket(ws: FakeSocket) {
+      ws.state = state;
+      state.sockets.push(ws);
+    },
+    getWebSockets: () => state.sockets.filter((ws) => !ws.closed),
     alarm: null as number | null,
     writes: 0, // calls to put, to see that an edit writes only what changed
     blockConcurrencyWhile: (fn: () => Promise<void>) => fn(),
@@ -30,24 +40,50 @@ let state: ReturnType<typeof fakeState>;
 
 type Room = InstanceType<typeof InkstoneRoom>;
 
-function fakeSocket() {
-  const listeners: Record<string, (e: { data: string }) => void> = {};
+interface FakeSocket {
+  sent: string[];
+  presence: string[];
+  state: { room: Room };
+  closed: boolean;
+  serializeAttachment(value: unknown): void;
+  deserializeAttachment(): unknown;
+  close(): void;
+  send(m: string): void;
+  emit(type: string, data?: string): void;
+  // biome-ignore lint/suspicious/noExplicitAny: a test reading whatever the room said
+  last(): any;
+  say(message: unknown): void;
+}
+
+function fakeSocket(): FakeSocket {
   const sent: string[] = [];
   const presence: string[] = []; // kept apart, so the tests about the map needn't step around it
-  return {
+  let attachment: unknown = null;
+  const ws: FakeSocket = {
     sent,
     presence,
-    accept() {},
-    send: (m: string) => void (m.startsWith('{"type":"presence"') ? presence : sent).push(m),
-    addEventListener: (type: string, fn: (e: { data: string }) => void) => {
-      listeners[type] = fn;
+    state: null as unknown as { room: Room },
+    closed: false,
+    serializeAttachment: (value: unknown) => {
+      attachment = structuredClone(value);
     },
-    emit: (type: string, data = '') => listeners[type]({ data }),
+    deserializeAttachment: () => (attachment === null ? null : structuredClone(attachment)),
+    close: () => {
+      ws.closed = true;
+    },
+    send: (m: string) => void (m.startsWith('{"type":"presence"') ? presence : sent).push(m),
+    emit: (type: string, data = ''): void => {
+      const { room } = ws.state;
+      if (type === 'message') room.webSocketMessage(ws, data);
+      else if (type === 'close') room.webSocketClose(ws);
+      else room.webSocketError(ws);
+    },
     // What the room last told this client, parsed.
     // biome-ignore lint/suspicious/noExplicitAny: a test reading whatever the room said
     last: (): any => JSON.parse(sent[sent.length - 1]),
-    say: (message: unknown) => listeners.message({ data: JSON.stringify(message) }),
+    say: (message: unknown): void => ws.emit('message', JSON.stringify(message)),
   };
+  return ws;
 }
 
 const rect = (id: string, x = 0) => ({ type: 'rect', id, x, y: 0, w: 40, h: 40 });
@@ -57,6 +93,7 @@ const WEEK = 7 * 24 * 60 * 60 * 1000;
 
 async function openRoom(s = state) {
   const room = new InkstoneRoom(s);
+  s.room = room;
   await room.ready;
   return room;
 }
@@ -452,6 +489,7 @@ describe('token pictures', () => {
 
     await room.alarm();
     expect(state.data.size).toBe(0);
+    state.room = room; // the first room is the one awake again
     const c = join(room, { cid: 'c' });
     c.say({ type: 'getimages', ids: ['pic1'] });
     expect(c.last().type).toBe('doc'); // nothing to send
@@ -546,7 +584,7 @@ describe('saving', () => {
 });
 
 describe('presence', () => {
-  const players = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
+  const players = (ws: FakeSocket) => ws.presence.map((m) => JSON.parse(m));
 
   it('tells everyone who is here when someone arrives or leaves', async () => {
     const room = await openRoom();
@@ -575,7 +613,7 @@ describe('presence', () => {
 });
 
 describe('renaming', () => {
-  const players = (ws: ReturnType<typeof fakeSocket>) => ws.presence.map((m) => JSON.parse(m));
+  const players = (ws: FakeSocket) => ws.presence.map((m) => JSON.parse(m));
 
   it('tells everyone the new name', async () => {
     const room = await openRoom();
@@ -632,5 +670,62 @@ describe('pictures on the map', () => {
     a.say(image('pic1', big));
     a.say({ type: 'getimages', ids: ['pic1'] });
     expect(a.last().data).toBe(big);
+  });
+});
+
+// Cloudflare drops an idle object from memory (hibernation) while its sockets stay open, and makes a new
+// one from storage when the next message comes. Who is connected has to come back with it.
+describe('hibernation', () => {
+  const wake = async () => {
+    const woken = new InkstoneRoom(state);
+    state.room = woken;
+    await woken.ready;
+    return woken;
+  };
+  const players = (ws: FakeSocket) => JSON.parse(ws.presence[ws.presence.length - 1]);
+
+  it('still passes a change on to the others after the room was dropped and made again', async () => {
+    const { room, first } = await seeded([rect('a')]);
+    const b = join(room, { cid: 'b' });
+    await wake();
+    first.say({ type: 'changes', base: 0, changes: [set(rect('c', 80))] });
+    expect(b.last().type).toBe('changes');
+    expect(first.last()).toMatchObject({ type: 'ack', rev: 1 });
+  });
+
+  it('still counts who is here, and tells them when someone leaves', async () => {
+    const { room, first } = await seeded([rect('a')]);
+    const b = join(room, { cid: 'b' });
+    const woken = await wake();
+    expect(players(join(woken, { cid: 'c' })).count).toBe(3);
+    first.emit('close');
+    expect(players(b).count).toBe(2);
+  });
+
+  it('keeps a renamed player renamed', async () => {
+    const { room, first } = await seeded([rect('a')]);
+    join(room, { cid: 'b' });
+    first.say({ type: 'rename', name: 'Ashen Warden' });
+    const woken = await wake();
+    const names = players(join(woken, { cid: 'c' })).players.map((p: { name: string }) => p.name);
+    expect(names).toContain('Ashen Warden');
+  });
+
+  it('still ignores a client that never said hello', async () => {
+    const { room } = await seeded([rect('a')]);
+    const silent = fakeSocket();
+    room.handleSession(silent);
+    await wake();
+    silent.say({ type: 'changes', base: 0, changes: [set(rect('x'))] });
+    expect(silent.sent).toEqual([]);
+  });
+
+  it('saves the last edits when the last player leaves, even after waking', async () => {
+    const { first } = await seeded([rect('a')]);
+    await wake();
+    first.say({ type: 'changes', base: 0, changes: [set(rect('c', 80))] });
+    first.emit('close');
+    await vi.advanceTimersByTimeAsync(0);
+    expect([...state.data.keys()]).toContain('el:c');
   });
 });

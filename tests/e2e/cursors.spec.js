@@ -74,3 +74,14 @@ test('garbage from the relay is ignored', async ({ page }) => {
   await page.waitForTimeout(200);
   await expect(page.locator('#cursors .cursor')).toHaveCount(0);
 });
+
+// To stay inside the free plan the relay can switch cursors off (it closes the socket with 4503): the page
+// must then stop asking, or every retry would cost the requests being saved. The map keeps working.
+test('when the relay has cursors switched off, the page stops trying to reconnect them', async ({ page }) => {
+  const { sockets } = await shared(page);
+  expect(sockets).toHaveLength(1);
+  sockets[0].close({ code: 4503, reason: 'Cursors are off' });
+  await page.waitForTimeout(4000); // longer than the first retry would take
+  expect(sockets).toHaveLength(1);
+  await expect(page.locator('#collab-status')).toContainText('Live'); // the map is still shared
+});

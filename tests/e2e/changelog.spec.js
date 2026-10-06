@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { resetBoard } from './helpers.js';
 
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 const releases = [...readFileSync('CHANGELOG.md', 'utf8').matchAll(/^## (\S+)/gm)].map((m) => m[1]);
 
 test.beforeEach(async ({ page }) => {
@@ -28,7 +27,6 @@ test("the What's new modal lists every release, newest first", async ({ page }) 
     .locator('.changelog-entry h3')
     .evaluateAll((els) => els.map((el) => el.firstChild.textContent));
   expect(versions).toEqual(releases.map((v) => `v${v}`));
-  expect(versions[0]).toBe(`v${version}`);
   await expect(page.locator('.changelog-entry').first().locator('li').first()).not.toBeEmpty();
 
   await page.keyboard.press('Escape');

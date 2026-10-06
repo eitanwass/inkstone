@@ -2,6 +2,12 @@ name = "inkstone"
 main = "party/server.js"
 compatibility_date = "2025-07-18"
 
+# Set CURSORS_OFF to "1" to switch the live cursors off when the free plan's daily limits run low: the
+# map keeps working, and clients stop asking for cursors. Changing it in the Cloudflare dashboard takes
+# effect at once, but the next `wrangler deploy` puts this value back.
+[vars]
+CURSORS_OFF = "0"
+
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "InkstoneRoom"

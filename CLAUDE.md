@@ -83,11 +83,11 @@ deployed host before running `npm run build`.
 ## Releasing
 
 The site only redeploys when the version changes. To release: bump the version
-(`npm version patch|minor --no-git-tag-version`), add a matching
-`## <version> - <date>` section at the top of [CHANGELOG.md](CHANGELOG.md)
-(written for players using the editor, not for developers), and push. CI runs
-`npm run check:changelog`, which fails if the top entry doesn't match
-package.json. The app's "What's new" modal renders that same file.
+(`npm version patch|minor --no-git-tag-version`) and push. Not every bump needs release notes: when
+there is something for players to read, add a `## <version> - <date>` section at the top of
+[CHANGELOG.md](CHANGELOG.md) (written for players using the editor, not for developers). The app's "What's
+new" modal renders that file, and its dot follows the package version, so a bump with no entry still
+shows the dot until the modal is opened.
 
 On Vercel (Git integration), [vercel.json](vercel.json) sets
 [scripts/should-deploy.mjs](scripts/should-deploy.mjs) as the Ignored Build
@@ -322,7 +322,7 @@ chain, so there are no circular imports to reason about.
 | `ui/name-dialog.ts` | "Who's at the table?": `ensureName(then)` runs `then` at once if there is a name, else asks first: a suggested fantasy name, a shuffle button on the right, a Continue button, **no skip, no Escape, no backdrop dismiss**. collab.ts wraps Share, Join and opening an invite link in it, so nothing connects (and no popover opens) until a name exists. Someone who already has a name is never asked. |
 | `settings/saved.ts` | The "Saved" mark at the top right of the Settings modal (`#settings-saved`, a status region): `flashSaved()` shows a green check and "Saved" for two seconds. Called by each panel whenever a change is kept (a Board setting, a condition added, edited or removed, a name changed), because settings apply as they are changed and nothing else says so. A panel that keeps something new should call it. |
 | `settings/profile.ts` | Settings, Profile (the last tab): the name field (Enter or clicking away keeps it, empty puts the old one back) and the shuffle button. Changing it while connected sends `{ type: 'rename', name }`; the relay updates the player's entry and sends everyone fresh presence, so the list and cursor labels follow. |
-| `collab/cursors.ts` | The cursors socket: a **second WebSocket** per session, to `/cursors/<room>` and its own Durable Object (`CursorRoom`, `party/cursors.js`), so pointers never share a connection with the map. Sends our pointer (world units) at most every 50ms (the latest position, so it ends where it stopped), drops positions instead of queueing them when the socket is backed up, sends `hide` when the pointer leaves the map, and never shows an error. Started from `connect()` in collab.ts. |
+| `collab/cursors.ts` | The cursors socket: a **second WebSocket** per session, to `/cursors/<room>` and its own Durable Object (`CursorRoom`, `party/cursors.js`), so pointers never share a connection with the map. Sends our pointer (world units) at most every 100ms (the latest position, so it ends where it stopped), drops positions instead of queueing them when the socket is backed up, sends `hide` when the pointer leaves the map, and never shows an error. Started from `connect()` in collab.ts. |
 | `ui/cursors.ts` | Other players' pointers: DOM elements in `#cursors` (an arrow in the player's sigil colour and their name from the presence list), kept in world units and placed again after every redraw, with a CSS glide between positions. Not drawn on the canvas, so a moving pointer never redraws the map. |
 | `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
@@ -654,10 +654,25 @@ step by hand. Tested in `tests/unit/party/`.
 **Cursors have their own socket and relay.** `party/cursors.js` (`CursorRoom`, routed from the Worker's
 `fetch` at `/cursors/<room>`, declared in the `v1` migration in wrangler.toml) keeps nothing (no storage, log or alarm): it forwards
 each client's `{ type: 'cursor', x, y }` to the others as `{ type: 'cursor', cid, id, x, y }`, drops positions faster
-than 25ms apart from one client, and says `{ type: 'gone', cid }` when a pointer leaves the map or the client leaves.
+than 50ms apart from one client, and says `{ type: 'gone', cid }` when a pointer leaves the map or the client leaves.
 It is separate from `InkstoneRoom` on purpose: cursors are frequent and worth nothing a moment later, so they must
 never delay a change to the map, and losing the cursor socket costs only the pointers. Tested in
 `tests/unit/party/cursors.test.ts` and `tests/e2e/cursors.spec.js`.
+
+**Staying inside Cloudflare's free plan.** Both Durable Objects use the **WebSocket Hibernation API**
+(`state.acceptWebSocket(ws)`, then the methods `webSocketMessage`, `webSocketClose` and `webSocketError`, not
+`ws.accept()` and listeners), so an object is billed only while it is working, not for as long as a table is
+open (the free plan allows 13,000 GB-s of duration and 100,000 requests a day, incoming WebSocket messages
+counting 20 to 1; passing either makes operations fail until 00:00 UTC). The price is that **nothing about a
+connection may live only in memory**: Cloudflare drops an idle object and builds a new one (constructor and
+`load()` again) when the next message comes. Who a socket is lives on the socket (`serializeAttachment` /
+`deserializeAttachment`, read back by `sessionOf` and `sessions()`, which use `state.getWebSockets()`
+instead of a Map), and unsaved edits are safe because an object with a timer waiting (the 2-second save) is
+not dropped. The unit tests fake this (`fakeState`, `fakeSocket` in tests/unit/party/) and "wake" a room by making
+a new one on the same state. Cursors are the traffic, so they send at most every 100ms, and **`CURSORS_OFF`**
+(a variable in wrangler.toml, editable in the dashboard at once) switches them off: the Worker accepts the
+socket and closes it with code 4503 (no Durable Object woken) and the client stops retrying
+(`collab/cursors.ts`). Check the usage graphs in the Cloudflare dashboard now and then.
 
 **Connection loss.** `partysocket` reconnects on its own; `collab.ts` surfaces
 it. The status pill (`#collab-status`, in the top-right rail under the action cluster, red dot

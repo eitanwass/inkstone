@@ -2,12 +2,7 @@
 
 ## 0.10.0 - 2026-10-06
 
-- Inkstone has a home page. The editor is now at /draw/, and old invite links that point at the
-  front page still take you to the right map.
-- New docs page: how to draw, place tokens, measure, set a map background, share a map live,
-  save, and every keyboard shortcut.
-- Inkstone is free, and there is now a small "Buy me a coffee" link at the bottom of Settings
-  if you would like to chip in.
+- Inkstone has a home page! Complete with docs, introduction to the map, and a support link :)
 
 ## 0.9.1 - 2026-10-06
 
@@ -16,35 +11,26 @@
 
 ## 0.9.0 - 2026-10-05
 
-- Fit to grid: a new button in the Adjust image panel finds the squares printed on a
+- Reworked the Adjust Image panel to be easier to read.
+- Fit to grid - A new button in the Adjust Image panel finds the squares printed on a
   scanned or downloaded map and sizes and moves the picture so they line up with the
-  grid. If the picture's squares are wider than tall (common with generated maps), it is
-  stretched until they are square. If no grid is found, nothing changes and you are told.
-- The Adjust image panel is easier to read: the controls are in the order you use them
-  (rotate, size, opacity), with Replace, Remove and Done below, and the keys that work on
-  the map are listed beside them.
-- Fixed resizing a background image after it has been rotated, which made it jump or
-  stretch when a corner was dragged.
+  app's grid.
 
 ## 0.8.1 - 2026-10-05
 
-- Rotate a background image by 90 degrees when it is the wrong way round: the Adjust image
-  panel has new buttons for turning it left or right, about its middle.
+- Allow rotating the background image to fix oriantation
 
 ## 0.8.0 - 2026-10-05
 
-- Give your map a background: right-click the empty map and choose "Add image…" to put a
+- Give your map a background - right-click the map background and choose "Add image…" to put a
   scanned or downloaded map behind the grid, or pick a background color. A new image opens
   an Adjust image panel to drag it into place, resize it from its corners, set its opacity
   and type how many squares wide it is. Hold Shift while dragging to snap to the grid, and
   use the arrow keys to nudge it a pixel at a time.
-- The background stays out of your way while you draw: you can't select, move or erase it by
-  accident. Right-click the map to replace, adjust or remove the image.
-- Everyone in a shared map sees the background, and it is saved with the map and in map files.
 
 ## 0.7.1 - 2026-10-05
 
-- Choose your name before joining a shared map: a window asks "Who's at the table?" with a
+- Choose your name before joining a shared map - a window asks "Who's at the table?" with a
   fantasy name already filled in (like "Crimson Owl") and a shuffle button for another. It only
   asks once; after that your name is remembered in this browser.
 - Hover over a player's icon to see their name, and see it beside their cursor too.
