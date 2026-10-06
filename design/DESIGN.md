@@ -95,6 +95,16 @@ one accent. Red means "danger", "live", or a map token, never decoration.
 | `--canvas-bg` | `#e9e4da` | Parchment |
 | `--dot-color` | `rgba(180,170,155,0.55)` | The dot grid |
 | `--grid-size` | `40px` | One map cell |
+| `--map-ink` | `#4a3f2e` | Text written straight on the map: the name, the logo, the readout, the welcome |
+| `--map-ink-soft` | `#5e5242` | The welcome's body text |
+| `--map-ink-faint` | `#6b5f50` | The map name's placeholder ("Untitled map") |
+| `--map-ink-line` | `#8f8370` | Outlines on that text (the welcome's key caps) |
+| `--map-field` | `rgba(255, 255, 255, 0.55)` | Behind the map's name while it is typed into |
+
+**A dark map color.** When a player gives the map a dark background color (see grid.ts: lightness under 0.4),
+`body` gets `map-dark` and these five are redefined for it: the ink becomes parchment (`#e8dcc8`, with
+`#d6cab5`, `#b8ab94` and `#a89885` for the lighter ones) and the field a dark veil, so the text stays
+readable. The dot grid goes light in the same way. The dark chrome (the panels) is unchanged.
 
 ### Drawing palettes (what players pick from)
 

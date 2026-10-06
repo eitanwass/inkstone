@@ -20,8 +20,10 @@ function lightness(hex: string): number {
 }
 
 // The dots: `usual` on the default parchment or any light colour, light dots on a dark one so they still show.
+const isDark = (color: string): boolean => lightness(color) < 0.4;
+
 export function dotColorFor(color: string, usual: string): string {
-  return lightness(color) < 0.4 ? 'rgba(232, 220, 200, 0.3)' : usual;
+  return isDark(color) ? 'rgba(232, 220, 200, 0.3)' : usual;
 }
 
 // The map's colour over a whole width x height area, if one has been chosen (the default is the page's own).
@@ -60,6 +62,8 @@ export function redrawGridIfBackgroundChanged(): void {
     : '';
   if (key === shownBackground) return;
   shownBackground = key;
+  // The text written straight on the map (its name, the logo, the readout) turns light on a dark color.
+  document.body.classList.toggle('map-dark', isDark(mapColor()));
   drawGrid();
 }
 

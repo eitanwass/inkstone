@@ -35,28 +35,29 @@
   min-width: 0;
   text-align: center;
   text-overflow: ellipsis;
-  color: #4a3f2e;
+  color: var(--map-ink);
   background: transparent;
+  transition: color 0.3s ease;
   cursor: text;
 }
 
 #map-name::placeholder {
-  color: #6b5f50; /* 4.9:1 on the parchment */
+  color: var(--map-ink-faint); /* 4.9:1 on the parchment */
   opacity: 1;
 }
 
 #map-title:hover #map-name {
-  border-color: rgba(74, 63, 46, 0.3);
+  border-color: color-mix(in srgb, var(--map-ink) 30%, transparent);
 }
 
 #map-name:focus {
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--map-field);
   border-color: transparent;
 }
 
 /* The gold focus ring is for the dark chrome; on the parchment it would be 1.8:1. */
 #map-name:focus-visible {
-  outline: 2px solid #4a3f2e;
+  outline: 2px solid var(--map-ink);
   outline-offset: 0;
 }
 
@@ -67,7 +68,7 @@
   top: 50%;
   margin-left: 6px;
   transform: translateY(-50%);
-  color: #4a3f2e;
+  color: var(--map-ink);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s;

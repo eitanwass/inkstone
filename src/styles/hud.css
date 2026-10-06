@@ -21,5 +21,11 @@
 #hud-meta span {
   font-family: monospace;
   font-size: 11px;
-  color: #4a3f2e;
+  color: var(--map-ink);
+  transition: color 0.3s ease;
+}
+
+/* The readout is faint on parchment; on a dark map the light ink needs a little more. */
+body.map-dark #hud-meta {
+  opacity: 0.7;
 }

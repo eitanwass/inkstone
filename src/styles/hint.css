@@ -4,7 +4,7 @@
   inset: 0;
   pointer-events: none; /* the map underneath stays drawable */
   z-index: 40;
-  color: #5e5242; /* ink, a shade lighter: 5.9:1 on parchment */
+  color: var(--map-ink-soft); /* ink, a shade lighter: 5.9:1 on parchment */
   animation: hint-in 0.5s ease 0.3s both;
 }
 
@@ -33,7 +33,7 @@
   margin: 0 0 10px;
   font-size: 22px;
   font-weight: 600;
-  color: #4a3f2e;
+  color: var(--map-ink);
 }
 
 .hint-welcome p {
@@ -57,8 +57,8 @@
   margin-right: 4px;
   text-align: center;
   font: 600 12px / 1.5 monospace;
-  color: #4a3f2e;
-  border: 1px solid #8f8370;
+  color: var(--map-ink);
+  border: 1px solid var(--map-ink-line);
   border-radius: 4px;
 }
 

@@ -43,7 +43,7 @@ test('pinching zooms around the midpoint and clamps at the limits', async ({ pag
 
   // Spreading far past the limit stops at the maximum zoom.
   await touch(page, 'pointermove', 2, x + 2000, y);
-  await expect(page.locator('#zoom-label')).toHaveText('800%');
+  await expect(page.locator('#zoom-label')).toHaveText('400%');
 
   // Back to a 2x spread; the world point under the midpoint never moved.
   await touch(page, 'pointermove', 2, x + 100, y);

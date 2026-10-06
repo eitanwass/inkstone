@@ -23,8 +23,8 @@ export const GRID = 40; // px per grid cell (logical)
 export const DEFAULT_TOKEN_RADIUS = GRID * 0.42;
 export const MAX_TOKEN_RADIUS = GRID * 2.5;
 export const MIN_SHAPE_SIZE = GRID * 0.3; // smaller rect/wall drags are discarded as stray clicks
-export const MIN_ZOOM = 0.15;
-export const MAX_ZOOM = 8;
+export const MIN_ZOOM = 0.25;
+export const MAX_ZOOM = 4;
 export const DEFAULT_FONT_SIZE = 14;
 // Inter, bundled (see main.ts). Canvas text and the label preview use the same stack as the UI.
 export const FONT_FAMILY = "'Inter Variable', system-ui, sans-serif";

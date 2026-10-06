@@ -231,6 +231,7 @@ function reads, including those of its dependencies, must be in `includeFiles`.
   screen); only the box itself scales.
 - UI chrome sits inside `header` / `nav` / `footer` landmarks; they wrap
   `position: fixed` panels, so they don't affect layout.
+- Text written straight on the map (the name, the logo, the readout, the welcome) uses the `--map-ink*` variables, not fixed colors: `grid.ts` sets `body.map-dark` when the background color is dark, and they turn light (see DESIGN.md). Any new text laid directly on the map must use them too.
 - Text must stay at least 4.5:1 against its background: `--text-muted` and
   `--text-label` are set for that on the dark panels (don't darken them), and
   `.btn-primary` uses a light label on the gold fill.

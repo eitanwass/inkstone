@@ -593,3 +593,61 @@ test('in a shared map the picture goes to the room once, and the change carries 
   await page.waitForTimeout(300);
   expect(sent.filter((m) => m.type === 'image')).toHaveLength(1);
 });
+
+// The name, the logo and the readout are written straight on the map, so they have to stay readable
+// whatever color the map is.
+const PARCHMENT = [233, 228, 218];
+const DARK = [28, 26, 23];
+
+// WCAG contrast of each piece of text against the map color, counting the readout's own fade.
+function contrasts(page, map) {
+  return page.evaluate((map) => {
+    const rgb = (css) =>
+      css
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number);
+    const luminance = (c) =>
+      c
+        .map((v) => v / 255)
+        .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+        .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const ratio = (selector) => {
+      const el = document.querySelector(selector);
+      const fade = Number(getComputedStyle(el.closest('#hud-meta') ?? el).opacity);
+      const text = rgb(getComputedStyle(el).color).map((v, i) => v * fade + map[i] * (1 - fade));
+      const [high, low] = [luminance(text), luminance(map)].sort((a, b) => b - a);
+      return (high + 0.05) / (low + 0.05);
+    };
+    return {
+      dark: document.body.classList.contains('map-dark'),
+      logo: ratio('#brand-mark span'),
+      name: ratio('#map-name'),
+      coords: ratio('#hud-coords span'),
+    };
+  }, map);
+}
+
+test('the text on the map is readable on a dark map color, and on the default one', async ({ page }) => {
+  await page.fill('#map-name', 'The Sunken Crypt');
+  await page.press('#map-name', 'Enter');
+  const light = await contrasts(page, PARCHMENT);
+  expect(light.dark).toBe(false);
+  expect(light.logo).toBeGreaterThan(4.5);
+  expect(light.name).toBeGreaterThan(4.5);
+
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'inkstone-board',
+      JSON.stringify([{ type: 'background', x: 0, y: 0, w: 0, h: 0, color: '#1c1a17' }]),
+    );
+  });
+  await page.reload();
+  await page.waitForSelector('#tool-rect');
+  await page.waitForTimeout(600); // the text's color eases over
+  const dark = await contrasts(page, DARK);
+  expect(dark.dark).toBe(true);
+  expect(dark.logo).toBeGreaterThan(4.5);
+  expect(dark.name).toBeGreaterThan(4.5);
+  expect(dark.coords).toBeGreaterThan(3); // the readout is meant to be faint
+});

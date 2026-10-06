@@ -22,6 +22,21 @@
   --dot-color: rgba(180, 170, 155, 0.55);
   --grid-size: 40px;
   --panel-chamfer: 9px;
+  /* The ink of the text written straight on the map (the name, the logo, the readout, the welcome). */
+  --map-ink: #4a3f2e;
+  --map-ink-soft: #5e5242;
+  --map-ink-faint: #6b5f50;
+  --map-ink-line: #8f8370;
+  --map-field: rgba(255, 255, 255, 0.55); /* behind the map's name while it is typed into */
+}
+
+/* A dark map color (set in grid.ts): the same text, in the light ink. */
+body.map-dark {
+  --map-ink: #e8dcc8;
+  --map-ink-soft: #d6cab5;
+  --map-ink-faint: #b8ab94;
+  --map-ink-line: #a89885;
+  --map-field: rgba(0, 0, 0, 0.35);
 }
 
 html,
