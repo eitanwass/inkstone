@@ -242,7 +242,10 @@
   #settings-layout {
     flex-direction: column;
   }
-  #settings-tabs {
+  #settings-side {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
     width: auto;
     padding: 8px 12px;
     border-right: none;

@@ -424,3 +424,17 @@ test('changing a board setting says "Saved"', async ({ page }) => {
   await expect(page.locator('#settings-saved')).toHaveText('Saved');
   await expect(page.locator('#settings-saved')).toHaveCSS('opacity', '1');
 });
+
+test('the settings menu quietly says how to chip in, below the tabs and not as one of them', async ({
+  page,
+}) => {
+  await page.click('#btn-settings');
+  const support = modal(page).getByRole('link', { name: 'Buy me a coffee' });
+  await expect(support).toBeVisible();
+  await expect(support).toHaveAttribute('target', '_blank');
+  await expect(support).toHaveAttribute('rel', /noopener/);
+  await expect(page.locator('#settings-tabs [role="tab"]')).toHaveCount(3);
+  const tabs = await page.locator('#settings-tabs').boundingBox();
+  const link = await support.boundingBox();
+  expect(link.y).toBeGreaterThan(tabs.y + tabs.height);
+});

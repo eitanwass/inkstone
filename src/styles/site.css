@@ -1,0 +1,377 @@
+/* ── What every page of the site shares ────────────────────────
+   Parchment, brass and ink, like the editor: the colours, the top bar, the buttons, the footer and
+   the motion. The home page (home.css) and the docs (docs.css) add their own. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1714;
+  --bg-raised: #25211d;
+  --border: #3a3228;
+  --accent: #c9a84c;
+  --accent-dim: #7a6230;
+  --text: #e8dcc8;
+  --text-muted: #a89885;
+  --parchment: #e9e4da;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* a long, soft landing */
+  --chamfer: 9px;
+  --hero-h: clamp(340px, 54vh, 620px);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+  background: var(--bg);
+}
+
+body {
+  font-family: "Inter Variable", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ── Top bar ───────────────────────────────────────────────── */
+.site-header {
+  position: fixed;
+  inset: 14px 14px auto;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top, 0px);
+  pointer-events: none;
+}
+
+.site-nav {
+  pointer-events: auto;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px 10px 18px;
+  background: rgba(26, 23, 20, 0.82);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--border);
+  clip-path: polygon(
+    var(--chamfer) 0,
+    calc(100% - var(--chamfer)) 0,
+    100% var(--chamfer),
+    100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%,
+    var(--chamfer) 100%,
+    0 calc(100% - var(--chamfer)),
+    0 var(--chamfer)
+  );
+  animation: drop-in 0.9s var(--ease) both;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brand img {
+  display: block;
+  transition: transform 0.7s var(--ease);
+}
+
+.brand:hover img {
+  transform: rotate(360deg);
+}
+
+.brand span {
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  font-size: 25px;
+  letter-spacing: 0.02em;
+}
+
+.site-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.site-links a,
+.site-links .soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 6px;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.site-links a:hover {
+  background: var(--bg-raised);
+}
+
+.site-links .soon {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.site-links small {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+}
+
+.site-links a[aria-current="page"] {
+  color: var(--accent);
+}
+
+.site-links .nav-cta {
+  margin-left: 6px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.site-links .nav-cta:hover {
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(201, 168, 76, 0.35);
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+
+/* ── Headings and the main button ──────────────────────────── */
+h1,
+h2 {
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.08;
+}
+
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 34px;
+  font-size: 19px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--bg);
+  background: var(--accent);
+  clip-path: polygon(
+    var(--chamfer) 0,
+    calc(100% - var(--chamfer)) 0,
+    100% var(--chamfer),
+    100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%,
+    var(--chamfer) 100%,
+    0 calc(100% - var(--chamfer)),
+    0 var(--chamfer)
+  );
+  transition: transform 0.45s var(--ease), background 0.3s var(--ease), filter 0.45s var(--ease);
+}
+
+.cta svg {
+  transition: transform 0.45s var(--ease);
+}
+
+.cta:hover {
+  transform: translateY(-3px);
+  background: #d6b658;
+  filter: drop-shadow(0 12px 22px rgba(201, 168, 76, 0.4));
+}
+
+.cta:hover svg {
+  transform: translateX(6px);
+}
+
+.cta:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+
+/* ── Footer ────────────────────────────────────────────────── */
+.site-footer {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-raised);
+  border-top: 1px solid var(--border);
+  padding: 56px 24px 32px;
+}
+
+.footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.free h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  margin-bottom: 10px;
+}
+
+.free p {
+  max-width: 560px;
+  color: var(--text-muted);
+}
+
+.coffee {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  border: 1px solid var(--accent-dim);
+  border-radius: 99px;
+  transition: background 0.35s var(--ease), color 0.35s var(--ease), transform 0.45s var(--ease),
+    opacity 0.9s var(--ease);
+}
+
+.coffee svg {
+  color: var(--accent);
+  transition: transform 0.6s var(--ease), color 0.35s var(--ease);
+}
+
+.coffee:hover {
+  background: var(--accent);
+  color: var(--bg);
+  transform: translateY(-2px);
+}
+
+.coffee:hover svg {
+  color: var(--bg);
+  transform: rotate(-12deg) scale(1.08);
+}
+
+.fine-print {
+  max-width: 1120px;
+  margin: 40px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Motion ────────────────────────────────────────────────── */
+/* Things start low and faint and rise into place as they come into view (site.ts adds .in). Without
+   script they are simply there. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+  transition-delay: calc(var(--i, 0) * 110ms);
+}
+
+.js [data-reveal].in {
+  opacity: 1;
+  transform: none;
+}
+
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Smaller screens ───────────────────────────────────────── */
+@media (max-width: 760px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .site-nav {
+    flex-wrap: wrap;
+  }
+
+  .site-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 8px;
+  }
+
+  .site-links.open {
+    display: flex;
+  }
+
+  .site-links .nav-cta {
+    margin: 6px 0 0;
+    justify-content: center;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .cta {
+    width: 100%;
+    max-width: 340px;
+    justify-content: center;
+  }
+}

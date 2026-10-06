@@ -3,9 +3,9 @@ import { defineConfig } from 'vite';
 import { resolveSiteUrl } from './scripts/site-url';
 
 export default defineConfig({
-  // Two pages: the home page (index.html) and the editor (draw/index.html).
+  // Three pages: the home page (index.html), the editor (draw/index.html) and the docs (docs/index.html).
   build: {
-    rollupOptions: { input: { home: 'index.html', draw: 'draw/index.html' } },
+    rollupOptions: { input: { home: 'index.html', draw: 'draw/index.html', docs: 'docs/index.html' } },
   },
   plugins: [
     {

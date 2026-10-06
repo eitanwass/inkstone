@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 - 2026-10-06
+
+- Inkstone has a home page. The editor is now at /draw/, and old invite links that point at the
+  front page still take you to the right map.
+- New docs page: how to draw, place tokens, measure, set a map background, share a map live,
+  save, and every keyboard shortcut.
+- Inkstone is free, and there is now a small "Buy me a coffee" link at the bottom of Settings
+  if you would like to chip in.
+
 ## 0.9.1 - 2026-10-06
 
 - Dragging a token now leaves a faded ghost where it started, with a line to where it would

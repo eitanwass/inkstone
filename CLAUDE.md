@@ -152,27 +152,35 @@ Deliberate design points:
   is set while the pill shows). The toast sits below the name for the same reason.
   Focus uses an ink-coloured outline, not the gold one, which is 1.8:1 on parchment.
 
-## The home page
+## The site around the editor
 
-`/` is a landing page ([index.html](index.html), [src/styles/home.css](src/styles/home.css),
-[src/home.ts](src/home.ts)); the editor is at `/draw/` (Vite builds both: `build.rollupOptions.input` in
-vite.config.ts). The top half is a map made in the editor (`public/home-map.jpg`), held still while a
-dark sheet with the headline, the "Start drawing" button and the features slides over it; the footer says
-the site is free and links to a "Buy me a coffee" page (**the address in `index.html` is a placeholder**
-to replace). The menu lists Public creations, Docs and Contact as "Soon" (plain `<span>`s: make one a link
-when its page exists). Animations (the entrance, scroll reveals, the map easing back) are CSS easing plus
-`home.ts`'s IntersectionObserver and one scroll listener; with `prefers-reduced-motion` or no script
-everything is just there.
+Three pages, all built by Vite (`build.rollupOptions.input` in vite.config.ts): the home page `/`
+([index.html](index.html)), the editor `/draw/` ([draw/index.html](draw/index.html)) and the docs `/docs/`
+([docs/index.html](docs/index.html)). The home page and docs share the top bar and footer
+([html/site-header.html](html/site-header.html), [html/site-footer.html](html/site-footer.html), pasted in
+by the same include plugin), [src/styles/site.css](src/styles/site.css) (colors, bar, buttons, footer, motion)
+and [src/site.ts](src/site.ts) (fonts, scroll reveal, the phone menu, `aria-current` on the page you are on).
+Each adds its own: `home.css` / `home.ts`, `docs.css` / `docs.ts`.
 
+- **Home.** The top half is a map made in the editor (`public/home-map.jpg`), held still while a dark sheet
+  with the headline, the "Start drawing" button and the features slides over it; the footer says the site is
+  free and links to the "Buy me a coffee" page (also linked, quietly, at the bottom of the editor's Settings,
+  `#settings-support`; the address is in `index.html`, `html/settings.html`, and so on: change all of them
+  together). The menu lists Public creations and Contact as "Soon" (plain `<span>`s: make one a link when its
+  page exists). Animations are CSS easing plus an IntersectionObserver and one scroll listener; with
+  `prefers-reduced-motion` or no script everything is just there.
 - **The picture is made by the editor.** `npm run build:home-map` (`scripts/build-home-map.mjs`) puts the map
   described in that file (the same elements the editor saves, token pictures painted on a canvas and kept
   through the editor's own image store) into the browser's storage, draws it with the real app and
   screenshots it. Don't edit the JPG by hand; change the script and run it again. Walls are `wall` elements
-  with gaps for doorways laid over floors (rooms whose outline takes their own colour).
+  with gaps for doorways laid over floors (rooms whose outline takes their own color).
+- **Docs** is one page: a sticky list of sections on the side (marked as you scroll, a row of pills above the
+  text on a phone) and the text. **When a tool, shortcut or feature changes, change it here too**;
+  `tests/e2e/docs.spec.js` fails if the shortcut tables stop matching the editor's own list (the `?` button).
 - **Old invite links keep working.** `/?session=…` is sent on to `/draw/?session=…` by a script in the head of
   `index.html`. Links to share are made from the editor's own address, so they point at `/draw/`.
-- Tests: `tests/e2e/home.spec.js` (the button, the map, the menu, the support link, the old
-  invite redirect, the phone menu, axe). The e2e helpers start at `/draw/`.
+- Tests: `tests/e2e/home.spec.js` and `docs.spec.js` (links, the map, the menu, the support link, the old
+  invite redirect, the phone layouts, axe). The e2e helpers start at `/draw/`.
 
 ## Design system and share preview
 

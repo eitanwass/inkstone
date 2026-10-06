@@ -1,26 +1,11 @@
 // ── The home page ──────────────────────────────────────────────
-// Only the touches that need script: the entrance and scroll-reveal animations, the map that eases
-// back as the page slides over it, the menu on small screens, and "Continue" for someone who already
-// has a map. The page reads fine without any of it.
+// What only this page needs script for: the map that eases back as the page slides over it, and the light
+// that follows the pointer over a feature card. (The rest is in site.ts.) The page reads fine without it.
 
-import '@fontsource-variable/inter';
-import '@fontsource/eb-garamond/500.css';
+import './site';
 import { byId } from './core/dom';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// Things fade up as they scroll into view. The class is only added once, so they stay put after.
-const reveal = new IntersectionObserver(
-  (entries) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      entry.target.classList.add('in');
-      reveal.unobserve(entry.target);
-    }
-  },
-  { threshold: 0.15, rootMargin: '0px 0px -6% 0px' },
-);
-for (const el of document.querySelectorAll('[data-reveal]')) reveal.observe(el);
 
 // The map is held still while the page slides over it, and eases back (smaller, dimmer) as it goes.
 const hero = byId('hero-map');
@@ -49,17 +34,3 @@ for (const card of document.querySelectorAll<HTMLElement>('.feature')) {
     card.style.setProperty('--my', `${e.clientY - box.top}px`);
   });
 }
-
-// The links fold into a menu on small screens.
-const toggle = byId<HTMLButtonElement>('menu-toggle');
-const links = byId('site-links');
-toggle.addEventListener('click', () => {
-  const open = toggle.getAttribute('aria-expanded') !== 'true';
-  toggle.setAttribute('aria-expanded', String(open));
-  links.classList.toggle('open', open);
-});
-links.addEventListener('click', (e) => {
-  if (!(e.target instanceof HTMLAnchorElement)) return;
-  toggle.setAttribute('aria-expanded', 'false');
-  links.classList.remove('open');
-});

@@ -14,10 +14,18 @@
         </button>
       </div>
       <div id="settings-layout">
-        <div id="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
-          <button id="settings-tab-board" role="tab" aria-selected="true" aria-controls="settings-panel-board">Board</button>
-          <button id="settings-tab-conditions" role="tab" aria-selected="false" aria-controls="settings-panel-conditions" tabindex="-1">Conditions</button>
-          <button id="settings-tab-profile" role="tab" aria-selected="false" aria-controls="settings-panel-profile" tabindex="-1">Profile</button>
+        <div id="settings-side">
+          <div id="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
+            <button id="settings-tab-board" role="tab" aria-selected="true" aria-controls="settings-panel-board">Board</button>
+            <button id="settings-tab-conditions" role="tab" aria-selected="false" aria-controls="settings-panel-conditions" tabindex="-1">Conditions</button>
+            <button id="settings-tab-profile" role="tab" aria-selected="false" aria-controls="settings-panel-profile" tabindex="-1">Profile</button>
+          </div>
+          <!-- Quietly at the bottom: Inkstone is free, and this is the one place that says how to chip in.
+               The same page as the home page's (index.html). -->
+          <a id="settings-support" href="https://www.buymeacoffee.com/eitanwass" target="_blank" rel="noopener noreferrer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z" /><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M8 2.5c-.8 1 .8 1.6 0 2.8M12 2.5c-.8 1 .8 1.6 0 2.8" /></svg>
+            Buy me a coffee
+          </a>
         </div>
         <section id="settings-panel-board" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-board" tabindex="0">
           <h3>Board</h3>

@@ -25,6 +25,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#1a1714" />
+  <link rel="stylesheet" href="/src/styles/site.css" />
   <link rel="stylesheet" href="/src/styles/home.css" />
   <script>
     // Invite links used to point at the editor's old address (/?session=...): send them on.
@@ -37,24 +38,7 @@
 </head>
 
 <body>
-  <header class="site-header">
-    <nav class="site-nav" aria-label="Main">
-      <a class="brand" href="/" aria-label="Inkstone, home">
-        <img src="/logo.svg" alt="" width="30" height="30" />
-        <span>Inkstone</span>
-      </a>
-
-      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-links">Menu</button>
-      <ul class="site-links" id="site-links">
-        <li><a href="#features">Features</a></li>
-        <!-- Not built yet: shown so people know they are coming. Make one a link when its page exists. -->
-        <li><span class="soon" title="Coming soon">Public creations <small>Soon</small></span></li>
-        <li><span class="soon" title="Coming soon">Docs <small>Soon</small></span></li>
-        <li><span class="soon" title="Coming soon">Contact <small>Soon</small></span></li>
-        <li><a class="nav-cta" href="/draw/">Start drawing</a></li>
-      </ul>
-    </nav>
-  </header>
+    <!-- @include html/site-header.html -->
 
   <main>
     <!-- The top half: a map made in the editor, held still while the page scrolls over it. -->
@@ -133,23 +117,7 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="free reveal" data-reveal>
-        <h2>Free, and staying that way</h2>
-        <p>
-          Inkstone has no ads, no accounts and no paywall. If it earns a place at your table, you can
-          chip in for the coffee that keeps it going.
-        </p>
-      </div>
-      <!-- Replace the address with your own page. -->
-      <a class="coffee reveal" data-reveal style="--i: 1" href="https://www.buymeacoffee.com/eitanwass" target="_blank" rel="noopener noreferrer">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z" /><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M8 2.5c-.8 1 .8 1.6 0 2.8M12 2.5c-.8 1 .8 1.6 0 2.8" /></svg>
-        Buy me a coffee
-      </a>
-    </div>
-    <p class="fine-print">Made for tabletop players, by tabletop players. © Inkstone</p>
-  </footer>
+    <!-- @include html/site-footer.html -->
 
   <script type="module" src="/src/home.ts"></script>
 </body>

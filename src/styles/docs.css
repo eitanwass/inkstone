@@ -1,0 +1,257 @@
+/* ── The docs page ─────────────────────────────────────────────
+   A list of sections on the side and the text beside it. The rest is in site.css. */
+
+body {
+  padding-top: 92px; /* the top bar floats over the page */
+}
+
+.docs {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 24px 72px;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+/* ── The list on the side ──────────────────────────────────── */
+.toc {
+  position: sticky;
+  top: 100px;
+}
+
+.toc-title {
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.toc ol {
+  list-style: none;
+  border-left: 1px solid var(--border);
+}
+
+.toc a {
+  display: block;
+  margin-left: -1px;
+  padding: 6px 14px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--text-muted);
+  border-left: 2px solid transparent;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease), padding-left 0.4s var(--ease);
+}
+
+.toc a:hover {
+  color: var(--text);
+}
+
+.toc a[aria-current="location"] {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  padding-left: 18px;
+}
+
+/* ── The text ──────────────────────────────────────────────── */
+.doc {
+  max-width: 720px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.doc h1 {
+  margin: 6px 0 14px;
+  font-size: clamp(38px, 5vw, 56px);
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.doc-intro {
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc section {
+  padding-top: 52px;
+}
+
+.doc h2 {
+  margin-bottom: 14px;
+  font-size: clamp(28px, 3.2vw, 36px);
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  color: #cfc3ae;
+}
+
+.doc p {
+  margin-top: 14px;
+}
+
+.doc ul,
+.doc ol.steps {
+  margin: 14px 0 0 22px;
+}
+
+.doc li {
+  margin-top: 8px;
+  padding-left: 4px;
+}
+
+.doc li::marker {
+  color: var(--accent-dim);
+}
+
+.doc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.doc em {
+  color: var(--text);
+}
+
+.doc a:not(.cta) {
+  color: var(--accent);
+}
+
+.doc code {
+  padding: 1px 6px;
+  font: 13px / 1.5 ui-monospace, monospace;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  text-align: center;
+  font: 600 12px / 1.5 ui-monospace, monospace;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+
+/* ── Tables ────────────────────────────────────────────────── */
+.doc table {
+  width: 100%;
+  margin-top: 18px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.doc th,
+.doc td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc thead th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.doc tbody th {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.doc td {
+  color: #cfc3ae;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 8px 32px;
+}
+
+.keys caption {
+  caption-side: top;
+  padding: 0 12px 4px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ── Questions ─────────────────────────────────────────────── */
+.faq dt {
+  margin-top: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.faq dd {
+  margin-top: 4px;
+}
+
+.doc-cta {
+  margin-top: 64px;
+}
+
+/* ── Smaller screens ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .docs {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* The list goes above the text, in the page's flow. */
+  .toc {
+    position: static;
+  }
+
+  .toc ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-left: none;
+  }
+
+  .toc a {
+    margin: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 13px;
+  }
+
+  .toc a[aria-current="location"] {
+    padding-left: 12px;
+    border-color: var(--accent);
+  }
+}
+
+@media (max-width: 560px) {
+  .doc tbody th {
+    white-space: normal;
+  }
+}

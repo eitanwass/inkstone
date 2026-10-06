@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Docs: how to use Inkstone</title>
+  <meta name="description" content="How to use Inkstone: drawing rooms and walls, tokens and conditions, measuring, map backgrounds, sharing a map live, saving and keyboard shortcuts." />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Inkstone" />
+  <meta property="og:title" content="Inkstone docs: how to use the battle-map editor" />
+  <meta property="og:description" content="Drawing, tokens, measuring, backgrounds, sharing live and every shortcut." />
+  <meta property="og:url" content="%SITE_URL%/docs/" />
+  <meta property="og:image" content="%SITE_URL%/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Inkstone logo and a small map: a room with two tokens on a parchment grid." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#1a1714" />
+  <link rel="stylesheet" href="/src/styles/site.css" />
+  <link rel="stylesheet" href="/src/styles/docs.css" />
+  <script>
+    document.documentElement.classList.add('js');
+  </script>
+</head>
+
+<body>
+  <!-- @include html/site-header.html -->
+
+  <main class="docs">
+    <aside class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ol id="toc">
+        <li><a href="#start">Getting started</a></li>
+        <li><a href="#tools">The tools</a></li>
+        <li><a href="#tokens">Tokens and conditions</a></li>
+        <li><a href="#labels">Labels</a></li>
+        <li><a href="#measuring">Measuring</a></li>
+        <li><a href="#background">Map background</a></li>
+        <li><a href="#editing">Selecting and editing</a></li>
+        <li><a href="#sharing">Sharing live</a></li>
+        <li><a href="#saving">Saving and exporting</a></li>
+        <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+        <li><a href="#touch">Touch screens</a></li>
+        <li><a href="#faq">Good to know</a></li>
+      </ol>
+    </aside>
+
+    <article class="doc">
+      <header class="doc-intro">
+        <p class="eyebrow">Docs</p>
+        <h1>How to use Inkstone</h1>
+        <p class="lede">Everything the editor does, in the order you will want it. It takes a few minutes to learn and nothing needs setting up.</p>
+      </header>
+
+      <section id="start">
+        <h2>Getting started</h2>
+        <p>Open the editor with <strong>Start drawing</strong>. There is no account and nothing to install: your map is saved in this browser as you work, so it is still there when you come back.</p>
+        <ol class="steps">
+          <li>Pick <strong>Room</strong> in the tool dock at the bottom and drag on the map to draw a room.</li>
+          <li>Pick <strong>Token</strong> and click to drop a token. Drag outward while placing it to make it larger.</li>
+          <li>Click the title at the top to name your map.</li>
+          <li>Press <strong>Share</strong> (top right) and send the link to your table, and everyone draws on the same map.</li>
+        </ol>
+        <p>Scroll to zoom, hold <kbd>Alt</kbd> and drag (or use the middle mouse button) to pan, and press <kbd>F</kbd> to fit the whole map on screen.</p>
+      </section>
+
+      <section id="tools">
+        <h2>The tools</h2>
+        <p>The tool dock holds seven tools. Each has a key, shown in its tooltip.</p>
+        <table>
+          <thead><tr><th scope="col">Tool</th><th scope="col">Key</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Select and move</th><td><kbd>V</kbd></td><td>Click to select, drag to move, drag on empty map to select everything inside a box. Hold <kbd>Shift</kbd> to add to a selection.</td></tr>
+            <tr><th scope="row">Room</th><td><kbd>R</kbd></td><td>Drag out a rectangle. It snaps to the grid, and its width and height are shown as you draw.</td></tr>
+            <tr><th scope="row">Wall</th><td><kbd>W</kbd></td><td>Drag a straight wall between two grid points.</td></tr>
+            <tr><th scope="row">Token</th><td><kbd>T</kbd></td><td>Click to place a token, or drag outward to make it larger.</td></tr>
+            <tr><th scope="row">Label</th><td><kbd>L</kbd></td><td>Click to write text on the map, or drag an area to set how big it is.</td></tr>
+            <tr><th scope="row">Erase</th><td><kbd>E</kbd></td><td>Click or drag over cells. A wall is removed cell by cell, and everything else as a whole.</td></tr>
+            <tr><th scope="row">Measure</th><td><kbd>M</kbd></td><td>Drag a ruler between two points to read the distance.</td></tr>
+          </tbody>
+        </table>
+        <p>With a room or wall tool, the panel beside the dock sets the outline color, fill color and line thickness. Select a room or wall and drag its handles to resize it, or the round handle above a room to rotate it. Rotation snaps to 15 degrees; hold <kbd>Shift</kbd> to turn freely.</p>
+      </section>
+
+      <section id="tokens">
+        <h2>Tokens and conditions</h2>
+        <p>Tokens are placed plain. Click one with the select tool and its <strong>card</strong> appears above it:</p>
+        <ul>
+          <li><strong>Name:</strong> type in the card, or press <kbd>Enter</kbd> or double-click the token. <kbd>Enter</kbd> keeps it and <kbd>Esc</kbd> puts the old one back. The bold, italic and plate buttons style the name.</li>
+          <li><strong>Color:</strong> one of eight swatches, or the ring for any color.</li>
+          <li><strong>Picture:</strong> choose a picture and it is cropped to the disc. The color becomes the outline.</li>
+          <li><strong>Conditions:</strong> press <em>Add</em> and type to find one (Prone, Poisoned, Dead and the rest of the 5e conditions). They show as round badges on the token, and Dead greys it out and crosses it. Hover a token to read its conditions in words.</li>
+        </ul>
+        <p>Sizes snap to whole squares: one for Medium, two for Large, three for Huge. A copy of a token named <em>Goblin 1</em> becomes <em>Goblin 2</em>.</p>
+        <p>You can make your own conditions in <strong>Settings → Conditions</strong>, with your own name, color and icon.</p>
+      </section>
+
+      <section id="labels">
+        <h2>Labels</h2>
+        <p>With the label tool, click the map to start typing, or drag out an area: the label's text is as tall as the area. <kbd>Enter</kbd> or clicking away keeps it, and <kbd>Esc</kbd> throws it away. Select a label to change its size and color in its card, and turn on a <em>plate</em> behind it so it reads over a busy map. Double-click a label to edit its text.</p>
+      </section>
+
+      <section id="measuring">
+        <h2>Measuring</h2>
+        <p>Press <kbd>M</kbd> and drag. The ruler snaps to the corners and middles of squares, and stays up until you click elsewhere. Rooms and walls also show their size while you draw them.</p>
+        <p>In <strong>Settings → Board</strong> you choose the unit (feet, meters or squares) and how much one square is. <em>D&amp;D diagonal rules</em> are on by default: the first diagonal square counts as 1, the next as 2, then 1, 2 and so on, as in the Dungeon Master's Guide. Turn it off to measure the true straight line.</p>
+      </section>
+
+      <section id="background">
+        <h2>Map background</h2>
+        <p>Right-click an empty part of the map to set what is behind the grid:</p>
+        <ul>
+          <li><strong>Add image</strong> puts a scanned or generated map behind the grid. Move it by dragging, resize it from a corner (its proportions are kept), and hold <kbd>Shift</kbd> to snap to the grid. The arrow keys nudge it a pixel at a time.</li>
+          <li><strong>Fit to grid</strong> finds the squares printed on the picture and sizes and moves it so they line up with ours. If it can't find a grid it changes nothing and says so.</li>
+          <li><strong>Background color</strong> changes the color of the map itself.</li>
+        </ul>
+        <p>While you adjust a picture it is the only thing you can touch, so nothing else moves by accident. Press <em>Done</em> when it is right.</p>
+      </section>
+
+      <section id="editing">
+        <h2>Selecting and editing</h2>
+        <ul>
+          <li><strong>Move</strong> by dragging, or nudge a square at a time with the arrow keys.</li>
+          <li><strong>Copy, paste and duplicate</strong> with <kbd>Ctrl</kbd> <kbd>C</kbd>, <kbd>V</kbd> and <kbd>D</kbd>. Paste lands at the pointer.</li>
+          <li><strong>Undo and redo</strong> with <kbd>Ctrl</kbd> <kbd>Z</kbd> and <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd>. In a shared map, undo only undoes <em>your</em> last change.</li>
+          <li><strong>Order:</strong> right-click an element for <em>Bring to Front</em> and <em>Send to Back</em>.</li>
+          <li><strong>Lock</strong> an element from the same menu to turn it into a backdrop that clicks, drags and the eraser pass through. Right-click it to unlock.</li>
+        </ul>
+      </section>
+
+      <section id="sharing">
+        <h2>Sharing live</h2>
+        <p>Press <strong>Share</strong> and copy the link. Anyone who opens it joins the same map, and you see each other's changes and pointers as they happen. The first time, you are asked what to call yourself; change it later in <strong>Settings → Profile</strong>. To join a map you were sent a code for, use <strong>Join</strong>.</p>
+        <ul>
+          <li>Two players editing <em>different</em> things never collide. If you both change the same thing at once, the first change wins and you are told.</li>
+          <li>If your connection drops, Inkstone reconnects by itself. What you did meanwhile is sent when it is back, unless someone changed the same thing first.</li>
+          <li>The map is kept for you: open the link later, even after everyone has left, and it is as you left it. A shared map that no one visits for a week is deleted.</li>
+        </ul>
+      </section>
+
+      <section id="saving">
+        <h2>Saving and exporting</h2>
+        <ul>
+          <li><strong>Automatic:</strong> your map is saved in this browser after every change. The small mark at the top right shows when it has been.</li>
+          <li><strong>Save to a file</strong> writes a <code>.inkstone.json</code> file you can keep, send or move to another computer, and <strong>Open</strong> reads one back (as one undo step).</li>
+          <li><strong>Export as PNG</strong> makes a picture of the map, named after your map.</li>
+        </ul>
+      </section>
+
+      <section id="shortcuts">
+        <h2>Keyboard shortcuts</h2>
+        <p>Press <kbd>?</kbd> in the editor to see this list there.</p>
+        <div class="keys">
+          <table>
+            <caption>Tools</caption>
+            <tbody>
+              <tr><th scope="row"><kbd>V</kbd></th><td>Select and move</td></tr>
+              <tr><th scope="row"><kbd>R</kbd></th><td>Room</td></tr>
+              <tr><th scope="row"><kbd>W</kbd></th><td>Wall</td></tr>
+              <tr><th scope="row"><kbd>T</kbd></th><td>Token</td></tr>
+              <tr><th scope="row"><kbd>L</kbd></th><td>Label</td></tr>
+              <tr><th scope="row"><kbd>E</kbd></th><td>Erase</td></tr>
+              <tr><th scope="row"><kbd>M</kbd></th><td>Measure</td></tr>
+            </tbody>
+          </table>
+          <table>
+            <caption>Selection</caption>
+            <tbody>
+              <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>A</kbd></th><td>Select all</td></tr>
+              <tr><th scope="row"><kbd>Esc</kbd></th><td>Deselect</td></tr>
+              <tr><th scope="row"><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></th><td>Move one square</td></tr>
+              <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>C</kbd> / <kbd>V</kbd> / <kbd>D</kbd></th><td>Copy, paste, duplicate</td></tr>
+              <tr><th scope="row"><kbd>Enter</kbd></th><td>Edit the selected token's name or label's text</td></tr>
+              <tr><th scope="row"><kbd>Del</kbd></th><td>Delete</td></tr>
+              <tr><th scope="row"><kbd>Shift</kbd> click</th><td>Add to the selection</td></tr>
+            </tbody>
+          </table>
+          <table>
+            <caption>History and view</caption>
+            <tbody>
+              <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Z</kbd></th><td>Undo</td></tr>
+              <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></th><td>Redo</td></tr>
+              <tr><th scope="row"><kbd>+</kbd> / <kbd>-</kbd></th><td>Zoom in and out</td></tr>
+              <tr><th scope="row"><kbd>F</kbd></th><td>Fit the map to the screen</td></tr>
+              <tr><th scope="row"><kbd>Home</kbd></th><td>Reset the view</td></tr>
+              <tr><th scope="row"><kbd>Alt</kbd> drag</th><td>Pan</td></tr>
+              <tr><th scope="row"><kbd>?</kbd></th><td>Show the shortcut list</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>On a Mac, use <kbd>Cmd</kbd> in place of <kbd>Ctrl</kbd>.</p>
+      </section>
+
+      <section id="touch">
+        <h2>Touch screens</h2>
+        <p>Pinch to zoom and drag with two fingers to pan. Press and hold on the map to open the menu you would get from a right-click. Everything else works as it does with a mouse.</p>
+      </section>
+
+      <section id="faq">
+        <h2>Good to know</h2>
+        <dl class="faq">
+          <dt>Is it really free?</dt>
+          <dd>Yes. There are no ads, accounts or paywalls. If you want to chip in, there is a "Buy me a coffee" link at the bottom of this page and in Settings.</dd>
+          <dt>Where is my map stored?</dt>
+          <dd>In your browser, on your computer. Nothing is sent anywhere unless you press Share, and then only to the people with the link. Clearing your browser's site data removes the map, so use <em>Save to a file</em> for anything you want to keep safe.</dd>
+          <dt>Can anyone with the link edit my map?</dt>
+          <dd>Yes. A shared link lets anyone who has it edit, and names are only labels that nobody checks. Share it with people you trust.</dd>
+          <dt>Does it work offline?</dt>
+          <dd>Drawing does once the page has loaded. Sharing needs a connection.</dd>
+          <dt>Something is wrong or missing.</dt>
+          <dd>The "What's new" button in the editor lists what changed lately. A contact page is coming.</dd>
+        </dl>
+      </section>
+
+      <p class="doc-cta"><a class="cta" href="/draw/"><span>Start drawing</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg></a></p>
+    </article>
+  </main>
+
+  <!-- @include html/site-footer.html -->
+
+  <script type="module" src="/src/docs.ts"></script>
+</body>
+</html>
