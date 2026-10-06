@@ -3,6 +3,8 @@ import { defineConfig } from 'vite';
 import { resolveSiteUrl } from './scripts/site-url';
 
 export default defineConfig({
+  // Preact for the parts of the UI written as components (src/ui/library.tsx): Vite's own JSX handling is enough.
+  esbuild: { jsx: 'automatic', jsxImportSource: 'preact' },
   // Three pages: the home page (index.html), the editor (draw/index.html) and the docs (docs/index.html).
   build: {
     rollupOptions: { input: { home: 'index.html', draw: 'draw/index.html', docs: 'docs/index.html' } },

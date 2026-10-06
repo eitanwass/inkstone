@@ -1,31 +1,4 @@
-  <!-- Library: a modal over a blurred page, opened from the open-book button under the logo (see src/ui/library.ts).
-       Sample maps for now; models and tokens that players share are meant to join them. The list is
-       public/library/index.json, and the cards are made from it. -->
-  <div id="library-overlay" class="hidden">
-    <div id="library-modal" role="dialog" aria-modal="true" aria-labelledby="library-title" tabindex="-1">
-      <div id="library-header">
-        <h2 id="library-title">Library</h2>
-        <button class="icon-btn" id="library-close" aria-label="Close">
-          <svg width="18" height="18"><use href="/icons.svg#icon-close"></use></svg>
-        </button>
-      </div>
-      <div id="library-layout">
-        <div id="library-filters">
-          <div class="library-field">
-            <label for="library-search">Search</label>
-            <input type="search" id="library-search" placeholder="Name or author" autocomplete="off" spellcheck="false" />
-          </div>
-          <fieldset class="library-field">
-            <legend>Type</legend>
-            <div id="library-kinds"></div>
-          </fieldset>
-          <button type="button" class="btn-secondary" id="library-clear" hidden>Clear filters</button>
-        </div>
-        <section id="library-main" aria-labelledby="library-count" tabindex="-1">
-          <p id="library-count" role="status"></p>
-          <p id="library-message" hidden></p>
-          <ul id="library-grid"></ul>
-        </section>
-      </div>
-    </div>
-  </div>
+  <!-- Library: the panel opened from the open-book button under the logo (see src/ui/library.tsx). Sample maps
+       for now; models and tokens that players share are meant to join them. The panel is drawn into this
+       element by Preact, from public/library/index.json. -->
+  <div id="library-root"></div>
