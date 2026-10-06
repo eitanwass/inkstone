@@ -39,7 +39,7 @@ export const imagesSaved = (): boolean => lastSaveWorked;
 
 // The id of the picture an element shows, if it has one (a token's disc, or a picture on the map).
 export function pictureOf(el: BoardElement): string | undefined {
-  return el.type === 'token' || el.type === 'background' ? el.image : undefined;
+  return 'image' in el ? el.image : undefined;
 }
 
 // Puts a picture in the store and returns its id (the same one if it was already there).

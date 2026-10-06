@@ -13,6 +13,7 @@ describe('rect.bounds', () => {
   it('is the box around the rotated corners', () => {
     // Turned a quarter turn around its center (40, 20): 40 wide, 80 tall.
     const b = rect.bounds(turned);
+    if (!b) throw new Error('no bounds');
     expect(b.x).toBeCloseTo(20);
     expect(b.y).toBeCloseTo(-20);
     expect(b.w).toBeCloseTo(40);

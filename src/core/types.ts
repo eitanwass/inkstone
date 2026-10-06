@@ -205,7 +205,8 @@ export interface SelectBox {
 export interface ElementBehavior<T extends BoardElement, S extends Coords = Coords> {
   center?(el: T): Point;
   draw(ctx: CanvasRenderingContext2D, el: T, isSelected: boolean): void;
-  bounds(el: T): Bounds;
+  /** null for an element with no extent on the map (a background that is only a colour). */
+  bounds(el: T): Bounds | null;
   hit(el: T, wx: number, wy: number): boolean;
   dimensions?(el: T): Dimension[];
   occupiesCell?(el: T, cellX: number, cellY: number): boolean;
@@ -214,4 +215,8 @@ export interface ElementBehavior<T extends BoardElement, S extends Coords = Coor
   translate?(el: T, dx: number, dy: number, origin?: S): void;
   handles?(el: T, rotateOffset: number): Handle[];
   rotate?(el: T, rotation: number, delta: number, pivot: Point, startCoords: S): void;
+  /** The angle it is turned by, in radians. Default 0. */
+  angle?(el: T): number;
+  /** Moves and resizes to the pixel, not the grid, and keeps its proportions when resized (a picture). */
+  freeform?: boolean;
 }

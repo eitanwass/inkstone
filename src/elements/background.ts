@@ -18,7 +18,10 @@ export const background: ElementBehavior<BackgroundElement> = {
     // Drawn on the grid's layer, behind the dots.
   },
 
-  bounds: (el) => ({ x: el.x, y: el.y, w: el.w, h: el.h }),
+  // A colour alone has no extent.
+  bounds: (el) => (el.image ? { x: el.x, y: el.y, w: el.w, h: el.h } : null),
+
+  freeform: true,
 
   hit: (el, wx, wy) => !!el.image && wx >= el.x && wx <= el.x + el.w && wy >= el.y && wy <= el.y + el.h,
 

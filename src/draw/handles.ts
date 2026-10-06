@@ -17,7 +17,14 @@ import type {
   TokenElement,
   WallElement,
 } from '../core/types';
-import { elementCenter, elementHandles, rotateElement, snapshotCoords } from '../elements';
+import {
+  elementAngle,
+  elementCenter,
+  elementHandles,
+  isFreeform,
+  rotateElement,
+  snapshotCoords,
+} from '../elements';
 
 export const HANDLE_RADIUS_PX = 5;
 export const HANDLE_HIT_PX = 9;
@@ -81,7 +88,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       return {
         center,
         startAngle: Math.atan2(world.y - center.y, world.x - center.x),
-        startRotation: el.type === 'rect' ? el.rotation || 0 : 0,
+        startRotation: elementAngle(el),
         startCoords: snapshotCoords(el),
       };
     },
@@ -100,7 +107,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
     start(el, handle) {
       // Only a room is turned by an angle (radians). A background picture's `rotation` is a count of quarter turns,
       // and its box is already the shape shown, so for resizing it is not turned at all.
-      const rotation = el.type === 'rect' ? el.rotation || 0 : 0;
+      const rotation = elementAngle(el);
       const anchorId = ({ nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' } as Record<Corner, Corner>)[
         handle.id as Corner
       ];
@@ -114,8 +121,9 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       const local = rotatePoint(world, anchorWorld, -rotation);
       // A picture is sized to the pixel, not to the grid: its own squares have to be lined up with ours. With
       // Shift (`precise`) its dragged corner goes on a grid line instead.
-      const pictureShift = el.type === 'background' && precise;
-      const snap = el.type === 'background' ? Math.round : snapToGrid;
+      const freeform = isFreeform(el);
+      const pictureShift = freeform && precise;
+      const snap = freeform ? Math.round : snapToGrid;
       const dx = pictureShift ? snapToGrid(local.x) - anchorWorld.x : snap(local.x - anchorWorld.x);
       const dy = pictureShift ? snapToGrid(local.y) - anchorWorld.y : snap(local.y - anchorWorld.y);
 
@@ -128,7 +136,7 @@ const HANDLE_DRAGS: HandleDragBehaviors = {
       let w = Math.max(MIN_SHAPE_SIZE, dx * signs.sx);
       let h = Math.max(MIN_SHAPE_SIZE, dy * signs.sy);
       // A picture keeps its proportions: the width decides, the height follows.
-      if (el.type === 'background') {
+      if (freeform) {
         w = Math.max(MIN_SHAPE_SIZE * aspect, w);
         h = w / aspect;
       }

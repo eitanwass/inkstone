@@ -28,6 +28,9 @@
 //   handles(el, rotateOffset)   resize/rotate handles. A rotate handle has a
 //                               `from` point its connector line starts at.
 //   rotate(el, rotation, delta, pivot, startCoords)  applies a rotate drag.
+//   angle(el)                   the angle it is turned by, in radians. Default 0.
+//   freeform                    moves and resizes to the pixel, proportions kept.
+//   bounds may return null: no extent on the map.
 //
 // To add a type: create its file, then add it to ELEMENT_TYPES.
 
@@ -69,7 +72,6 @@ export function drawElementShape(ctx: CanvasRenderingContext2D, el: BoardElement
 }
 
 export function getElementBounds(el: BoardElement): Bounds | null {
-  if (el.type === 'background' && !el.image) return null; // a colour alone has no extent
   return typeOf(el)?.bounds(el) ?? null;
 }
 
@@ -129,6 +131,12 @@ export function translateElement(el: BoardElement, dx: number, dy: number, origi
     (el as Point).y = (origin as Point).y + dy;
   }
 }
+
+// The angle el is turned by, in radians (0 for a type that is never turned).
+export const elementAngle = (el: BoardElement): number => typeOf(el)?.angle?.(el) ?? 0;
+
+// Whether el moves and resizes to the pixel with its proportions kept (a picture), not by grid cells.
+export const isFreeform = (el: BoardElement | undefined): boolean => !!el && !!typeOf(el)?.freeform;
 
 export function elementHandles(el: BoardElement, rotateOffset: number): Handle[] {
   return typeOf(el)?.handles?.(el, rotateOffset) ?? [];

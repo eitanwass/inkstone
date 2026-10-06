@@ -7,7 +7,7 @@ import { normalizeRect, rectsOverlap, snapToGrid } from '../core/geometry';
 import { GRID, state } from '../core/state';
 import type { BoardElement, Point } from '../core/types';
 import { drawMain } from '../draw/render';
-import { getElementBounds, snapshotCoords, translateElement } from '../elements';
+import { getElementBounds, isFreeform, snapshotCoords, translateElement } from '../elements';
 import { isInteractive } from '../elements/layer';
 import { nextTokenName } from '../elements/token-names';
 import { showToast } from '../ui/toast';
@@ -137,7 +137,7 @@ export function applyElementDrag(world: Point, snap = false): void {
   drag.moved = true;
   const { origin, snapshot } = drag;
   // The background picture moves to the pixel, everything else a cell at a time.
-  const free = snapshot.every(({ i }) => state.elements[i]?.type === 'background');
+  const free = snapshot.every(({ i }) => isFreeform(state.elements[i]));
   const step = free ? Math.round : snapToGrid;
   const dx = step(world.x - origin.x);
   const dy = step(world.y - origin.y);

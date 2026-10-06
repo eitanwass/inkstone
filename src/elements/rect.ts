@@ -100,6 +100,8 @@ export const rect: ElementBehavior<RectElement> = {
     return cellX < el.x + el.w && cellX + GRID > el.x && cellY < el.y + el.h && cellY + GRID > el.y;
   },
 
+  angle: (el) => el.rotation || 0,
+
   // Four corner resize handles plus a rotate handle above the top edge.
   handles(el, rotateOffset) {
     const rotation = el.rotation || 0;
