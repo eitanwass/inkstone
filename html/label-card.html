@@ -1,17 +1,4 @@
-  <!-- The label card: details of the selected label, above it (see src/ui/label-card.ts): its size and
-       color so far; font family and the like are meant to go here too. -->
-  <div id="label-card" class="hidden" role="group" aria-label="Label details">
-    <div class="lc-size">
-      <span class="tc-label">Size</span>
-      <input type="range" id="label-size" min="8" max="72" value="14" class="slider" aria-label="Label size" />
-      <span id="label-size-value">14</span>
-    </div>
-    <!-- Bold, italic and a plate behind the text (built in src/ui/text-style-toggles.ts, shared with the token card) -->
-    <div id="label-text-style" class="ts-toggles" role="group" aria-label="Text style"></div>
-    <!-- Color: the swatches (built in src/ui/label-card.ts), then any color -->
-    <div id="label-colors" role="group" aria-label="Label color">
-      <label class="token-swatch token-swatch-custom" title="Custom color">
-        <input type="color" id="label-color-custom" aria-label="Custom color" />
-      </label>
-    </div>
-  </div>
+  <!-- The label card: details of the selected label, above it (see src/ui/label-card.tsx): its size, text
+       style and color so far; font family and the like are meant to go here too. Preact draws its contents
+       into this element, which stays here so label-editor.ts can find it at load. -->
+  <div id="label-card" class="hidden" role="group" aria-label="Label details"></div>

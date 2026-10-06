@@ -7,6 +7,7 @@
 
 import { byId } from './dom';
 import { screenToWorld } from './geometry';
+import { state } from './state';
 import type { Point } from './types';
 
 export const gridCanvas = byId<HTMLCanvasElement>('grid-canvas');
@@ -26,6 +27,12 @@ export const mCtx = context2d(mainCanvas);
 export function clientToCanvas(clientX: number, clientY: number): Point {
   const rect = iCanvas.getBoundingClientRect();
   return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+// And back: a point in world space -> browser (client) coordinates.
+export function worldToClient(x: number, y: number): Point {
+  const rect = iCanvas.getBoundingClientRect();
+  return { x: rect.left + state.panX + x * state.zoom, y: rect.top + state.panY + y * state.zoom };
 }
 
 export function clientToWorld(clientX: number, clientY: number): Point {

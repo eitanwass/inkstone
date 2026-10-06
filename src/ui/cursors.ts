@@ -5,10 +5,9 @@
 // positions it is sent. A pointer is kept in world units and placed again after every redraw
 // (render.ts's onMainDrawn hook), so it stays on its spot as the map is panned or zoomed.
 
-import { iCanvas } from '../core/canvas';
+import { worldToClient } from '../core/canvas';
 import { byId } from '../core/dom';
 import { identicon } from '../core/identicon';
-import { state } from '../core/state';
 import { onMainDrawn } from '../draw/render';
 import { playerName } from './players';
 
@@ -19,10 +18,8 @@ type Cursor = { el: HTMLElement; name: HTMLElement; x: number; y: number };
 const cursors = new Map<string, Cursor>(); // by tab
 
 function place({ el, x, y }: Cursor): void {
-  const screen = iCanvas.getBoundingClientRect();
-  const left = screen.left + state.panX + x * state.zoom;
-  const top = screen.top + state.panY + y * state.zoom;
-  el.style.transform = `translate(${left}px, ${top}px)`;
+  const at = worldToClient(x, y);
+  el.style.transform = `translate(${at.x}px, ${at.y}px)`;
 }
 
 function create(id: string): Cursor {

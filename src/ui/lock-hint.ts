@@ -6,7 +6,7 @@
 // (render.ts's onMainDrawn hook, registered rather than imported to keep the module chain one-way), so it
 // stays on its element as the map is panned or zoomed under a mouse that hasn't moved.
 
-import { clientToWorld, iCanvas } from '../core/canvas';
+import { clientToWorld, iCanvas, worldToClient } from '../core/canvas';
 import { byId } from '../core/dom';
 import { state } from '../core/state';
 import { onMainDrawn } from '../draw/render';
@@ -42,11 +42,9 @@ function update(): void {
   // it sits out beyond the corner.
   const small = Math.min(bounds.w, bounds.h) * state.zoom < SMALL_PX;
   const inset = small ? -SIZE_PX * 0.3 : MARGIN_PX + SIZE_PX / 2; // negative: outside the corner
-  const screen = iCanvas.getBoundingClientRect();
-  const right = screen.left + state.panX + (bounds.x + bounds.w) * state.zoom;
-  const top = screen.top + state.panY + bounds.y * state.zoom;
-  hint.style.left = `${right - inset - SIZE_PX / 2}px`;
-  hint.style.top = `${top + inset - SIZE_PX / 2}px`;
+  const corner = worldToClient(bounds.x + bounds.w, bounds.y);
+  hint.style.left = `${corner.x - inset - SIZE_PX / 2}px`;
+  hint.style.top = `${corner.y + inset - SIZE_PX / 2}px`;
   hint.classList.add('shown');
 }
 

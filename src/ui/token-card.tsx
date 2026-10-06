@@ -15,7 +15,7 @@
 
 import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef } from 'preact/hooks';
-import { iCanvas } from '../core/canvas';
+import { iCanvas, worldToClient } from '../core/canvas';
 import { byId } from '../core/dom';
 import { DEFAULT_TOKEN_RADIUS, state } from '../core/state';
 import type { TokenElement } from '../core/types';
@@ -37,8 +37,7 @@ const NAME_LABEL_PX = 28; // a name is written just under its token
 function place(card: HTMLElement, token: TokenElement): void {
   const screen = iCanvas.getBoundingClientRect();
   const radius = (token.radius || DEFAULT_TOKEN_RADIUS) * state.zoom;
-  const x = screen.left + state.panX + token.x * state.zoom;
-  const y = screen.top + state.panY + token.y * state.zoom;
+  const { x, y } = worldToClient(token.x, token.y);
   const { left, top } = cardPosition({
     centerX: x,
     top: y - radius,

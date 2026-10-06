@@ -6,25 +6,24 @@
 //
 // The text tool uses the same field: a click on a label opens it, a click anywhere else puts a new,
 // empty label there and opens that (textToolClick), and a drag marks out an area for a new one, whose
-// height is its size (textToolArea), with its card (label-card.ts) beside it. It joins the map, and the undo history, only
+// height is its size (textToolArea), with its card (label-card.tsx) beside it. It joins the map, and the undo history, only
 // when it has text; blank, or Escape, and it was never there.
 //
 // The label itself isn't drawn by the canvas while it is edited (see state.editingLabel), and the
 // field follows it as the map is panned or zoomed. It is positioned from render.ts's onMainDrawn hook,
 // which is registered rather than imported to keep the module chain one-way.
 
-import { iCanvas } from '../core/canvas';
+import { worldToClient } from '../core/canvas';
 import { byId } from '../core/dom';
-import { DEFAULT_FONT_SIZE, state } from '../core/state';
+import { state } from '../core/state';
 import type { LabelElement, Point } from '../core/types';
 import { drawMain, onMainDrawn } from '../draw/render';
 import { hitTest } from '../elements';
-import { LABEL_SIZE } from '../elements/label';
+import { fontSizeOf, LABEL_SIZE, labelColorOf } from '../elements/label';
 import { fontString } from '../elements/text-style';
 import { pushHistory } from '../input/history';
 
 const field = byId<HTMLInputElement>('label-editor');
-const DEFAULT_COLOR = '#e8dcc8'; // as in elements/label.ts
 const PAD_PX = 3;
 
 let editing: { label: LabelElement; original: string; isNew: boolean } | null = null;
@@ -40,16 +39,16 @@ function place(): void {
     cancel(); // gone (undone, or changed by someone else) while it was being edited
     return;
   }
-  const size = (label.fontSize || DEFAULT_FONT_SIZE) * state.zoom;
+  const size = fontSizeOf(label) * state.zoom;
   measure.font = fontString(size, label);
-  const screen = iCanvas.getBoundingClientRect();
+  const at = worldToClient(label.x, label.y);
   field.style.fontSize = `${size}px`;
-  field.style.color = label.strokeColor || DEFAULT_COLOR;
+  field.style.color = labelColorOf(label);
   field.style.fontWeight = label.bold ? '700' : '400';
   field.style.fontStyle = label.italic ? 'italic' : 'normal';
   field.style.width = `${Math.ceil(measure.measureText(field.value || ' ').width) + 2 * PAD_PX + size}px`;
-  field.style.left = `${screen.left + state.panX + label.x * state.zoom - PAD_PX - 1}px`;
-  field.style.top = `${screen.top + state.panY + label.y * state.zoom - PAD_PX - 1}px`;
+  field.style.left = `${at.x - PAD_PX - 1}px`;
+  field.style.top = `${at.y - PAD_PX - 1}px`;
 }
 
 // Whether this is a label that has just been placed and has no text yet: it is on the map for the field

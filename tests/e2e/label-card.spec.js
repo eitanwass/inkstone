@@ -108,8 +108,9 @@ test.describe('size', () => {
     await page.reload();
     await page.waitForSelector('#tool-rect');
     await page.click('#tool-select');
-    await page.mouse.click(332, 328);
+    await page.keyboard.press('Control+a'); // the one label
     await expect(page.locator('#label-size')).toHaveValue('14');
+    await expect(card(page)).toBeVisible();
   });
 });
 
