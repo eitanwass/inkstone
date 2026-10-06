@@ -103,6 +103,36 @@ body:has(#btn-share[aria-expanded="true"]) .hint-share,
   user-select: none;
 }
 
+/* Under the library button (the open book under the logo), pointing up at it. */
+.hint-library {
+  position: absolute;
+  top: calc(112px + env(safe-area-inset-top, 0px));
+  left: calc(31px + env(safe-area-inset-left, 0px)); /* its arrow's tip is over the middle of the button */
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13px;
+  user-select: none;
+}
+
+.hint-library span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.hint-book {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  /* The button moves under the map's name here. */
+  .hint-library {
+    top: calc(168px + env(safe-area-inset-top, 0px));
+  }
+}
+
 .hint-help svg {
   margin-right: 6px;
 }

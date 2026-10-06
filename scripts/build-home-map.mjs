@@ -34,7 +34,6 @@ try {
         delete el.portrait;
       }
       localStorage.setItem('inkstone-board', JSON.stringify(board));
-      localStorage.setItem('inkstone-hint-seen', '1');
       localStorage.setItem('inkstone-player', JSON.stringify({ id: 'homepage01', name: 'Mira' }));
     },
     { board: BOARD, paintSource: paintPortraits.toString() },
