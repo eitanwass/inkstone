@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { analyticsTags, resolveAnalyticsToken } from './scripts/analytics';
 import { resolveSiteUrl } from './scripts/site-url';
+import { COMMUNITY_URL } from './src/community';
 
 export default defineConfig({
   // Preact for the parts of the UI written as components (src/ui/library.tsx): Vite's own JSX handling is enough.
@@ -34,6 +35,14 @@ export default defineConfig({
         server.watcher.on('change', (file) => {
           if (/[\\/]html[\\/]/.test(file)) server.ws.send({ type: 'full-reload' });
         });
+      },
+    },
+    {
+      // Fills in the %COMMUNITY_URL% placeholder of the site's top bar and footer (src/community.ts).
+      name: 'inkstone-community-url',
+      transformIndexHtml: {
+        order: 'pre',
+        handler: (html) => html.replaceAll('%COMMUNITY_URL%', COMMUNITY_URL),
       },
     },
     {

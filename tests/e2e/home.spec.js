@@ -25,6 +25,7 @@ test('the menu links to the docs and lists what is still coming', async ({ page 
     'Inkstone',
     'Features',
     'Docs',
+    'Community',
     'Contact',
     'Start drawing',
   ]);

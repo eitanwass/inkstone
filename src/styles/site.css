@@ -255,7 +255,8 @@ h2 {
   color: var(--text-muted);
 }
 
-.coffee {
+.coffee,
+.community {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -270,20 +271,31 @@ h2 {
     opacity 0.9s var(--ease);
 }
 
-.coffee svg {
+.coffee svg,
+.community svg {
   color: var(--accent);
   transition: transform 0.6s var(--ease), color 0.35s var(--ease);
 }
 
-.coffee:hover {
+.coffee:hover,
+.community:hover {
   background: var(--accent);
   color: var(--bg);
   transform: translateY(-2px);
 }
 
-.coffee:hover svg {
+.coffee:hover svg,
+.community:hover svg {
   color: var(--bg);
   transform: rotate(-12deg) scale(1.08);
+}
+
+/* The two buttons beside each other, in a column on a phone. */
+.footer-actions {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .fine-print {

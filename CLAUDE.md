@@ -194,6 +194,16 @@ Each adds its own: `home.css` / `home.ts`, `docs.css` / `docs.ts`, `contact.css`
 - Tests: `tests/e2e/home.spec.js` and `docs.spec.js` (links, the map, the menu, the support link, the old
   invite redirect, the phone layouts, axe). The e2e helpers start at `/draw/`.
 
+## Community
+
+The **Discord server** is linked from three places: the site's top menu ("Community") and footer ("Join the community",
+beside "Buy me a coffee"; both in `html/site-header.html` / `html/site-footer.html`, so every page that includes them
+has them: home, docs, contact) and the editor's Settings (a quiet link above the coffee one at the foot of the tabs,
+`#settings-community`). They all open in a new tab (`rel="noopener noreferrer"`). **The address is one constant,
+`COMMUNITY_URL` in `src/community.ts`**: Settings imports it, and a Vite plugin fills it into the pages' `%COMMUNITY_URL%`
+placeholders (the docs FAQ uses it too), so changing the invite there changes it everywhere. (The coffee address is still
+repeated; see "Home".) Tested in `tests/e2e/community.spec.js`, which compares with the constant.
+
 ## Feedback
 
 Players can write to the person who makes Inkstone, and it arrives in a **private Discord channel** that only the
