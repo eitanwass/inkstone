@@ -14,9 +14,18 @@ export function relayHttpUrl(host: string, path: string): string {
   return `${local ? 'http' : 'https'}://${host}${path}`;
 }
 
+// Just the host, however it was typed: a scheme in front ("https://", "wss://", even a mistyped "https//") or a
+// slash or path after it is dropped, since the sockets and the feedback form add their own.
+export function cleanRelayHost(value: string): string {
+  return value
+    .trim()
+    .replace(/^(?:https?|wss?):?\/\//i, '')
+    .replace(/\/.*$/, '');
+}
+
 // The relay's host, or null when this build has none (sharing is then off).
 export function resolveRelayHost(env: { VITE_RELAY_HOST?: string; DEV: boolean }): string | null {
-  const configured = env.VITE_RELAY_HOST?.trim();
+  const configured = cleanRelayHost(env.VITE_RELAY_HOST ?? '');
   if (configured) return configured;
   return env.DEV ? LOCAL_RELAY_HOST : null;
 }

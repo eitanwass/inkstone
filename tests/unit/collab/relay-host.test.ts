@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_RELAY_HOST, resolveRelayHost } from '../../../src/collab/relay-host';
+import { cleanRelayHost, LOCAL_RELAY_HOST, resolveRelayHost } from '../../../src/collab/relay-host';
 
 describe('resolveRelayHost', () => {
   it('uses the configured relay, in dev and in production', () => {
@@ -31,5 +31,32 @@ describe('resolveRelayHost', () => {
     expect(resolveRelayHost({ VITE_RELAY_HOST: '  relay.example.dev \n', DEV: false })).toBe(
       'relay.example.dev',
     );
+  });
+});
+
+describe('cleanRelayHost', () => {
+  it('leaves a plain host alone', () => {
+    expect(cleanRelayHost('inkstone.me.workers.dev')).toBe('inkstone.me.workers.dev');
+    expect(cleanRelayHost('localhost:8787')).toBe('localhost:8787');
+  });
+
+  it('drops a scheme, a mistyped one, a slash and a path, and spaces', () => {
+    for (const value of [
+      'https://inkstone.me.workers.dev',
+      'https://inkstone.me.workers.dev/',
+      'https//inkstone.me.workers.dev/',
+      'wss://inkstone.me.workers.dev',
+      'HTTP://inkstone.me.workers.dev/parties/main',
+      '  inkstone.me.workers.dev/  ',
+    ]) {
+      expect(cleanRelayHost(value)).toBe('inkstone.me.workers.dev');
+    }
+  });
+
+  it('is what resolveRelayHost gives back, so a pasted address still works; nothing left means no relay', () => {
+    expect(resolveRelayHost({ VITE_RELAY_HOST: 'https://inkstone.me.workers.dev/', DEV: false })).toBe(
+      'inkstone.me.workers.dev',
+    );
+    expect(resolveRelayHost({ VITE_RELAY_HOST: 'https://', DEV: false })).toBeNull();
   });
 });
