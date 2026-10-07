@@ -16,6 +16,20 @@ class_name = "InkstoneRoom"
 name = "CURSORS"
 class_name = "CursorRoom"
 
+# Counts what each visitor has sent through the feedback form, so it can't be used to flood the channel (party/feedback.js).
+[[durable_objects.bindings]]
+name = "FEEDBACK_GATE"
+class_name = "FeedbackGate"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["InkstoneRoom", "CursorRoom"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["FeedbackGate"]
+
+# The feedback form posts to a Discord channel through a webhook, whose address is a secret and not in this file:
+#   npx wrangler secret put FEEDBACK_WEBHOOK
+# (Discord: a private channel, Edit Channel, Integrations, Webhooks, New Webhook, Copy Webhook URL.)
+# Without it the form says feedback isn't set up.

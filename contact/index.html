@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Contact: tell us what you think of Inkstone</title>
+  <meta name="description" content="Found a bug, have an idea, or run a table with Inkstone? Send a message to the person who makes it." />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Inkstone" />
+  <meta property="og:title" content="Contact Inkstone" />
+  <meta property="og:description" content="A bug, an idea, or how your table uses it: send a message to the person who makes Inkstone." />
+  <meta property="og:url" content="%SITE_URL%/contact/" />
+  <meta property="og:image" content="%SITE_URL%/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Inkstone logo and a small map: a room with two tokens on a parchment grid." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#1a1714" />
+  <link rel="stylesheet" href="/src/styles/site.css" />
+  <link rel="stylesheet" href="/src/styles/contact.css" />
+  <script>
+    document.documentElement.classList.add('js');
+  </script>
+</head>
+
+<body>
+  <!-- @include html/site-header.html -->
+
+  <main class="contact">
+    <h1>Tell us what you think</h1>
+    <p class="contact-intro">
+      Found a bug, have an idea, or want to say how your table uses Inkstone? Write it here. It goes straight to the
+      person who makes it, and every message is read.
+    </p>
+
+    <!-- Posts to the relay's /feedback (party/feedback.js), like the editor's feedback dialog; see src/contact.ts -->
+    <form id="contact-form" novalidate>
+      <label for="contact-message">Your message</label>
+      <textarea id="contact-message" rows="7" maxlength="2000"></textarea>
+
+      <label for="contact-email">Email <span class="optional">(optional, only so you can be answered)</span></label>
+      <input id="contact-email" type="email" maxlength="200" autocomplete="email" spellcheck="false" />
+
+      <!-- Hidden from people: only a script fills this in, and its message goes nowhere -->
+      <input id="contact-trap" class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+      <p id="contact-problem" class="problem" role="alert"></p>
+      <button id="contact-send" class="send" type="submit">Send message</button>
+    </form>
+
+    <p id="contact-thanks" class="thanks" role="status" tabindex="-1" hidden>
+      Thank you. Your message has been sent to the person who makes Inkstone.
+    </p>
+
+    <p class="contact-elsewhere">
+      Prefer to do it in the open? Report a bug or ask for a feature on
+      <a href="https://github.com/eitanwass/inkstone/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
+    </p>
+  </main>
+
+  <!-- @include html/site-footer.html -->
+
+  <script type="module" src="/src/contact.ts"></script>
+</body>
+</html>

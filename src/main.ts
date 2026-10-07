@@ -26,6 +26,7 @@ import './ui/map-name';
 import './ui/table-maps';
 import './collab/collab';
 import './ui/changelog';
+import './ui/feedback';
 import './ui/library';
 import './settings';
 import './ui/label-card';

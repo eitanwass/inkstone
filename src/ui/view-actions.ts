@@ -3,15 +3,15 @@
 
 import { mainCanvas } from '../core/canvas';
 import { byId } from '../core/dom';
-import { parseMapFile, serializeMap } from '../core/map-file';
+import { parseMapFile } from '../core/map-file';
 import { state } from '../core/state';
 import { dotColorFor, drawBackground, drawGridDots, mapColor } from '../draw/grid';
 import { drawElement, drawMain } from '../draw/render';
-import { getImageData, pictureOf } from '../elements/token-image';
 import { resetView } from '../input/controls';
 import { pushHistory, showUndoToast } from '../input/history';
 import { mapFileName } from './map-name';
 import { mapFileSlug } from './map-name-text';
+import { currentMapText } from './map-text';
 import { showConfirm } from './modal';
 import { openMap } from './open-map';
 import { showToast } from './toast';
@@ -39,13 +39,7 @@ function download(blob: Blob, name: string): void {
 }
 
 byId('btn-save-file').addEventListener('click', () => {
-  const images: Record<string, string> = {};
-  for (const el of state.elements) {
-    const id = pictureOf(el);
-    const data = id ? getImageData(id) : undefined;
-    if (id && data) images[id] = data;
-  }
-  const text = serializeMap({ name: state.mapName, elements: state.elements, images });
+  const text = currentMapText();
   download(new Blob([text], { type: 'application/json' }), `${mapFileSlug(state.mapName)}.inkstone.json`);
   showToast('Map saved to a file');
 });

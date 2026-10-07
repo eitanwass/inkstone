@@ -17,8 +17,6 @@ Each item is meant to ship on its own. Done items are removed (see CHANGELOG.md)
   already that map.
 - **Know whether people come back.** Cloudflare Web Analytics (free, no cookies) or Vercel's own
   analytics. Decide on this before spending anything on hosting.
-- **A way to reach us.** Make "Contact" in the menu a real page: a `mailto:` or a link to GitHub
-  issues, and a "send feedback" link from the editor.
 - **Watch the free tier.** The relay now hibernates when a table is idle, cursors send every 100 ms, and
   `CURSORS_OFF` in wrangler.toml switches them off (see CLAUDE.md). What is left is looking at the Durable
   Objects usage in the Cloudflare dashboard (requests, duration, storage reads) once real tables use it, and

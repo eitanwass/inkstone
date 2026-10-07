@@ -1,6 +1,6 @@
 // The page-view counter: Cloudflare Web Analytics, which is free, sets no cookies and follows nobody
 // across sites. It counts visits and page views (and where they come from, and the country), and
-// never sees a map. It is added to the three pages (home, editor, docs) only in a production build
+// never sees a map. It is added to the four pages (home, editor, docs, contact) only in a production build
 // that has a token: CF_ANALYTICS_TOKEN, the site's token from Cloudflare (Analytics & Logs, Web
 // Analytics, Add a site; set it in Vercel's environment variables, then redeploy). Without one
 // (development, tests, a fork) nothing is added and nothing is sent.

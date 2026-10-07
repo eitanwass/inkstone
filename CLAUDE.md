@@ -83,7 +83,7 @@ deployed host before running `npm run build`.
 ## Analytics
 
 A page-view counter (**Cloudflare Web Analytics**: free, no cookies, no cross-site tracking, never sees a map) is
-added to the three pages in a **production build that has a token** only: `CF_ANALYTICS_TOKEN`, the site's token
+added to the four pages in a **production build that has a token** only: `CF_ANALYTICS_TOKEN`, the site's token
 from Cloudflare (Analytics & Logs, Web Analytics, Add a site), set in Vercel's environment variables, then
 redeploy (changing a variable alone doesn't trigger a build). `scripts/analytics.ts` decides (a token must be 32
 hex characters, else it is dropped) and a small Vite plugin in vite.config.ts (`apply: 'build'`) adds the beacon
@@ -165,13 +165,14 @@ Deliberate design points:
 
 ## The site around the editor
 
-Three pages, all built by Vite (`build.rollupOptions.input` in vite.config.ts): the home page `/`
-([index.html](index.html)), the editor `/draw/` ([draw/index.html](draw/index.html)) and the docs `/docs/`
-([docs/index.html](docs/index.html)). The home page and docs share the top bar and footer
+Four pages, all built by Vite (`build.rollupOptions.input` in vite.config.ts): the home page `/`
+([index.html](index.html)), the editor `/draw/` ([draw/index.html](draw/index.html)), the docs `/docs/`
+([docs/index.html](docs/index.html)) and contact `/contact/` ([contact/index.html](contact/index.html), see
+"Feedback"). The home page, docs and contact share the top bar and footer
 ([html/site-header.html](html/site-header.html), [html/site-footer.html](html/site-footer.html), pasted in
 by the same include plugin), [src/styles/site.css](src/styles/site.css) (colors, bar, buttons, footer, motion)
 and [src/site.ts](src/site.ts) (fonts, scroll reveal, the phone menu, `aria-current` on the page you are on).
-Each adds its own: `home.css` / `home.ts`, `docs.css` / `docs.ts`.
+Each adds its own: `home.css` / `home.ts`, `docs.css` / `docs.ts`, `contact.css` / `contact.ts`.
 
 - **Home.** The top half is a map made in the editor (`public/home-map.jpg`), held still while a dark sheet
   with the headline, the "Start drawing" button and the features slides over it; the footer says the site is
@@ -192,6 +193,32 @@ Each adds its own: `home.css` / `home.ts`, `docs.css` / `docs.ts`.
   `index.html`. Links to share are made from the editor's own address, so they point at `/draw/`.
 - Tests: `tests/e2e/home.spec.js` and `docs.spec.js` (links, the map, the menu, the support link, the old
   invite redirect, the phone layouts, axe). The e2e helpers start at `/draw/`.
+
+## Feedback
+
+Players can write to the person who makes Inkstone, and it arrives in a **private Discord channel** that only the
+owner can see. Two ways in, one message: the **speech-bubble button in the editor's top bar** opens a dialog
+(`ui/feedback.tsx`: a message, an email only if they'd like an answer, and an opt-in "Attach my map", which sends
+the map file, `ui/map-text.ts`, so a bug can be reproduced; too big, 2,000,000 characters, it goes without the
+pictures, then not at all) and the **Contact page** (`/contact/`, `contact.ts`) has the same form without the map.
+Both build the body with `core/feedback.ts` (pure: `feedbackProblem` says in words why a draft can't be sent,
+`feedbackBody`, the limits) and post it with `feedback-send.ts` to the relay: `POST /feedback` on the Worker
+(`party/feedback.js`, routed in `party/server.js`, CORS open since the site and the relay are on different
+addresses). What the Worker does: checks the body (message 1 to 2,000 characters, a plausible email or none, a
+map as text), **ignores a message whose hidden `website` field was filled** (a script's; it is answered as if it
+went), asks `FeedbackGate` (a Durable Object, binding `FEEDBACK_GATE`, migration `v2`) whether this visitor
+(a hash of their address, never the address) may send, **at most 5 an hour each and 300 a day in all**, then posts
+an embed to the Discord webhook (mentions switched off, so nothing typed can ping anyone; the map as a file).
+Nothing is stored but those counts, which are forgotten after a day of quiet. A build with no relay (see
+`resolveRelayHost`) or a Worker without the webhook says "Feedback isn't set up on this site yet."
+
+**Setting it up** (once): in Discord make a server and a private channel, then Edit Channel, Integrations,
+Webhooks, New Webhook, Copy Webhook URL; then `npx wrangler secret put FEEDBACK_WEBHOOK` and paste it, and
+`npm run party:deploy` (which also applies the `v2` migration). The address is a secret: anyone who has it can
+post to the channel, so it lives only in the Worker, never in the site or the repo. `VITE_RELAY_HOST` (already set
+for sharing) tells the site where the Worker is. Tested in `tests/unit/party/feedback.test.ts`,
+`tests/unit/core/feedback.test.ts`, `tests/e2e/feedback.spec.js` and `contact.spec.js` (the e2e tests answer
+`/feedback` themselves; nothing is sent to Discord from a test).
 
 ## Design system and share preview
 
@@ -297,6 +324,10 @@ chain, so there are no circular imports to reason about.
 | `ui/maps.ts` | The moves between maps: `listMaps` (the one on the board first, with a picture made just now, then the parked ones), `newMap`, `openSavedMap`, `openAsNewMap` (a library sample), `deleteMap`, `hasParkedMaps`. `putOnBoard` parks the working copy (its elements as `inkstone-map:<id>`, its entry in the index `inkstone-maps`, with a thumbnail from `ui/map-thumbnail.ts`) and makes another map the board's through `startMap` (history.ts): a fresh undo baseline, nothing broadcast. It writes to storage first and reports failure with a toast, changing nothing. Registers `setImageKeepers`, so the picture store never prunes a picture a parked map shows. At a table nothing is parked or moved: a map from My Maps, a sample or a new one is *brought to the table* (`bringToTable`: asks, then `addTableMap` in collab.ts copies it to the room, and the one in My Maps stays), and the board changes when the room's `switch` comes back; deleting the table's map is refused. `setTableHooks` registers what collab.ts calls back for: `mapId`, `shared`, `beforeJoin` (the map on the board is put away unless it is already the table's: `index.table`), `switched` and `left`. |
 | `ui/table-maps.ts` | The list of the maps a table holds in the Share popover (`#share-maps`, plain DOM): the one the table is on marked (`aria-current`), the others buttons that move the table there at once (`gotoTableMap`), each with a × that asks and takes it off the table (`dropTableMap`); redrawn from `onTableChanged`. |
 | `ui/map-thumbnail.ts` | `makeThumbnail()`: the map on the board framed in 400 by 260 (the library samples' size) as a jpeg data URL, or null for an empty map. |
+| `core/feedback.ts` | Pure: the feedback form's limits (as in `party/feedback.js`, kept in step by hand), `feedbackProblem` (why a draft can't be sent, in words), `SEND_PROBLEMS` (what to say when sending fails) and `feedbackBody`. Unit tested. |
+| `feedback-send.ts` | `sendFeedback(body)`: posts to the relay's `/feedback` (`relayHttpUrl` in `collab/relay-host.ts`: http for a relay on this machine, https otherwise) and says `sent`, `not-set-up`, `busy` or `failed`. Shared by the dialog and the Contact page. |
+| `ui/feedback.tsx` | The feedback dialog (**a Preact component**, drawn into `#feedback-root`, opened by `#btn-feedback` in the action bar through `use-modal.ts`): see "Feedback". The text is kept if sending fails, and the form starts fresh after one was sent. |
+| `ui/map-text.ts` | `currentMapText(withPictures)`: the map on the board as the text of a map file. What Save to a file writes and what the feedback form attaches. |
 | `ui/changelog.tsx` | The "What's new" modal (**a Preact component**, drawn into `#changelog-root`; about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
 | `ui/use-modal.ts` | The hook every modal opened from a button uses (Settings, What's new): opens on the button's click, moves focus in, keeps Tab inside (`focus.ts`), closes on Escape or a click on the backdrop, gives focus back. The component draws the overlay and puts `modal` and `onBackdropClick` on it. |
 | `ui/changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
@@ -607,7 +638,7 @@ instead of outlining it.
 
 **The right rail** (top-right, `html/right-rail.html`, `styles/right-rail.css`) is two panels, one under the other:
 the **action cluster** (`#action-cluster`: the save indicator, undo, redo, then clear, export, save and
-open file, then What's new and Settings; on a phone only the indicator, undo, redo and "more" show, the rest drop
+open file, then What's new, Send feedback and Settings; on a phone only the indicator, undo, redo and "more" show, the rest drop
 down from it) holds the map's own actions, and the **live session** under it is a panel of its own (`#session`):
 while shared, the Live indicator (`#collab-status`, a dot and the word, the count only for screen readers) and
 everyone connected as a stack of overlapping round sigils (`#players`, `ui/players.tsx`: you first, ringed in

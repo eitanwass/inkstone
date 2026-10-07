@@ -1,0 +1,145 @@
+/* ── The Contact page ──────────────────────────────────────────
+   One plain column: a short welcome, the form, and where else to go. The rest is in site.css. */
+
+body {
+  padding-top: 92px; /* the top bar floats over the page */
+}
+
+.contact {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+}
+
+.contact h1 {
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: clamp(34px, 6vw, 46px);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.contact-intro {
+  margin-top: 14px;
+  max-width: 52ch;
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+#contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 36px;
+}
+
+#contact-form[hidden] {
+  display: none; /* the form goes once it is sent; its flex layout would otherwise win */
+}
+
+#contact-form label {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.optional {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+#contact-message,
+#contact-email {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* not smaller: phones zoom into smaller fields */
+  line-height: 1.5;
+}
+
+#contact-message {
+  resize: vertical;
+  min-height: 160px;
+}
+
+#contact-message:focus,
+#contact-email:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Hidden from people (and from the page's layout); a script that fills every field in fills this one too. */
+.trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.problem {
+  min-height: 1.5em;
+  color: #f0868a; /* readable on the dark page (the editor's red is for dark panels too) */
+  font-size: 14px;
+}
+
+.send {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 13px 28px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  clip-path: polygon(
+    var(--chamfer) 0,
+    calc(100% - var(--chamfer)) 0,
+    100% var(--chamfer),
+    100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%,
+    var(--chamfer) 100%,
+    0 calc(100% - var(--chamfer)),
+    0 var(--chamfer)
+  );
+  transition: background 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.send:hover:not(:disabled) {
+  background: #d6b658;
+  transform: translateY(-2px);
+}
+
+.send:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.thanks {
+  margin-top: 36px;
+  padding: 18px 20px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  font-size: 17px;
+  outline: none;
+}
+
+.contact-elsewhere {
+  margin-top: 48px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.contact-elsewhere a {
+  color: var(--text);
+  text-underline-offset: 3px;
+}

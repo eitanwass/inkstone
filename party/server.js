@@ -47,6 +47,10 @@
 
 export { CursorRoom } from './cursors.js';
 
+import { FeedbackGate, handleFeedback } from './feedback.js';
+
+export { FeedbackGate };
+
 const CURSORS_OFF_CODE = 4503; // the same as in src/collab/cursors.ts
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const SAVE_DELAY_MS = 2000; // edits come in bursts; one write per burst
@@ -712,6 +716,7 @@ export class InkstoneRoom {
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
+    if (pathname === '/feedback') return handleFeedback(request, env); // the feedback form (feedback.js)
     const cursors = pathname.match(/^\/cursors\/([^/]+)/);
     if (cursors) {
       // The first thing to switch off when the free plan's daily limits run low (set CURSORS_OFF to 1 in the

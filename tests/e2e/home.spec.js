@@ -20,8 +20,14 @@ test('the map on top is shown', async ({ page }) => {
 test('the menu links to the docs and lists what is still coming', async ({ page }) => {
   await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Main' });
-  for (const name of ['Public creations', 'Contact']) await expect(nav.getByText(name)).toBeVisible();
-  await expect(nav.getByRole('link')).toHaveText(['Inkstone', 'Features', 'Docs', 'Start drawing']);
+  await expect(nav.getByText('Public creations')).toBeVisible(); // still coming
+  await expect(nav.getByRole('link')).toHaveText([
+    'Inkstone',
+    'Features',
+    'Docs',
+    'Contact',
+    'Start drawing',
+  ]);
 });
 
 test('the page says it is free and offers a way to chip in', async ({ page }) => {

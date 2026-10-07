@@ -7,6 +7,13 @@
 
 export const LOCAL_RELAY_HOST = 'localhost:8787';
 
+// An address on the relay for an ordinary request (the feedback form's): http for a relay on this machine, which has
+// no certificate, https for any other.
+export function relayHttpUrl(host: string, path: string): string {
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);
+  return `${local ? 'http' : 'https'}://${host}${path}`;
+}
+
 // The relay's host, or null when this build has none (sharing is then off).
 export function resolveRelayHost(env: { VITE_RELAY_HOST?: string; DEV: boolean }): string | null {
   const configured = env.VITE_RELAY_HOST?.trim();
