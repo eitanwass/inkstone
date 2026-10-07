@@ -4,7 +4,7 @@
 // each fold, and a ring of two-tone nib-shaped petals around the middle, turned 3 to 8 times. A ring of
 // dots or strokes between the petals and a ring or dot at the centre vary it, and the colour is one of
 // the token colours, so a player's sigil can later match their tokens. Pure, so it is unit tested; the
-// page draws it in ui/players.ts. Coordinates are in a box from -10 to 10, the tile a circle of radius 10.
+// page draws it in ui/players.tsx. Coordinates are in a box from -10 to 10, the tile a circle of radius 10.
 
 export const TOKEN_COLORS = [
   '#e05c5c',

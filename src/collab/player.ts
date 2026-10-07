@@ -1,6 +1,6 @@
 // ── Who you are ────────────────────────────────────────────────
 // A random id, made once and kept in this browser (so you are the same player in every session), and a
-// name you chose, empty until you have (see ui/name-dialog.ts). The id is who you are; the name is a
+// name you chose, empty until you have (see ui/name-dialog.tsx). The id is who you are; the name is a
 // label. Both are told to the room when connecting (collab.ts), and the room's log says who sent what.
 
 import { normalizePlayerName, type Player } from '../core/player-name';

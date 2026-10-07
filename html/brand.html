@@ -4,14 +4,11 @@
     <span>Inkstone</span>
   </div>
 
-  <!-- The library, under the logo: sample maps to open (see src/ui/library.ts) -->
+  <!-- The library, under the logo: sample maps to open (see src/ui/library.tsx) -->
   <button id="btn-library" class="floating-panel icon-btn" aria-label="Library" aria-haspopup="dialog" aria-expanded="false" aria-controls="library-modal" title="Library: sample maps to open">
     <svg width="20" height="20"><use href="/icons.svg#icon-book"></use></svg>
   </button>
 
-  <!-- The map's name: top-centre, click to rename (see src/ui/map-name.ts) -->
-  <div id="map-title">
-    <span id="map-title-mirror" aria-hidden="true"></span>
-    <input id="map-name" type="text" maxlength="60" placeholder="Untitled map" aria-label="Map name" title="Rename map" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" />
-    <svg class="map-title-edit" width="16" height="16" aria-hidden="true"><use href="/icons.svg#icon-edit"></use></svg>
-  </div>
+  <!-- The map's name: top-centre, click to rename. Preact draws the text, the field and the pencil into this
+       element (see src/ui/map-name.tsx). -->
+  <div id="map-title"></div>

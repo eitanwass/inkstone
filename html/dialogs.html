@@ -9,21 +9,6 @@
     </div>
   </div>
 
-  <!-- Asked once, before joining or sharing, when there is no name yet (see src/ui/name-dialog.ts). No skip, no Escape. -->
-  <div id="name-overlay" class="hidden">
-    <div id="name-dialog" role="dialog" aria-modal="true" aria-labelledby="name-title" aria-describedby="name-note">
-      <h2 id="name-title">Who's at the table?</h2>
-      <p id="name-note">Others in the map see this name by your cursor. You can change it later in Settings.</p>
-      <form id="name-form" novalidate>
-        <div class="name-row">
-          <input type="text" id="name-input" maxlength="40" aria-label="Your name" autocomplete="off" spellcheck="false" />
-          <button type="button" class="icon-btn" id="name-shuffle" aria-label="Suggest another name" title="Suggest another name">
-            <svg width="18" height="18"><use href="/icons.svg#icon-shuffle"></use></svg>
-          </button>
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn-primary" id="name-join">Continue</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Asked once, before joining or sharing, when there is no name yet. No skip, no Escape. Preact draws it into
+       this element (see src/ui/name-dialog.tsx). -->
+  <div id="name-root"></div>

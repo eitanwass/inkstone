@@ -9,9 +9,9 @@
 // in this folder, shown while `tab` is its id.
 
 import { render } from 'preact';
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { byId } from '../core/dom';
-import { restoreFocus, trapFocus } from '../ui/focus';
+import { useModal } from '../ui/use-modal';
 import { BoardPanel } from './board';
 import { ConditionsPanel } from './conditions';
 import { ProfilePanel } from './profile';
@@ -28,52 +28,18 @@ const ARROW_STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowU
 const openButton = byId('btn-settings');
 
 function Settings() {
-  const [open, setOpen] = useState(false);
+  const { open, close, modal, onBackdropClick } = useModal(openButton);
   const [tab, setTab] = useState<TabId>('board');
   const [saved, setSaved] = useState(false);
-  const modal = useRef<HTMLDivElement>(null);
   const tabButtons = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
-  const opener = useRef<Element | null>(null);
-  const wasOpen = useRef(false);
 
-  useEffect(() => {
-    if (modal.current) trapFocus(modal.current);
-    onSavedChange(setSaved);
-    const show = () => {
-      opener.current = document.activeElement;
-      setOpen(true);
-    };
-    openButton.addEventListener('click', show);
-    return () => openButton.removeEventListener('click', show);
-  }, []);
-
-  // Opening puts focus in the dialog; closing gives it back to what had it.
-  useLayoutEffect(() => {
-    if (open) modal.current?.focus();
-    else if (wasOpen.current) restoreFocus(opener.current ?? openButton);
-    wasOpen.current = open;
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
+  useEffect(() => onSavedChange(setSaved), []);
 
   return (
     // A click on the blurred page outside the modal closes it.
     // biome-ignore lint/a11y/useKeyWithClickEvents: Escape closes it (above); the click is only for the backdrop
     // biome-ignore lint/a11y/noStaticElementInteractions: the backdrop, not a control
-    <div
-      id="settings-overlay"
-      class={open ? undefined : 'hidden'}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
-      }}
-    >
+    <div id="settings-overlay" class={open ? undefined : 'hidden'} onClick={onBackdropClick}>
       <div
         id="settings-modal"
         role="dialog"
@@ -98,13 +64,7 @@ function Settings() {
             </svg>
             <span id="settings-saved-text">{saved ? 'Saved' : ''}</span>
           </span>
-          <button
-            type="button"
-            class="icon-btn"
-            id="settings-close"
-            aria-label="Close"
-            onClick={() => setOpen(false)}
-          >
+          <button type="button" class="icon-btn" id="settings-close" aria-label="Close" onClick={close}>
             <svg width="18" height="18" aria-hidden="true">
               <use href="/icons.svg#icon-close" />
             </svg>
