@@ -247,6 +247,7 @@ test('a sample opens as a map of its own and the map you were on stays in My Map
 });
 
 test('the library with My Maps open has no accessibility problems', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); // so axe doesn't sample the panel mid fade-in
   await drawRoom(page);
   await rename(page, 'First');
   await openMine(page);
@@ -277,7 +278,7 @@ async function shareWithMockRelay(page) {
   await page.keyboard.press('Escape');
 }
 
-test('moving to another map while the board is shared live asks first, and leaving ends the session', async ({
+test('at a table, a new map is brought to the table (after asking) instead of put on your board alone', async ({
   page,
 }) => {
   await shareWithMockRelay(page);
@@ -285,21 +286,12 @@ test('moving to another map while the board is shared live asks first, and leavi
 
   await openMine(page);
   await page.click('#library-new-map');
-  await expect(page.locator('#modal-message')).toContainText('shared live');
-  await expect(page.locator('#modal-confirm')).toHaveText('Leave session');
+  await expect(page.locator('#modal-message')).toContainText('Bring a new, empty map to the table?');
+  await expect(page.locator('#modal-confirm')).toHaveText('Bring to the table');
 
   await page.click('#modal-cancel'); // nothing changed: still in the session, on the same map
   await expect(page.locator('#collab-status')).toHaveText('Live');
   await expect(mapName(page)).toHaveValue('Shared');
-
-  await openMine(page);
-  await page.click('#library-new-map');
-  await page.click('#modal-confirm');
-  await expect(page.locator('#collab-status')).toBeHidden();
-  expect(page.url()).not.toContain('session=');
-  expect(await boardElements(page)).toHaveLength(0);
-
-  // The shared map was kept, as a map of yours.
-  await page.click('#btn-library');
-  await expect(myCards(page).filter({ hasText: 'Shared' })).toBeVisible();
+  expect(await boardElements(page)).toHaveLength(1);
+  // (what the table then does is in table.spec.js)
 });

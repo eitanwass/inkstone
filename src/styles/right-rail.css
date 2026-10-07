@@ -1,4 +1,4 @@
-/* ── Right rail (top-right): action cluster, then the live indicator ── */
+/* ── Right rail (top-right): the map's actions, then the live session ── */
 #right-rail {
   position: fixed;
   top: calc(20px + env(safe-area-inset-top, 0px));
@@ -11,8 +11,13 @@
 }
 
 /* .floating-panel is position: fixed; inside the rail it flows with it. */
-#action-cluster {
+#action-cluster,
+#session {
   position: relative;
+}
+/* The bar's dropdown (phones) opens over the session panel below it, so the bar stacks above. */
+#action-cluster {
+  z-index: 101;
 }
 
 /* The rarer buttons are plain members of the bar; only phones make them a dropdown (responsive.css). */
@@ -23,34 +28,30 @@
 #action-more::before {
   content: none;
 }
-#btn-more {
+#btn-more,
+.phone-only {
   display: none;
 }
 @media (max-width: 640px) {
-  #btn-more {
+  #btn-more,
+  .phone-only {
     display: flex;
   }
 }
 
-/* The Live pill (while a map is shared) and the save indicator share a row, indicator on the right. */
-#status-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* A dark chip like the Live pill: gold would not read on the parchment (1.8:1). Yellow
-   spinner while saving, green check once saved, red X if the browser refused. */
+/* Whether the map is kept in this browser, first in the action bar: it goes with undo and redo (the map's
+   history). Yellow spinner while saving, green check once saved, red X if the browser refused. */
 #save-status {
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
-  background: var(--bg-toolbar);
+  margin: 0 6px 0 4px;
+  background: var(--bg-toolbar-hover);
   border: 1px solid var(--border);
   border-radius: 50%;
   cursor: default;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   user-select: none;
 }
 
@@ -84,18 +85,42 @@
   }
 }
 
-/* Shown while a map is shared. Red = live, like a broadcast badge. */
+/* ── The live session: the Live indicator and who is here (while shared), then Share and Join ──
+   One panel in the same brass plate as the action bar. Its plate is drawn on ::after rather than by
+   clip-path on the element, so a player's name can hang below it when its avatar is pointed at. */
+#session {
+  gap: 6px;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.4));
+}
+#session::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-toolbar);
+  clip-path: polygon(
+    var(--panel-chamfer) 0,
+    calc(100% - var(--panel-chamfer)) 0,
+    100% var(--panel-chamfer),
+    100% calc(100% - var(--panel-chamfer)),
+    calc(100% - var(--panel-chamfer)) 100%,
+    var(--panel-chamfer) 100%,
+    0 calc(100% - var(--panel-chamfer)),
+    0 var(--panel-chamfer)
+  );
+}
+
+/* Shown while a map is shared: a red dot that pulses (grey while connecting, amber while reconnecting), and
+   "Live". It is part of the panel, not a pill of its own. */
 #collab-status {
   display: flex;
   align-items: center;
   gap: 7px;
-  height: 20px; /* same height as the save indicator beside it */
-  padding: 0 12px 0 10px;
-  box-sizing: border-box;
-  background: var(--bg-toolbar);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  height: 28px;
+  padding: 0 4px 0 6px;
   color: var(--text-primary);
   font-size: 10.5px;
   font-weight: 700;
@@ -133,42 +158,51 @@
   }
 }
 
-/* Who is connected: a column of round identicons under the Live pill. */
+/* Who is connected: a stack of overlapping round sigils, you first and ringed in gold. Each is cut out of the
+   next by a ring in the plate's own colour. */
 #players {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: center;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 8px; /* the overlap pulls the first one back out again */
   list-style: none;
 }
 #players:empty {
   display: none;
 }
 .player {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
+  width: 28px;
+  height: 28px;
+  margin-left: -8px;
   border-radius: 50%;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px var(--bg-toolbar);
   cursor: default;
   user-select: none;
-  transition: transform 0.15s ease-out;
-  position: relative;
+  transition: transform 0.12s ease-out;
 }
 .player:hover {
-  transform: translateX(-5px);
+  transform: translateY(-2px);
+}
+.player.is-self {
+  box-shadow:
+    0 0 0 2px var(--bg-toolbar),
+    0 0 0 3.5px var(--accent);
+}
+.player svg {
+  display: block;
+  width: 100%; /* the sigil fills its circle exactly, so the ring around it is centred */
+  height: 100%;
 }
 
-/* Their name, to the left of the icon, while the pointer is over it. */
+/* Their name, under the avatar, while the pointer is over it. */
 .player-name {
   position: absolute;
-  right: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
   padding: 2px 9px;
   background: var(--bg-toolbar);
   border: 1px solid var(--border);
@@ -185,15 +219,27 @@
 .player:hover .player-name {
   opacity: 1;
 }
-.player svg {
-  display: block;
-}
-.player.is-self {
-  border-color: var(--accent);
-}
+/* "+N" for the players past the ones shown: a small pill after the stack, not part of the overlap. */
 .player-more {
-  background: var(--bg-toolbar);
+  width: auto;
+  height: 22px;
+  min-width: 22px;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  box-shadow: none;
+  background: var(--bg-toolbar-hover);
   color: var(--text-primary);
   font-size: 10.5px;
   font-weight: 700;
+}
+
+/* A line between who is here and the buttons, only while there is someone to separate from. */
+body:not(.is-sharing) #session .session-divider {
+  display: none;
+}
+
+/* Sharing is on: Share says so. */
+body.is-sharing #btn-share {
+  color: var(--accent);
 }

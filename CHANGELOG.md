@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.12.0 - 2026-10-07
+
+- My Maps - keep as many maps as you like in this browser. Open the library (the book under the logo)
+  and choose "My Maps", above the sample maps, to see them all with a picture each, start a new one,
+  switch between them, or delete one you are done with. A map with no name and nothing on it is never kept.
+- Sample maps from the library now open as a map of their own, so the map you were working on is never
+  replaced.
+- A live session can now hold several maps - say the floors of a building. Open the Share popover to see the
+  maps at your table and move everyone to another one with a click; each map is found just as it was left.
+  To bring another map to the table, choose it in the library: a copy goes to the table and the one in My Maps
+  stays yours. Anyone at the table can do this.
+- Joining a table puts the map you had in My Maps first, so joining never costs you a map.
+- Leave session, in the Share popover, ends it for you and keeps the map on your board.
+- The live session now has a panel of its own under the top bar: Share and Join, and while you are sharing, the
+  Live indicator and everyone at the table as a stack of round icons (yours first, ringed in gold).
+- The saved check moved to the start of the top bar, next to undo and redo, and Reset view now sits with the
+  zoom controls at the bottom left.
+
 ## 0.10.0 - 2026-10-06
 
 - Inkstone has a home page! Complete with docs, introduction to the map, and a support link :)

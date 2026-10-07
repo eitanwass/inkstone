@@ -224,7 +224,7 @@ test('a token that arrives with a picture we do not have asks for it, and keeps 
     .toEqual([id]);
 });
 
-test('the red live indicator appears under the action cluster only while the map is shared', async ({
+test('the red live indicator is in the session panel under the action cluster, only while the map is shared', async ({
   page,
 }) => {
   const connections = await loadWithMockRelay(page);
@@ -236,14 +236,16 @@ test('the red live indicator appears under the action cluster only while the map
   await expect(indicator).toHaveText('Live');
   await expect(page.locator('#collab-status .live-dot')).toHaveCSS('background-color', 'rgb(229, 72, 77)');
 
-  // It sits in the right-hand column below the action cluster, just left of the save indicator,
-  // which is the one flush with the cluster's right edge.
+  // It is part of the session panel, which is its own panel under the action cluster and flush with its right
+  // edge, with the Share and Join buttons at the panel's right end and the indicator before them.
   const cluster = await page.locator('#action-cluster').boundingBox();
+  const panel = await page.locator('#session').boundingBox();
   const pill = await indicator.boundingBox();
-  const saveChip = await page.locator('#save-status').boundingBox();
-  expect(pill.y).toBeGreaterThanOrEqual(cluster.y + cluster.height);
-  expect(pill.x + pill.width).toBeLessThanOrEqual(saveChip.x);
-  expect(saveChip.x + saveChip.width).toBeCloseTo(cluster.x + cluster.width, 0);
+  const share = await page.locator('#btn-share').boundingBox();
+  expect(panel.y).toBeGreaterThanOrEqual(cluster.y + cluster.height);
+  expect(panel.x + panel.width).toBeCloseTo(cluster.x + cluster.width, 0);
+  expect(pill.x).toBeGreaterThanOrEqual(panel.x);
+  expect(pill.x + pill.width).toBeLessThanOrEqual(share.x);
 
   // A dropped connection is no longer "live": the dot stops being red.
   connections[0].close();

@@ -294,7 +294,8 @@ chain, so there are no circular imports to reason about.
 | `ui/library.tsx` | The library (**a Preact component**, drawn into `#library-root`): the open-book button under the logo (`#btn-library`; under the map's name at 1100px and under) and its modal (`html/library.html`, `styles/library.css`): a search, **My Maps** (`#library-mine`) above a separator line, then the types (Models and Tokens are disabled and marked "Soon" until an item of that kind exists) and a grid of cards. My Maps shows a "New map" card and a card per map (`MyMapCard`: picture, name, "On the board now" or "Kept 3 hours ago", and a Delete button, which asks first and shows on hover or focus); it is the section the library opens on once any map has been put away, otherwise the samples as before. A sample's card opens it as a new map (`openAsNewMap`). The list is fetched the first time it opens (with a "Try again" when it can't be reached); choosing a map fetches its file and opens it through `ui/open-map.ts`, so it is one undo step with an Undo toast. Sample maps are in `public/library/` (`index.json`, `maps/<id>.inkstone.json`, `thumbs/<id>.jpg`), **made by `npm run build:library`** (`scripts/build-library.mjs`, from the boards in `scripts/sample-maps.mjs`, drawn by the real editor; the generated files are committed). To add a sample: write its board in `sample-maps.mjs`, add it to `SAMPLES`, run the script. Sharing maps, models and tokens between players is meant to use this same list format. |
 | `ui/open-map.ts` | `openMap(map, message)`: puts a parsed map file on the board (token pictures into the image store, the name, one undo step, an Undo toast). Used by Open (the file button): it *replaces* the map on the board. (A library sample goes through `openAsNewMap` in `ui/maps.ts` instead, which replaces nothing.) |
 | `core/maps.ts` | Pure: **My Maps**' index (see "My Maps" below). `MapIndex` (`current`, the id of the map on the board, and `maps`, the parked ones as `MapEntry` { id, name, updated, thumbnail? }), `parseIndex` (drops bad, duplicate and working-copy-id entries, a name goes through `normalizeMapName`, a thumbnail is kept only if it is a small jpeg data URL; at most `MAX_MAPS`, 50), `newMapId`, `isBlankMap`, `byRecent`, `filterMaps`, `withEntry` / `withoutEntry`, `whenParked` ("3 hours ago"), `INDEX_KEY` and `slotKey`. Unit tested. |
-| `ui/maps.ts` | The moves between maps: `listMaps` (the one on the board first, with a picture made just now, then the parked ones), `newMap`, `openSavedMap`, `openAsNewMap` (a library sample), `deleteMap`, `hasParkedMaps`. `putOnBoard` parks the working copy (its elements as `inkstone-map:<id>`, its entry in the index `inkstone-maps`, with a thumbnail from `ui/map-thumbnail.ts`) and makes another map the board's through `startMap` (history.ts): a fresh undo baseline, nothing broadcast. It writes to storage first and reports failure with a toast, changing nothing. Registers `setImageKeepers`, so the picture store never prunes a picture a parked map shows. While the board is in a live session, every move asks first ("Leave session") and leaves it (`leaveSession` in collab.ts). |
+| `ui/maps.ts` | The moves between maps: `listMaps` (the one on the board first, with a picture made just now, then the parked ones), `newMap`, `openSavedMap`, `openAsNewMap` (a library sample), `deleteMap`, `hasParkedMaps`. `putOnBoard` parks the working copy (its elements as `inkstone-map:<id>`, its entry in the index `inkstone-maps`, with a thumbnail from `ui/map-thumbnail.ts`) and makes another map the board's through `startMap` (history.ts): a fresh undo baseline, nothing broadcast. It writes to storage first and reports failure with a toast, changing nothing. Registers `setImageKeepers`, so the picture store never prunes a picture a parked map shows. At a table nothing is parked or moved: a map from My Maps, a sample or a new one is *brought to the table* (`bringToTable`: asks, then `addTableMap` in collab.ts copies it to the room, and the one in My Maps stays), and the board changes when the room's `switch` comes back; deleting the table's map is refused. `setTableHooks` registers what collab.ts calls back for: `mapId`, `shared`, `beforeJoin` (the map on the board is put away unless it is already the table's: `index.table`), `switched` and `left`. |
+| `ui/table-maps.ts` | The list of the maps a table holds in the Share popover (`#share-maps`, plain DOM): the one the table is on marked (`aria-current`), the others buttons that move the table there at once (`gotoTableMap`), each with a × that asks and takes it off the table (`dropTableMap`); redrawn from `onTableChanged`. |
 | `ui/map-thumbnail.ts` | `makeThumbnail()`: the map on the board framed in 400 by 260 (the library samples' size) as a jpeg data URL, or null for an empty map. |
 | `ui/changelog.tsx` | The "What's new" modal (**a Preact component**, drawn into `#changelog-root`; about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
 | `ui/use-modal.ts` | The hook every modal opened from a button uses (Settings, What's new): opens on the button's click, moves focus in, keeps Tab inside (`focus.ts`), closes on Escape or a click on the backdrop, gives focus back. The component draws the overlay and puts `modal` and `onBackdropClick` on it. |
@@ -343,7 +344,7 @@ chain, so there are no circular imports to reason about.
 | `settings/profile.tsx` | Settings, Profile (the last tab, a Preact component): the name field (Enter or clicking away keeps it, empty puts the old one back) and the shuffle button. Changing it while connected sends `{ type: 'rename', name }`; the relay updates the player's entry and sends everyone fresh presence, so the list and cursor labels follow. |
 | `collab/cursors.ts` | The cursors socket: a **second WebSocket** per session, to `/cursors/<room>` and its own Durable Object (`CursorRoom`, `party/cursors.js`), so pointers never share a connection with the map. Sends our pointer (world units) at most every 100ms (the latest position, so it ends where it stopped), drops positions instead of queueing them when the socket is backed up, sends `hide` when the pointer leaves the map, and never shows an error. Started from `connect()` in collab.ts. |
 | `ui/cursors.ts` | Other players' pointers: DOM elements in `#cursors` (an arrow in the player's sigil colour and their name from the presence list), kept in world units and placed again after every redraw, with a CSS glide between positions. Not drawn on the canvas, so a moving pointer never redraws the map. |
-| `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `catchup`, `changes`, `ack`), dropping a bad change on its own. |
+| `collab/protocol.ts` | `parseMessage`: checks what the relay sends (`doc`, `switch`, `maps`, `catchup`, `changes`, `ack`, `image`, `presence`), dropping a bad change on its own. |
 | `main.ts` | Entry point: canvas sizing, load-time init, pulls in the pure-side-effect modules. |
 
 To add an element type, add a file in `elements/` and register it in
@@ -363,10 +364,24 @@ replaces the board, with an Undo toast. Undo can't go back into another map. Del
 - **Storage is localStorage**, one key per map, about 5 MB for everything including pictures; a write that
   fails stops the move with a toast and changes nothing. The picture store (`inkstone-images`, 100 newest) skips
   pictures that parked maps show (`setImageKeepers`), so a parked map's pictures aren't pruned.
-- **A session is not a map.** Until the two are told apart (a table that moves from one place to another
-  must not need a new link, and a move must not swap everyone's map under them), moving to another map while
-  the board is shared live asks to leave the session and does (`leaveSession`, collab.ts). **Open question,
-  see ROADMAP.md.** Joining someone else's session still replaces the map on the board with theirs (as before).
+- **A session is a table, and a map is where the table is.** A table *holds its own maps* (the floors of a
+  building; the relay keeps them all, see Collaboration) and is on one of them, which is the board of everyone at
+  it. Nobody needs a new link to go to another place, and each map is found as it was left. **Moving** between the
+  maps the table holds is the Share popover's list (`ui/table-maps.ts`): at once, no question, for everyone.
+  **Bringing a map** (from My Maps, a sample, or a new one) asks "Bring ... to the table? Everyone at the table will
+  see it." and gives the room a *copy*: the one in My Maps stays (so a map prepared for a game is never lost to the
+  room's week of retention), and later edits at the table don't write back to it. **Taking one off** the table asks
+  (what is drawn on it goes). A table holds ten: bringing an eleventh quietly lets the **oldest** go (never the one the
+  table is on), so a long game keeps moving on. **Nothing says so to the players** (no confirm note, no toast):
+  it is internal behaviour of the room, not something to manage. Anyone at the table may do all of these, until roles exist (then the GM). Everyone's
+  board is replaced by the map the table moves to, and their undo starts again from it (`switched` in `ui/maps.ts`),
+  with a toast; **nothing is put away** on a move, because the map they had was the table's, not theirs, and their
+  own parked maps are never touched. **Joining** puts the map on your board away in My Maps (unless it is empty, or
+  already this table's) before the table's takes its place (`beforeJoin`), so joining never costs a map. Which
+  table the board's map is at is `table` in the index (`inkstone-maps`), set when a room takes your map or you join
+  one, and cleared by **Leave session** (the Share popover's button, `leaveSession`), which keeps the map on your
+  board as your own (the table's other maps stay in the room). A reload of a table's link is the same map, so
+  nothing more is put away. Deleting the board's map from My Maps is refused at a table.
 
 ## Preact (for UI that is components)
 
@@ -590,6 +605,20 @@ A flat world-unit pad shrinks to ~0 screen px once zoomed out, so the
 highlight visually merges back into a thick-stroked element's border
 instead of outlining it.
 
+**The right rail** (top-right, `html/right-rail.html`, `styles/right-rail.css`) is two panels, one under the other:
+the **action cluster** (`#action-cluster`: the save indicator, undo, redo, then clear, export, save and
+open file, then What's new and Settings; on a phone only the indicator, undo, redo and "more" show, the rest drop
+down from it) holds the map's own actions, and the **live session** under it is a panel of its own (`#session`):
+while shared, the Live indicator (`#collab-status`, a dot and the word, the count only for screen readers) and
+everyone connected as a stack of overlapping round sigils (`#players`, `ui/players.tsx`: you first, ringed in
+gold, on top; "+N" as a pill after eight; a name appears under a sigil on hover), then a divider, then Share and
+Join (which open the Share and Join popovers anchored to them; Share turns gold while sharing). Keep session things in
+that second panel, not in the action bar. Its plate is drawn on `::after`, not by `clip-path`, so a name can hang
+below it. On a phone the panel keeps just the red dot for "Live". **Reset view** is not in the bar: it is a view
+command, so it sits with the zoom controls (bottom-left: zoom out, zoom in, fit, reset), and phones, which hide that
+panel, get a second button for it in the "more" dropdown (`.phone-only`; both are `data-action="reset-view"`). The welcome hint's Share arrow (`.hint-share`)
+points at the Share button there.
+
 **UI chrome** is all `position: fixed` floating panels over a full-bleed
 canvas (no sidebar) — the brand mark (top-left) and HUD readout (bottom-right:
 cursor coords + zoom on one line, app version on the line below) are
@@ -701,8 +730,9 @@ notify it of changes without creating a cycle. Instead `history.ts` exposes
 function there at load time — inversion of control instead of a direct
 import, so the dependency arrow still only points one way.
 
-**The room is kept.** The relay keeps the map in the Durable Object's storage, one row per
-element (`el:<id>`), one per log entry (`log:<rev>`) plus `order` and `meta` (name, epoch, revision), so an edit writes only the rows it
+**The room is kept.** The relay keeps the maps in the Durable Object's storage, one row per
+element (`el:<map>:<id>`), one per log entry (`log:<rev>`), an `order:<map>` per map and `meta` (epoch, revision, which
+map is current, and every map's id and name), so an edit writes only the rows it
 changed (once per burst of edits, and at once when the last player leaves). Whoever opens the
 link later, even after everyone has left, gets the map as it was. A room (and its log) is deleted a week
 after its last visit (a Durable Object alarm; any visit pushes it back), so abandoned rooms
@@ -711,6 +741,32 @@ needs an id of letters, digits, `_` and `-` and a known type) or is over its lim
 characters an element (they no longer carry pictures), 2,000 elements, 900,000 in all, kept under Cloudflare's 1 MiB per
 message), since what it stores lasts. It can't import `changes.ts`, so its checks are kept in
 step by hand. Tested in `tests/unit/party/`.
+
+**A table holds several maps.** The room is a *table*: `InkstoneRoom` keeps up to `MAX_TABLE_MAPS` (10) maps
+(and `MAX_ROOM_TOTAL_LENGTH`, 3,000,000 characters of elements between them; one map is at most 900,000, which
+`parseMessage` already enforces) and a pointer to the current one. Everything above (changes, the log, revisions,
+catch-up) is about the **current map**: `this.elements`, `this.name` and `this.total` are its, and the others are
+parked in `this.maps`. Why the relay keeps them and not each browser: the table's maps are shared state, and a
+player only ever has the map on their board (their own My Maps are a different thing, in their browser); a
+player who joins later, reloads, or whose GM is away needs the floors from somewhere that is always there. A
+client's batch of changes says which map it was built on (`map`, required) and the relay drops one built on a map
+the table has since left (the sender is acked with no fix; the `switch` is already on its way). The messages: a
+client sends `addmap` ({ map, name, elements }: a map for the table to hold, which it moves to; one it already
+holds is just moved to), `goto` ({ map }) and `dropmap` ({ map }: not the current one); the relay answers everyone
+with `switch` (the current map whole, with `map` and `maps`, as a revision of its own) and tells everyone `maps`
+({ current, maps }) when a map was dropped. **A full table rotates**: `addmap` over the count or size cap lets the
+oldest maps go, other than the one the table is on (`forget`), until the new one fits, **silently**: the `switch`
+doesn't name them and the client doesn't mention it. (`TABLE_MAP_LIMIT` in `protocol.ts` is only the cap on a list
+read from the relay.) A switch is a **barrier in the log**
+(`switch: true`): a client that was away across one is sent the whole map (`doc`, which carries `map` and `maps` too),
+never a catch-up over it. The first map is given by the first client under its My Maps id (`doc` has `map`; a room
+nobody has used is on no map, `map: ''`). Each wake reads **all** the maps from storage, so the cap is part of
+keeping inside the free plan: watch the usage graphs if tables with many large floors become common. There is no
+migration for rooms saved before tables held several maps: they lapse after their week.
+Client side (`collab.ts`): `tableInfo`, `onTableChanged`, `gotoTableMap`, `addTableMap` (uploads the map's pictures
+first), `dropTableMap`; the board changes when `switch` comes back, for the one who asked too. Joining, sharing
+and leaving are the table hooks `beforeJoin`, `shared` and `left`, and `switched` runs after a move
+(`TableHooks`, `setTableHooks`, registered by `ui/maps.ts`, which sits above collab.ts).
 
 **Cursors have their own socket and relay.** `party/cursors.js` (`CursorRoom`, routed from the Worker's
 `fetch` at `/cursors/<room>`, declared in the `v1` migration in wrangler.toml) keeps nothing (no storage, log or alarm): it forwards

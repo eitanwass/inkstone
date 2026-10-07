@@ -9,7 +9,7 @@
 // #library-root, and the button under the logo (static, in html/brand.html) is wired to it from here.
 
 import { render } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { byId } from '../core/dom';
 import {
   filterLibrary,
@@ -130,8 +130,9 @@ function Library() {
     byId('btn-library').setAttribute('aria-expanded', String(open));
   }, [open]);
 
-  // While it is open: focus goes in and stays in, and Escape closes it.
-  useEffect(() => {
+  // While it is open: focus goes in and stays in, and Escape closes it. (A layout effect, so Escape works from the
+  // moment the panel is there, not after the next paint.)
+  useLayoutEffect(() => {
     if (!open || !modal.current) return;
     modal.current.focus();
     trapFocus(modal.current); // the element is made anew each time it opens

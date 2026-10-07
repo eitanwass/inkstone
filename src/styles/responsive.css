@@ -55,16 +55,17 @@ body.tool-ruler #interaction-canvas {
 
 /* ── Medium and narrow screens: there's no room for the map name beside both
    the brand mark and the right rail, so it moves to its own row beneath them,
-   left-aligned, and leaves room on the right for the "Live" pill when sharing. */
+   left-aligned, and leaves room on the right for the session panel (Share and Join, and while sharing the
+   Live indicator and who is here). */
 @media (max-width: 1100px) {
   #map-title {
     top: calc(76px + env(safe-area-inset-top, 0px));
     left: calc(24px + env(safe-area-inset-left, 0px));
     transform: none;
-    max-width: calc(100vw - 48px - 40px); /* room for the save indicator */
+    max-width: calc(100vw - 48px - 110px - 24px); /* room for Share and Join */
   }
   body.is-sharing #map-title {
-    max-width: calc(100vw - 48px - 130px - 40px);
+    max-width: calc(100vw - 48px - 330px - 24px); /* and the Live indicator and a few players */
   }
   #map-name {
     text-align: left;
@@ -99,13 +100,13 @@ body.tool-ruler #interaction-canvas {
     display: none;
   } /* these point at keys and the ? button, which a phone lacks */
 
-  /* The name shares the top row with the action bar (about 150px wide); the Live pill and
-     save indicator sit below the bar, so sharing needs no extra room. */
+  /* The name shares the top row with the action bar (about 180px wide, with the save indicator); the session
+     panel sits below the bar, so sharing needs no extra room. */
   #map-title,
   body.is-sharing #map-title {
     top: calc(21px + env(safe-area-inset-top, 0px));
     left: calc(14px + env(safe-area-inset-left, 0px));
-    max-width: calc(100vw - 28px - 150px - 8px);
+    max-width: calc(100vw - 28px - 180px - 8px);
   }
   #btn-library {
     top: calc(66px + env(safe-area-inset-top, 0px));
@@ -131,8 +132,8 @@ body.tool-ruler #interaction-canvas {
     top: calc(14px + env(safe-area-inset-top, 0px));
     right: calc(14px + env(safe-area-inset-right, 0px));
   }
-  /* Ten buttons are wider than a phone: the bar keeps undo, redo and "more", and the rest
-     drop down from "more" over the players (nothing else on the page moves). The bar's
+  /* Eight buttons are wider than a phone: the bar keeps undo, redo and "more", and the rest
+     drop down from "more" over the session panel and the players (nothing else on the page moves). The bar's
      chamfered plate moves to ::after because its clip-path would cut the dropdown off. */
   #action-cluster {
     clip-path: none;
@@ -174,16 +175,20 @@ body.tool-ruler #interaction-canvas {
     display: none;
   }
 
-  /* Players sit in a compact row, not a column, so they stay short. */
-  #players {
-    flex-direction: row-reverse;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    max-width: calc(100vw - 28px);
+  /* The session panel stays narrow: just the dot for "Live" (its words are still there for screen readers), and a
+     slightly smaller stack of players. */
+  #collab-status-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
-  .player {
-    width: 28px;
-    height: 28px;
+  .player:not(.player-more) {
+    width: 24px;
+    height: 24px;
+    margin-left: -7px;
   }
   #tool-dock {
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));

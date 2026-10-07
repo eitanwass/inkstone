@@ -113,7 +113,7 @@ function join(
 async function seeded(elements: unknown[], name = '') {
   const room = await openRoom();
   const first = join(room, { cid: 'seed' });
-  first.say({ type: 'doc', name, elements });
+  first.say({ type: 'doc', map: 'main', name, elements });
   await vi.advanceTimersByTimeAsync(2500);
   return { room, first, epoch: first.last().epoch as string };
 }
@@ -137,12 +137,15 @@ describe('parseMessage', () => {
       epoch: 'e1',
       since: 4,
     });
-    expect(parseMessage(JSON.stringify({ type: 'doc', name: 'N', elements: [rect('a')] }))).toMatchObject({
+    expect(
+      parseMessage(JSON.stringify({ type: 'doc', map: 'main', name: 'N', elements: [rect('a')] })),
+    ).toMatchObject({
       type: 'doc',
     });
     const changes = [set(rect('a')), del('b'), { t: 'order', ids: ['a'] }, { t: 'name', name: 'N' }];
-    expect(parseMessage(JSON.stringify({ type: 'changes', base: 3, changes }))).toMatchObject({
+    expect(parseMessage(JSON.stringify({ type: 'changes', map: 'main', base: 3, changes }))).toMatchObject({
       type: 'changes',
+      map: 'main',
       base: 3,
     });
   });
@@ -150,7 +153,8 @@ describe('parseMessage', () => {
   it('refuses anything else, whole', () => {
     const changes = (list: unknown[], base: unknown = 0) =>
       JSON.stringify({ type: 'changes', base, changes: list });
-    const doc = (elements: unknown[], name = '') => JSON.stringify({ type: 'doc', name, elements });
+    const doc = (elements: unknown[], name = '') =>
+      JSON.stringify({ type: 'doc', map: 'main', name, elements });
     const bad = [
       '',
       'nope',
@@ -171,7 +175,7 @@ describe('parseMessage', () => {
       doc([rect('no spaces')]),
       doc([rect('a')], 'x'.repeat(201)),
       doc([{ ...rect('a'), pad: 'x'.repeat(20_000) }]),
-      JSON.stringify({ type: 'changes', changes: [del('a')] }), // no base
+      JSON.stringify({ type: 'changes', map: 'main', changes: [del('a')] }), // no base
       changes([del('a')], -1),
       changes([del('a'), { t: 'explode' }]), // one bad change spoils the message
       changes([{ t: 'order', ids: [1] }]),
@@ -187,8 +191,8 @@ describe('meeting the room', () => {
     const room = await openRoom();
     const ws = fakeSocket();
     room.handleSession(ws);
-    ws.say({ type: 'doc', name: '', elements: [rect('a')] });
-    ws.say({ type: 'changes', base: 0, changes: [set(rect('b'))] });
+    ws.say({ type: 'doc', map: 'main', name: '', elements: [rect('a')] });
+    ws.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('b'))] });
     expect(ws.sent).toEqual([]);
     expect(mapOf(room).elements).toEqual([]);
   });
@@ -199,9 +203,9 @@ describe('meeting the room', () => {
     expect(a.last()).toMatchObject({ type: 'doc', fresh: true, rev: 0, name: '', elements: [] });
     expect(b.last().fresh).toBe(true);
 
-    a.say({ type: 'doc', name: 'Mine', elements: [rect('a')] });
+    a.say({ type: 'doc', map: 'main', name: 'Mine', elements: [rect('a')] });
     expect(a.last()).toMatchObject({ type: 'ack', rev: 0, fix: [] });
-    b.say({ type: 'doc', name: 'Theirs', elements: [rect('b')] }); // too late
+    b.say({ type: 'doc', map: 'main', name: 'Theirs', elements: [rect('b')] }); // too late
     expect(b.last()).toMatchObject({ type: 'doc', fresh: false, name: 'Mine', elements: [rect('a')] });
   });
 
@@ -218,7 +222,7 @@ describe('changes', () => {
   it('become the next revision: passed on with it, and acknowledged to the sender', async () => {
     const { room, first } = await seeded([rect('a'), rect('b')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
-    a.say({ type: 'changes', base: 0, changes: [set(rect('b', 80)), set(rect('c')), del('a')] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('b', 80)), set(rect('c')), del('a')] });
     expect(a.last()).toMatchObject({ type: 'ack', rev: 1, fix: [] });
     expect(b.last()).toEqual({
       type: 'changes',
@@ -232,8 +236,8 @@ describe('changes', () => {
   it("keeps two players' edits to different elements", async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 40))] });
-    b.say({ type: 'changes', base: 0, changes: [set(rect('b', 80))] }); // built on 0, but touches something else
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 40))] });
+    b.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('b', 80))] }); // built on 0, but touches something else
     expect(b.last()).toMatchObject({ type: 'ack', rev: 2, fix: [] });
     expect(mapOf(room).elements).toEqual([rect('a', 40), rect('b', 80)]);
   });
@@ -241,8 +245,8 @@ describe('changes', () => {
   it('reorders, and renames without touching the map', async () => {
     const { room } = await seeded([rect('a'), rect('b'), rect('c')], 'Old');
     const a = join(room, { cid: 'a' });
-    a.say({ type: 'changes', base: 0, changes: [{ t: 'order', ids: ['c', 'a', 'b'] }] });
-    a.say({ type: 'changes', base: 1, changes: [{ t: 'name', name: 'New' }] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [{ t: 'order', ids: ['c', 'a', 'b'] }] });
+    a.say({ type: 'changes', map: 'main', base: 1, changes: [{ t: 'name', name: 'New' }] });
     expect(mapOf(room)).toMatchObject({ name: 'New', elements: [rect('c'), rect('a'), rect('b')] });
   });
 
@@ -250,7 +254,7 @@ describe('changes', () => {
     const { room } = await seeded([rect('a')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
     const [heardA, heardB] = [a.sent.length, b.sent.length];
-    a.say({ type: 'changes', base: 0, changes: [set({ type: 'rect' })] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set({ type: 'rect' })] });
     await vi.advanceTimersByTimeAsync(5000);
     expect([a.sent.length, b.sent.length]).toEqual([heardA, heardB]);
     expect(mapOf(room)).toMatchObject({ rev: 0, elements: [rect('a')] });
@@ -261,9 +265,9 @@ describe('when two players change the same thing, the room wins', () => {
   it('refuses an edit to an element someone else changed after the revision it was built on', async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
     const [a, b, c] = [join(room, { cid: 'a' }), join(room, { cid: 'b' }), join(room, { cid: 'c' })];
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 40))] }); // revision 1
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 40))] }); // revision 1
     const heardByC = c.sent.length;
-    b.say({ type: 'changes', base: 0, changes: [set(rect('a', 99)), set(rect('b', 80))] });
+    b.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 99)), set(rect('b', 80))] });
 
     // b's edit to b went in (revision 2), its edit to a did not, and b is sent the room's a
     expect(b.last()).toEqual({ type: 'ack', epoch: expect.any(String), rev: 2, fix: [set(rect('a', 40))] });
@@ -274,9 +278,9 @@ describe('when two players change the same thing, the room wins', () => {
   it('does not make a revision, or tell the others, when everything was refused', async () => {
     const { room } = await seeded([rect('a')]);
     const [a, b, c] = [join(room, { cid: 'a' }), join(room, { cid: 'b' }), join(room, { cid: 'c' })];
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 40))] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 40))] });
     const heardByC = c.sent.length;
-    b.say({ type: 'changes', base: 0, changes: [set(rect('a', 99))] });
+    b.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 99))] });
     expect(b.last()).toMatchObject({ type: 'ack', rev: 1, fix: [set(rect('a', 40))] });
     expect(c.sent.length).toBe(heardByC);
     expect(mapOf(room).rev).toBe(1);
@@ -285,8 +289,8 @@ describe('when two players change the same thing, the room wins', () => {
   it('refuses an edit to an element someone deleted, and tells the sender it is gone', async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
-    a.say({ type: 'changes', base: 0, changes: [del('a')] });
-    b.say({ type: 'changes', base: 0, changes: [set(rect('a', 5))] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [del('a')] });
+    b.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 5))] });
     expect(b.last().fix).toEqual([del('a')]);
     expect(mapOf(room).elements).toEqual([rect('b')]);
   });
@@ -294,8 +298,8 @@ describe('when two players change the same thing, the room wins', () => {
   it('refuses a deletion of an element someone edited, and sends the sender their version', async () => {
     const { room } = await seeded([rect('a')]);
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 7))] });
-    b.say({ type: 'changes', base: 0, changes: [del('a')] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 7))] });
+    b.say({ type: 'changes', map: 'main', base: 0, changes: [del('a')] });
     expect(b.last().fix).toEqual([set(rect('a', 7))]);
     expect(mapOf(room).elements).toEqual([rect('a', 7)]);
   });
@@ -305,6 +309,7 @@ describe('when two players change the same thing, the room wins', () => {
     const [a, b] = [join(room, { cid: 'a' }), join(room, { cid: 'b' })];
     a.say({
       type: 'changes',
+      map: 'main',
       base: 0,
       changes: [
         { t: 'order', ids: ['b', 'a'] },
@@ -313,6 +318,7 @@ describe('when two players change the same thing, the room wins', () => {
     });
     b.say({
       type: 'changes',
+      map: 'main',
       base: 0,
       changes: [
         { t: 'order', ids: ['a', 'b'] },
@@ -329,8 +335,8 @@ describe('when two players change the same thing, the room wins', () => {
   it("does not count a client's own earlier batches, which it has not necessarily heard about", async () => {
     const { room } = await seeded([rect('a')]);
     const a = join(room, { cid: 'a' });
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 1))] });
-    a.say({ type: 'changes', base: 0, changes: [set(rect('a', 2))] }); // built before the ack arrived
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 1))] });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 2))] }); // built before the ack arrived
     expect(a.last()).toMatchObject({ rev: 2, fix: [] });
     expect(mapOf(room).elements).toEqual([rect('a', 2)]);
   });
@@ -338,9 +344,10 @@ describe('when two players change the same thing, the room wins', () => {
   it('refuses everything from a client built on a revision the log no longer reaches back to', async () => {
     const { room } = await seeded([rect('a')]);
     const a = join(room, { cid: 'a' });
-    for (let i = 1; i <= 105; i++) a.say({ type: 'changes', base: i - 1, changes: [set(rect('a', i))] });
+    for (let i = 1; i <= 105; i++)
+      a.say({ type: 'changes', map: 'main', base: i - 1, changes: [set(rect('a', i))] });
     const b = join(room, { cid: 'b' });
-    b.say({ type: 'changes', base: 2, changes: [set(rect('a', -1))] });
+    b.say({ type: 'changes', map: 'main', base: 2, changes: [set(rect('a', -1))] });
     expect(b.last().fix).toEqual([set(rect('a', 105))]);
   });
 
@@ -348,7 +355,7 @@ describe('when two players change the same thing, the room wins', () => {
     const { room } = await seeded([rect('a')]);
     const a = join(room, { cid: 'a' });
     const many = Array.from({ length: 2100 }, (_, i) => set(rect(`e${i}`)));
-    a.say({ type: 'changes', base: 0, changes: many });
+    a.say({ type: 'changes', map: 'main', base: 0, changes: many });
     expect(mapOf(room).elements).toHaveLength(2000);
     expect(a.last().fix).toHaveLength(101);
     expect(a.last().fix[0]).toEqual(del('e1999'));
@@ -360,10 +367,11 @@ describe('catching a client up', () => {
   async function history() {
     const { room, epoch } = await seeded([rect('a'), rect('b')], 'Crypt');
     const w = join(room, { cid: 'w' });
-    w.say({ type: 'changes', base: 0, changes: [set(rect('a', 40))] });
-    w.say({ type: 'changes', base: 1, changes: [set(rect('c'))] });
+    w.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('a', 40))] });
+    w.say({ type: 'changes', map: 'main', base: 1, changes: [set(rect('c'))] });
     w.say({
       type: 'changes',
+      map: 'main',
       base: 2,
       changes: [del('b'), { t: 'order', ids: ['c', 'a'] }, { t: 'name', name: 'New' }],
     });
@@ -411,7 +419,8 @@ describe('catching a client up', () => {
   it('sends the whole map to a client further behind than the log goes', async () => {
     const { room, epoch } = await seeded([rect('a')]);
     const w = join(room, { cid: 'w' });
-    for (let i = 1; i <= 105; i++) w.say({ type: 'changes', base: i - 1, changes: [set(rect('a', i))] });
+    for (let i = 1; i <= 105; i++)
+      w.say({ type: 'changes', map: 'main', base: i - 1, changes: [set(rect('a', i))] });
     expect(join(room, { cid: 'x', since: 4, epoch }).last().type).toBe('doc'); // the log starts at 6
     expect(join(room, { cid: 'x', since: 5, epoch }).last().type).toBe('catchup');
   });
@@ -499,18 +508,23 @@ describe('token pictures', () => {
 describe('saving', () => {
   it('writes once per burst of edits, and only the rows that changed, plus the new log entry', async () => {
     const { room } = await seeded([rect('a'), rect('b'), rect('c')], 'Crypt');
-    expect(state.data.get('el:a')).toBe(JSON.stringify(rect('a')));
-    expect(state.data.get('order')).toEqual(['a', 'b', 'c']);
-    expect(state.data.get('meta')).toMatchObject({ name: 'Crypt', rev: 0 });
+    expect(state.data.get('el:main:a')).toBe(JSON.stringify(rect('a')));
+    expect(state.data.get('order:main')).toEqual(['a', 'b', 'c']);
+    expect(state.data.get('meta')).toMatchObject({
+      rev: 0,
+      current: 'main',
+      maps: [{ id: 'main', name: 'Crypt' }],
+    });
 
     const writesBefore = state.writes;
-    state.data.set('el:c', 'UNTOUCHED'); // a row that must not be rewritten by an edit to a
+    state.data.set('el:main:c', 'UNTOUCHED'); // a row that must not be rewritten by an edit to a
     const a = join(room, { cid: 'a' });
-    for (let i = 1; i <= 5; i++) a.say({ type: 'changes', base: i - 1, changes: [set(rect('a', i))] });
+    for (let i = 1; i <= 5; i++)
+      a.say({ type: 'changes', map: 'main', base: i - 1, changes: [set(rect('a', i))] });
     await vi.advanceTimersByTimeAsync(2500);
     expect(state.writes).toBe(writesBefore + 1);
-    expect(state.data.get('el:a')).toBe(JSON.stringify(rect('a', 5)));
-    expect(state.data.get('el:c')).toBe('UNTOUCHED');
+    expect(state.data.get('el:main:a')).toBe(JSON.stringify(rect('a', 5)));
+    expect(state.data.get('el:main:c')).toBe('UNTOUCHED');
     expect(state.data.get('meta')).toMatchObject({ rev: 5 });
     expect(state.data.get('log:5')).toMatchObject({
       rev: 5,
@@ -525,7 +539,8 @@ describe('saving', () => {
   it('keeps the last 100 log entries in storage', async () => {
     const { room } = await seeded([rect('a')]);
     const a = join(room, { cid: 'a' });
-    for (let i = 1; i <= 120; i++) a.say({ type: 'changes', base: i - 1, changes: [set(rect('a', i))] });
+    for (let i = 1; i <= 120; i++)
+      a.say({ type: 'changes', map: 'main', base: i - 1, changes: [set(rect('a', i))] });
     await vi.advanceTimersByTimeAsync(2500);
     const logs = [...state.data.keys()].filter((k) => k.startsWith('log:'));
     expect(logs).toHaveLength(100);
@@ -535,18 +550,23 @@ describe('saving', () => {
 
   it('removes a deleted element from storage', async () => {
     const { room } = await seeded([rect('a'), rect('b')]);
-    join(room, { cid: 'a' }).say({ type: 'changes', base: 0, changes: [del('a')] });
+    join(room, { cid: 'a' }).say({ type: 'changes', map: 'main', base: 0, changes: [del('a')] });
     await vi.advanceTimersByTimeAsync(2500);
-    expect(state.data.has('el:a')).toBe(false);
-    expect(state.data.get('order')).toEqual(['b']);
+    expect(state.data.has('el:main:a')).toBe(false);
+    expect(state.data.get('order:main')).toEqual(['b']);
   });
 
   it('keeps the map, the revision and the log for the next visitor, even across a restart', async () => {
     const room = await openRoom();
     const a = join(room, { cid: 'a' });
-    a.say({ type: 'doc', name: 'Crypt', elements: [rect('a'), rect('b')] });
+    a.say({ type: 'doc', map: 'main', name: 'Crypt', elements: [rect('a'), rect('b')] });
     const epoch = a.last().epoch;
-    a.say({ type: 'changes', base: 0, changes: [set(rect('b', 40)), { t: 'order', ids: ['b', 'a'] }] });
+    a.say({
+      type: 'changes',
+      map: 'main',
+      base: 0,
+      changes: [set(rect('b', 40)), { t: 'order', ids: ['b', 'a'] }],
+    });
     a.emit('close'); // the last one out saves at once, without waiting for the timer
     await vi.advanceTimersByTimeAsync(0);
 
@@ -557,6 +577,8 @@ describe('saving', () => {
       epoch,
       rev: 1,
       name: 'Crypt',
+      map: 'main',
+      maps: [{ id: 'main', name: 'Crypt' }],
       elements: [rect('b', 40), rect('a')],
     });
     // and it still knows what happened, so a client at revision 0 is caught up and a stale edit is refused
@@ -564,7 +586,12 @@ describe('saving', () => {
       set(rect('b', 40)),
       { t: 'order', ids: ['b', 'a'] },
     ]);
-    join(restarted, { cid: 'y' }).say({ type: 'changes', base: 0, changes: [set(rect('b', 1))] });
+    join(restarted, { cid: 'y' }).say({
+      type: 'changes',
+      map: 'main',
+      base: 0,
+      changes: [set(rect('b', 1))],
+    });
     expect(mapOf(restarted).elements).toEqual([rect('b', 40), rect('a')]);
   });
 
@@ -660,6 +687,7 @@ describe('pictures on the map', () => {
     const a = join(room, { cid: 'a' });
     a.say({
       type: 'changes',
+      map: 'main',
       base: 0,
       changes: [
         { t: 'set', el: { type: 'background', id: 'p1', x: 0, y: 0, w: 400, h: 300, image: 'pic1' } },
@@ -688,7 +716,7 @@ describe('hibernation', () => {
     const { room, first } = await seeded([rect('a')]);
     const b = join(room, { cid: 'b' });
     await wake();
-    first.say({ type: 'changes', base: 0, changes: [set(rect('c', 80))] });
+    first.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('c', 80))] });
     expect(b.last().type).toBe('changes');
     expect(first.last()).toMatchObject({ type: 'ack', rev: 1 });
   });
@@ -716,16 +744,255 @@ describe('hibernation', () => {
     const silent = fakeSocket();
     room.handleSession(silent);
     await wake();
-    silent.say({ type: 'changes', base: 0, changes: [set(rect('x'))] });
+    silent.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('x'))] });
     expect(silent.sent).toEqual([]);
   });
 
   it('saves the last edits when the last player leaves, even after waking', async () => {
     const { first } = await seeded([rect('a')]);
     await wake();
-    first.say({ type: 'changes', base: 0, changes: [set(rect('c', 80))] });
+    first.say({ type: 'changes', map: 'main', base: 0, changes: [set(rect('c', 80))] });
     first.emit('close');
     await vi.advanceTimersByTimeAsync(0);
-    expect([...state.data.keys()]).toContain('el:c');
+    expect([...state.data.keys()]).toContain('el:main:c');
+  });
+});
+
+// A table holds several maps (the floors of a building), moves between them, and keeps each as it was left.
+describe('a table with several maps', () => {
+  // A room whose first map, 'ground', has been given by a first client, and two players at it.
+  async function table() {
+    const room = await openRoom();
+    const a = join(room, { cid: 'a' });
+    a.say({ type: 'doc', map: 'ground', name: 'Ground floor', elements: [rect('g1'), rect('g2', 80)] });
+    const b = join(room, { cid: 'b' });
+    return { room, a, b };
+  }
+  const upstairs = { type: 'addmap', map: 'upper', name: 'Upstairs', elements: [rect('u1', 200)] };
+
+  it('is given its first map under the id the client chose, and lists it', async () => {
+    const { room } = await table();
+    expect(mapOf(room)).toMatchObject({
+      map: 'ground',
+      maps: [{ id: 'ground', name: 'Ground floor' }],
+      elements: [rect('g1'), rect('g2', 80)],
+    });
+  });
+
+  it('takes another map and moves everyone to it, as a revision of its own', async () => {
+    const { room, a, b } = await table();
+    a.say(upstairs);
+    for (const who of [a, b]) {
+      expect(who.last()).toMatchObject({
+        type: 'switch',
+        rev: 1,
+        name: 'Upstairs',
+        map: 'upper',
+        maps: [
+          { id: 'ground', name: 'Ground floor' },
+          { id: 'upper', name: 'Upstairs' },
+        ],
+        elements: [rect('u1', 200)],
+      });
+    }
+    expect(mapOf(room)).toMatchObject({ map: 'upper', rev: 1, elements: [rect('u1', 200)] });
+  });
+
+  it('moves back to a map as it was left, edits and all', async () => {
+    const { room, a, b } = await table();
+    a.say({ type: 'changes', base: 0, map: 'ground', changes: [set(rect('g3', 120)), del('g1')] });
+    a.say(upstairs);
+    b.say({ type: 'changes', base: 2, map: 'upper', changes: [set(rect('u1', 240))] });
+    a.say({ type: 'goto', map: 'ground' });
+    expect(b.last()).toMatchObject({
+      type: 'switch',
+      map: 'ground',
+      name: 'Ground floor',
+      elements: [rect('g2', 80), rect('g3', 120)],
+    });
+    a.say({ type: 'goto', map: 'upper' });
+    expect(mapOf(room).elements).toEqual([rect('u1', 240)]);
+  });
+
+  it('ignores a move to the map it is on, or one it does not hold', async () => {
+    const { a, b } = await table();
+    const heard = b.sent.length;
+    a.say({ type: 'goto', map: 'ground' });
+    a.say({ type: 'goto', map: 'nowhere' });
+    expect(b.sent).toHaveLength(heard);
+  });
+
+  it('treats a map it already holds as a move to it, and keeps the one it has', async () => {
+    const { room, a } = await table();
+    a.say(upstairs);
+    a.say({ type: 'goto', map: 'ground' });
+    a.say({ ...upstairs, elements: [rect('other')] }); // the same id: a move, not a replacement
+    expect(mapOf(room)).toMatchObject({ map: 'upper', elements: [rect('u1', 200)] });
+  });
+
+  it('drops a batch built on a map the table has left, and passes on one built on the one it is on', async () => {
+    const { room, a, b } = await table();
+    a.say(upstairs);
+    const heard = b.sent.length;
+    a.say({ type: 'changes', base: 1, map: 'ground', changes: [set(rect('late'))] }); // built before the move
+    expect(a.last()).toMatchObject({ type: 'ack', rev: 1, fix: [] });
+    expect(b.sent).toHaveLength(heard);
+    expect(mapOf(room).elements).toEqual([rect('u1', 200)]);
+
+    a.say({ type: 'changes', base: 1, map: 'upper', changes: [set(rect('u2'))] });
+    expect(b.last()).toMatchObject({ type: 'changes', rev: 2 });
+  });
+
+  it('sends the whole map, not a catch-up, to a client that was away across a move', async () => {
+    const { room, a } = await table();
+    const epoch = a.last().epoch;
+    a.say(upstairs);
+    const back = join(room, { cid: 'back', since: 0, epoch });
+    expect(back.last()).toMatchObject({
+      type: 'doc',
+      fresh: false,
+      map: 'upper',
+      elements: [rect('u1', 200)],
+    });
+    // but one that was there for it is caught up as usual
+    a.say({ type: 'changes', base: 1, map: 'upper', changes: [set(rect('u2'))] });
+    const there = join(room, { cid: 'there', since: 1, epoch });
+    expect(there.last()).toMatchObject({ type: 'catchup', changes: [set(rect('u2'))] });
+  });
+
+  it('shows the current map under its new name in the list once it is renamed', async () => {
+    const { room, a } = await table();
+    a.say({ type: 'changes', base: 0, map: 'ground', changes: [{ t: 'name', name: 'The Lobby' }] });
+    a.say(upstairs);
+    expect(mapOf(room).maps).toEqual([
+      { id: 'ground', name: 'The Lobby' },
+      { id: 'upper', name: 'Upstairs' },
+    ]);
+  });
+
+  it('lets the oldest map go to make room for an eleventh, never the one the table is on', async () => {
+    const { room, a, b } = await table();
+    for (let i = 1; i < 10; i++) a.say({ ...upstairs, map: `f${i}`, name: `Floor ${i}`, elements: [] });
+    expect(mapOf(room).maps).toHaveLength(10);
+
+    a.say({ ...upstairs, map: 'f10', name: 'Floor 10', elements: [] });
+    expect(b.last()).toMatchObject({ type: 'switch', map: 'f10' });
+    expect(b.last()).not.toHaveProperty('dropped'); // nobody is told which one went
+    const ids = b.last().maps.map((m: { id: string }) => m.id);
+    expect(ids).toHaveLength(10);
+    expect(ids).not.toContain('ground');
+    expect(ids[ids.length - 1]).toBe('f10');
+  });
+
+  it('does not let go of the map the table is on, even when it is the oldest', async () => {
+    const { a, b } = await table(); // ground is the oldest, and the table stays on it
+    a.say({ type: 'goto', map: 'ground' }); // (nothing: already there)
+    for (let i = 1; i < 10; i++) a.say({ ...upstairs, map: `f${i}`, name: `Floor ${i}`, elements: [] });
+    a.say({ type: 'goto', map: 'ground' });
+    expect(b.last()).toMatchObject({ type: 'switch', map: 'ground' });
+    a.say({ ...upstairs, map: 'f10', name: 'Floor 10', elements: [] });
+    const ids = b.last().maps.map((m: { id: string }) => m.id);
+    expect(ids).toContain('ground'); // the one the table is on stays
+    expect(ids).not.toContain('f1'); // the oldest after it went
+  });
+
+  it('lets maps go, oldest first, until a map that would take the room past its size fits', async () => {
+    const { room, a, b } = await table();
+    const heavy = (n: number) =>
+      Array.from({ length: 45 }, (_, i) => ({ ...rect(`h${n}-${i}`), pad: 'x'.repeat(19_000) }));
+    a.say({ ...upstairs, map: 'h1', name: 'Heavy 1', elements: heavy(1) });
+    a.say({ ...upstairs, map: 'h2', name: 'Heavy 2', elements: heavy(2) });
+    a.say({ ...upstairs, map: 'h3', name: 'Heavy 3', elements: heavy(3) });
+    expect(mapOf(room).maps).toHaveLength(4);
+    a.say({ ...upstairs, map: 'h4', name: 'Heavy 4', elements: heavy(4) }); // over 3,000,000 together
+    expect(b.last()).toMatchObject({ type: 'switch', map: 'h4' });
+    expect(mapOf(room).maps.map((m: { id: string }) => m.id)).toEqual(['h2', 'h3', 'h4']);
+  });
+
+  it('drops a map it holds but is not on, and tells everyone the new list; the current one stays', async () => {
+    const { room, a, b } = await table();
+    a.say(upstairs);
+    a.say({ type: 'dropmap', map: 'upper' }); // the one it is on
+    a.say({ type: 'dropmap', map: 'nowhere' });
+    expect(mapOf(room).maps).toHaveLength(2);
+
+    a.say({ type: 'dropmap', map: 'ground' });
+    expect(b.last()).toEqual({ type: 'maps', current: 'upper', maps: [{ id: 'upper', name: 'Upstairs' }] });
+    expect(mapOf(room).maps).toEqual([{ id: 'upper', name: 'Upstairs' }]);
+  });
+
+  it('keeps every map in its own rows, and takes a dropped map out of storage', async () => {
+    const { a } = await table();
+    a.say(upstairs);
+    a.say({ type: 'dropmap', map: 'ground' });
+    a.say(upstairs); // a no-op
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(state.data.get('meta')).toMatchObject({
+      current: 'upper',
+      maps: [{ id: 'upper', name: 'Upstairs' }],
+    });
+    expect(state.data.get('el:upper:u1')).toBe(JSON.stringify(rect('u1', 200)));
+    expect(state.data.get('order:upper')).toEqual(['u1']);
+    expect([...state.data.keys()].filter((k) => k.startsWith('el:ground') || k === 'order:ground')).toEqual(
+      [],
+    );
+  });
+
+  it('survives a restart with every map, which one is current, and each as it was left', async () => {
+    const { room, a } = await table();
+    a.say({ type: 'changes', base: 0, map: 'ground', changes: [set(rect('g3', 5))] });
+    a.say(upstairs);
+    await vi.advanceTimersByTimeAsync(2500); // saved
+
+    const woken = await openRoom();
+    expect(mapOf(woken)).toMatchObject({
+      map: 'upper',
+      maps: [
+        { id: 'ground', name: 'Ground floor' },
+        { id: 'upper', name: 'Upstairs' },
+      ],
+      elements: [rect('u1', 200)],
+    });
+    const c = join(woken, { cid: 'c' });
+    c.say({ type: 'goto', map: 'ground' });
+    expect(c.last()).toMatchObject({
+      type: 'switch',
+      map: 'ground',
+      elements: [rect('g1'), rect('g2', 80), rect('g3', 5)],
+    });
+    expect(room).not.toBe(woken);
+  });
+});
+
+describe('parseMessage for a table', () => {
+  const text = (m: unknown) => JSON.stringify(m);
+  it('reads addmap, goto and dropmap, and a map id on doc and changes', () => {
+    expect(parseMessage(text({ type: 'addmap', map: 'f1', name: 'N', elements: [rect('a')] }))).toMatchObject(
+      {
+        type: 'addmap',
+        map: 'f1',
+      },
+    );
+    expect(parseMessage(text({ type: 'goto', map: 'f1' }))).toEqual({ type: 'goto', map: 'f1' });
+    expect(parseMessage(text({ type: 'dropmap', map: 'f1' }))).toEqual({ type: 'dropmap', map: 'f1' });
+    expect(parseMessage(text({ type: 'doc', map: 'f1', name: '', elements: [] }))).toMatchObject({
+      map: 'f1',
+    });
+    expect(parseMessage(text({ type: 'changes', base: 0, map: 'f1', changes: [] }))).toMatchObject({
+      map: 'f1',
+    });
+  });
+  it('refuses a map id that is not one, and an addmap with none', () => {
+    for (const map of ['', 'a b', 'x/../y', 7, null, 'x'.repeat(65)]) {
+      expect(parseMessage(text({ type: 'goto', map }))).toBeNull();
+      expect(parseMessage(text({ type: 'dropmap', map }))).toBeNull();
+      expect(parseMessage(text({ type: 'addmap', map, name: '', elements: [] }))).toBeNull();
+      expect(parseMessage(text({ type: 'doc', map, name: '', elements: [] }))).toBeNull();
+      expect(parseMessage(text({ type: 'changes', base: 0, map, changes: [] }))).toBeNull();
+    }
+    // a map is always named: a doc, a batch and an addmap each need one
+    expect(parseMessage(text({ type: 'addmap', name: '', elements: [] }))).toBeNull();
+    expect(parseMessage(text({ type: 'doc', name: '', elements: [] }))).toBeNull();
+    expect(parseMessage(text({ type: 'changes', base: 0, changes: [] }))).toBeNull();
   });
 });

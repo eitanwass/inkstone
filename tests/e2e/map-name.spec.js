@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { boardElements, openActionBar, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
+import { boardElements, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
 
 const NAME_KEY = 'inkstone-map-name';
 const savedName = (page) => page.evaluate((key) => localStorage.getItem(key), NAME_KEY);
@@ -180,7 +180,7 @@ test.describe('the name in a shared session', () => {
 
   test('typing sends nothing; finishing sends the name once, on its own, never the map', async ({ page }) => {
     const { sent } = await loadWithRelay(page);
-    expect(sent[0]).toEqual({ type: 'doc', name: '', elements: [] }); // the seed
+    expect(sent[0]).toEqual({ type: 'doc', map: expect.stringMatching(/^m-/), name: '', elements: [] }); // the seed
 
     await page.click('#map-name');
     await page.keyboard.type('The Sunken Crypt', { delay: 20 });
@@ -189,7 +189,12 @@ test.describe('the name in a shared session', () => {
 
     await page.keyboard.press('Enter');
     await expect.poll(() => sent.length).toBe(2);
-    expect(sent[1]).toEqual({ type: 'changes', base: 0, changes: [{ t: 'name', name: 'The Sunken Crypt' }] });
+    expect(sent[1]).toEqual({
+      type: 'changes',
+      base: 0,
+      map: sent[0].map, // the map the table is on
+      changes: [{ t: 'name', name: 'The Sunken Crypt' }],
+    });
   });
 
   test('cancelling a rename sends nothing', async ({ page }) => {
@@ -285,7 +290,6 @@ test.describe('the map name never collides with the other controls', () => {
 
       for (const sharing of [false, true]) {
         if (sharing) {
-          await openActionBar(page);
           await page.click('#btn-share');
           await expect(page.locator('#collab-status')).toBeVisible();
           await page.keyboard.press('Escape');

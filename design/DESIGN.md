@@ -204,8 +204,9 @@ nothing and play once).
 ## 8. Layout
 
 The canvas is full-bleed; **all chrome floats over it** as fixed panels: the
-brand mark top-left, **the map's name top-centre** (click to rename), the action
-cluster and "Live" pill in a right-hand rail top-right, the tool dock bottom-centre with the contextual style panel above it,
+brand mark top-left, **the map's name top-centre** (click to rename), a right-hand rail top-right of two panels (the
+action cluster, which starts with the save indicator, and under it the live session: the "Live" dot, a stack of
+overlapping player sigils and the Share and Join buttons), the tool dock bottom-centre with the contextual style panel above it,
 and a faded readout bottom-right. Bottom panels are `width: max-content`, capped
 at the viewport.
 

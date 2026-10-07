@@ -41,11 +41,17 @@ function PlayerList({ room, selfId }: { room: Room; selfId: string }) {
   const more = room.count - shown.length;
   return (
     <>
-      {shown.map((player) => {
+      {shown.map((player, i) => {
         const self = player.id === selfId;
         const label = self ? `${player.name} (you)` : player.name;
         return (
-          <li class={self ? 'player is-self' : 'player'} role="img" aria-label={label} key={player.id}>
+          <li
+            class={self ? 'player is-self' : 'player'}
+            role="img"
+            aria-label={label}
+            key={player.id}
+            style={{ zIndex: shown.length - i }} // the first on top: you
+          >
             <Avatar seed={player.id} size={30} />
             <span class="player-name" aria-hidden="true">
               {label}

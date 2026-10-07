@@ -23,6 +23,7 @@ import './ui/action-more';
 import './ui/adjust-panel';
 import './ui/background';
 import './ui/map-name';
+import './ui/table-maps';
 import './collab/collab';
 import './ui/changelog';
 import './ui/library';

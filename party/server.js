@@ -11,12 +11,20 @@
 // revision it has, and is sent the room's current version of whatever was touched since (or the
 // whole map, if the log doesn't reach back that far).
 //
+// A room is a *table*, and holds several maps (the floors of a building the players move between; at most
+// MAX_TABLE_MAPS). One of them is the table's current map, which everyone sees and edits: everything above is
+// about that map, and `this.elements`, `this.name` and `this.total` are its. The others are parked in `this.maps`.
+// Moving the table is switching which one is current (`goto`), or bringing a new one (`addmap`): every client is
+// sent the map it moves to whole (`switch`), and a switch is a revision of its own, a barrier in the log that a
+// client which was away across it is not caught up over (it is sent the whole map). A batch of changes says
+// which map it was built on (`map`) and is dropped if the table has moved on since.
+//
 // Token pictures are not part of the map: a token holds the id of one, and each picture is kept once
 // (`img:<id>`), sent by a client when it first uses it and handed to any client that asks for it.
 // First one wins: a picture's id is made from its content, so it never needs to change.
 //
-// The map is kept in the object's storage (one row per element, so an edit writes one row, not the
-// whole map), so someone opening the link after everyone has left finds it as it was. A room is
+// The maps are kept in the object's storage (one row per element, `el:<map>:<id>`, so an edit writes one row,
+// not the whole map; switching writes only `meta`), so someone opening the link after everyone has left finds it as it was. A room is
 // deleted a week after its last visit (an alarm), so abandoned rooms don't fill the free plan's
 // storage. Until a room has been written to it is "fresh", and the first client to connect gives it
 // its map (see src/collab/collab.ts).
@@ -57,6 +65,8 @@ const MAX_IMAGES = 100;
 const MAX_IMAGES_TOTAL_LENGTH = 6_000_000; // a few pictures on the map, and every token's
 const MAX_IMAGES_PER_REQUEST = 50;
 const MAX_PLAYERS_LISTED = 50; // the count is always the true one; only the list is cut
+const MAX_TABLE_MAPS = 10; // maps a table can hold; every wake of the room reads them all from storage
+const MAX_ROOM_TOTAL_LENGTH = 3_000_000; // all the maps' elements together (one map is at most MAX_TOTAL_LENGTH)
 
 // Kept in step by hand with src/collab/changes.ts, which this file can't import.
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -84,13 +94,19 @@ function elementJson(el) {
 //   { type: 'hello', cid, player: { id, name }, epoch?, since? }
 //        who is connecting (cid is this tab; player is who they are) and, for a client that has been in
 //        this room before, the room's epoch and the last revision it has
-//   { type: 'doc', name, elements }       a map to give a fresh room
-//   { type: 'changes', base, changes }    changes made on top of revision `base`
+//   { type: 'doc', map, name, elements }  a map to give a fresh room (`map` is its id)
+//   { type: 'addmap', map, name, elements }  a map for the table to hold, which the table moves to (if `map`
+//        is already at the table, it just moves there). A table that is full (MAX_TABLE_MAPS maps, or
+//        MAX_ROOM_TOTAL_LENGTH between them) drops its oldest maps, other than the one it is on, to make room
+//   { type: 'goto', map }                 moves the table to a map it holds
+//   { type: 'dropmap', map }              takes a map the table holds, but isn't on, away
+//   { type: 'changes', base, map, changes }  changes made on top of revision `base`, on the map `map`
 //   { type: 'rename', name }              the player's new name (a client that has said hello)
 //   { type: 'image', id, data }           a token picture, which the room keeps if it hasn't got it
 //   { type: 'getimages', ids }            asks for pictures, each answered with an `image` message
 // and the room tells everyone `{ type: 'presence', count, players: [{ id, name }] }` when someone arrives
-// or leaves.
+// or leaves, `{ type: 'switch', ...the map }` when the table moves, `{ type: 'maps', current, maps }` when the
+// list of maps changes without that.
 export function parseMessage(text) {
   if (typeof text !== 'string' || text.length > MAX_TOTAL_LENGTH) return null;
   let data;
@@ -119,14 +135,20 @@ export function parseMessage(text) {
     const ok = Array.isArray(data.ids) && data.ids.length <= MAX_IMAGES_PER_REQUEST && data.ids.every(isId);
     return ok ? { type: 'getimages', ids: data.ids } : null;
   }
-  if (data.type === 'doc') {
+  if (data.type === 'goto' || data.type === 'dropmap') {
+    return isId(data.map) ? { type: data.type, map: data.map } : null;
+  }
+  if (data.type === 'doc' || data.type === 'addmap') {
     if (!Array.isArray(data.elements) || data.elements.length > MAX_ELEMENTS) return null;
     const name = data.name ?? '';
     if (typeof name !== 'string' || name.length > MAX_NAME_LENGTH) return null;
+    const map = data.map;
+    if (!isId(map)) return null;
     const sets = data.elements.map((el) => [el?.id, elementJson(el)]);
-    return sets.some(([, json]) => json === null) ? null : { type: 'doc', name, sets };
+    return sets.some(([, json]) => json === null) ? null : { type: data.type, map, name, sets };
   }
   if (data.type !== 'changes' || !isRev(data.base) || !Array.isArray(data.changes)) return null;
+  if (!isId(data.map)) return null;
   const changes = [];
   for (const c of data.changes) {
     if (!isObject(c)) return null;
@@ -144,7 +166,7 @@ export function parseMessage(text) {
       return null;
     }
   }
-  return { type: 'changes', base: data.base, changes };
+  return { type: 'changes', base: data.base, map: data.map, changes };
 }
 
 // A change as the text that goes over the wire.
@@ -153,9 +175,12 @@ const wire = (c) => (c.t === 'set' ? `{"t":"set","el":${c.json}}` : JSON.stringi
 export class InkstoneRoom {
   constructor(state) {
     this.state = state; // Cloudflare's: storage, and the sockets (getWebSockets)
-    this.elements = new Map(); // id -> the element's JSON text; the map's order is the room's order
+    this.elements = new Map(); // the current map: id -> the element's JSON text; its order is the map's order
     this.total = 0; // the length of all the JSON texts
     this.name = '';
+    this.current = ''; // the id of the current map
+    this.maps = new Map(); // the others the table holds: id -> { name, elements, total }
+    this.mapOrder = []; // every map's id, in the order they were added
     this.initialized = false; // false until a client has given the room its map
     this.epoch = ''; // names this life of the room, so a client can tell if it was deleted and remade
     this.rev = 0;
@@ -163,10 +188,11 @@ export class InkstoneRoom {
     this.images = new Map(); // id -> the picture's data URL
     this.imagesTotal = 0;
     this.imageWrites = new Set(); // picture ids to write at the next save
-    this.dirty = new Set(); // ids to write (or delete) at the next save
+    this.dirty = new Set(); // `<map>:<id>` of elements to write (or delete) at the next save
     this.logWrites = new Set(); // revisions to write
     this.logDeletes = new Set(); // revisions to delete
-    this.orderDirty = false;
+    this.orderDirty = new Set(); // maps whose order is to be written
+    this.orderDeletes = new Set(); // maps whose order is to be deleted
     this.metaDirty = false;
     this.saveTimer = null;
     this.ready = state.blockConcurrencyWhile(() => this.load());
@@ -175,12 +201,29 @@ export class InkstoneRoom {
   async load() {
     const stored = await this.state.storage.list();
     const meta = stored.get('meta');
-    this.name = meta?.name ?? '';
-    this.initialized = !!meta;
-    this.epoch = meta?.epoch ?? '';
-    this.rev = meta?.rev ?? 0;
-    for (const id of stored.get('order') ?? []) this.keep(id, stored.get(`el:${id}`));
-    for (const [key, json] of stored) if (key.startsWith('el:')) this.keep(key.slice(3), json);
+    const listed = Array.isArray(meta?.maps) ? meta.maps.filter((m) => isObject(m) && isId(m.id)) : [];
+    if (isId(meta?.current) && listed.some((m) => m.id === meta.current)) {
+      this.initialized = true;
+      this.epoch = meta.epoch ?? '';
+      this.rev = meta.rev ?? 0;
+      this.current = meta.current;
+      this.mapOrder = listed.map((m) => m.id);
+      const targets = new Map();
+      for (const { id, name } of listed) {
+        const target = id === this.current ? this : { name: '', elements: new Map(), total: 0 };
+        target.name = typeof name === 'string' ? name : '';
+        for (const elId of stored.get(`order:${id}`) ?? [])
+          this.keep(elId, stored.get(`el:${id}:${elId}`), target);
+        targets.set(id, target);
+        if (id !== this.current) this.maps.set(id, target);
+      }
+      for (const [key, json] of stored) {
+        if (!key.startsWith('el:')) continue;
+        const at = key.indexOf(':', 3);
+        const target = at < 0 ? undefined : targets.get(key.slice(3, at));
+        if (target) this.keep(key.slice(at + 1), json, target);
+      }
+    }
     for (const [key, data] of stored) {
       if (key.startsWith('img:') && isImageData(data)) this.addImage(key.slice(4), data);
     }
@@ -190,15 +233,36 @@ export class InkstoneRoom {
       .sort((a, b) => a.rev - b.rev);
   }
 
-  // Puts an element in (a new one goes last, an old one keeps its place); false if it doesn't fit.
-  keep(id, json) {
+  // Puts an element in a map (the current one unless told otherwise; a new one goes last, an old one keeps its
+  // place); false if it doesn't fit.
+  keep(id, json, map = this) {
     if (typeof json !== 'string') return false;
-    const old = this.elements.get(id);
-    if (old === undefined && this.elements.size >= MAX_ELEMENTS) return false;
-    if (this.total - (old?.length ?? 0) + json.length > MAX_TOTAL_LENGTH) return false;
-    this.total += json.length - (old?.length ?? 0);
-    this.elements.set(id, json);
+    const old = map.elements.get(id);
+    if (old === undefined && map.elements.size >= MAX_ELEMENTS) return false;
+    if (map.total - (old?.length ?? 0) + json.length > MAX_TOTAL_LENGTH) return false;
+    map.total += json.length - (old?.length ?? 0);
+    map.elements.set(id, json);
     return true;
+  }
+
+  // The length of every map's elements together.
+  roomTotal() {
+    let total = this.total;
+    for (const map of this.maps.values()) total += map.total;
+    return total;
+  }
+
+  // The element `id` of the map `mapId` as it is now, if there is one.
+  jsonOf(mapId, id) {
+    return (mapId === this.current ? this.elements : this.maps.get(mapId)?.elements)?.get(id);
+  }
+
+  // Every map, in the order they were added, as { id, name }.
+  mapList() {
+    return this.mapOrder.map((id) => ({
+      id,
+      name: id === this.current ? this.name : (this.maps.get(id)?.name ?? ''),
+    }));
   }
 
   // Keeps a picture the room hasn't got; false if it has it or it doesn't fit.
@@ -216,29 +280,35 @@ export class InkstoneRoom {
     this.epoch = newEpoch();
     this.rev = 0;
     this.log = [];
-    this.metaDirty = this.orderDirty = true;
+    this.metaDirty = true;
+    this.current = message.map;
+    this.mapOrder = [message.map];
+    this.maps.clear();
     this.elements.clear();
     this.total = 0;
     for (const [id, json] of message.sets) this.keep(id, json);
     this.name = message.name;
-    this.dirty = new Set(this.elements.keys());
+    this.dirty = new Set([...this.elements.keys()].map((id) => `${this.current}:${id}`));
+    this.orderDirty = new Set([this.current]);
+    this.orderDeletes = new Set();
   }
 
   // Applies changes already checked for conflicts: sets, then deletes, then the last order, then the
   // name, which is how changes.ts applies them. Returns the ids of sets that didn't fit.
   applyChanges(changes) {
-    this.metaDirty = this.orderDirty = true; // cheap to rewrite, and sets and deletes change it anyway
+    this.metaDirty = true;
+    this.orderDirty.add(this.current); // cheap to rewrite, and sets and deletes change it anyway
     const failed = [];
     for (const c of changes) {
       if (c.t !== 'set') continue;
-      if (this.keep(c.id, c.json)) this.dirty.add(c.id);
+      if (this.keep(c.id, c.json)) this.dirty.add(`${this.current}:${c.id}`);
       else failed.push(c.id);
     }
     for (const c of changes) {
       if (c.t === 'del' && this.elements.has(c.id)) {
         this.total -= this.elements.get(c.id).length;
         this.elements.delete(c.id);
-        this.dirty.add(c.id);
+        this.dirty.add(`${this.current}:${c.id}`);
       }
     }
     const order = changes.findLast((c) => c.t === 'order');
@@ -256,8 +326,101 @@ export class InkstoneRoom {
   // The whole map as the message a client gets when it has nothing to be caught up from, built from
   // the stored texts as they are.
   documentMessage() {
+    return this.mapMessage('doc', `"fresh":${!this.initialized},`);
+  }
+
+  // The current map whole, as a `doc` (to a client with nothing to be caught up from) or a `switch` (to
+  // everyone, when the table moves), with the list of maps the table holds.
+  mapMessage(type, fresh = '') {
     const elements = [...this.elements.values()].join(',');
-    return `{"type":"doc","fresh":${!this.initialized},"epoch":"${this.epoch}","rev":${this.rev},"name":${JSON.stringify(this.name)},"elements":[${elements}]}`;
+    return `{"type":"${type}",${fresh}"epoch":"${this.epoch}","rev":${this.rev},"name":${JSON.stringify(this.name)},"map":"${this.current}","maps":${JSON.stringify(this.mapList())},"elements":[${elements}]}`;
+  }
+
+  // Makes a map the table holds, other than the current one, the current one (which is parked).
+  swapTo(id) {
+    const target = this.maps.get(id);
+    if (!target) return false;
+    this.maps.set(this.current, { name: this.name, elements: this.elements, total: this.total });
+    this.maps.delete(id);
+    this.current = id;
+    this.name = target.name;
+    this.elements = target.elements;
+    this.total = target.total;
+    this.metaDirty = true;
+    return true;
+  }
+
+  // The table has moved: a revision of its own (a barrier in the log), and everyone is sent the map it is on,
+  switched(session) {
+    this.rev++;
+    this.log.push({
+      rev: this.rev,
+      cid: session.cid,
+      by: session.player,
+      at: Date.now(),
+      ids: [],
+      order: false,
+      name: false,
+      switch: true,
+    });
+    this.logWrites.add(this.rev);
+    while (this.log.length > LOG_LIMIT) this.logDeletes.add(this.log.shift().rev);
+    this.metaDirty = true;
+    const message = this.mapMessage('switch');
+    for (const [other] of this.sessions()) other.send(message);
+  }
+
+  // Moves the table to a map it holds. False if it is the current one, or isn't held.
+  goto(session, id) {
+    if (id === this.current || !this.swapTo(id)) return false;
+    this.switched(session);
+    return true;
+  }
+
+  // Takes a map for the table to hold, and moves the table to it. A map it already holds is just moved to.
+  // A table that is full lets its oldest maps go, other than the one it is on, to make room for the new one
+  // (a long game keeps moving on), without a word to anyone. Any map that got here fits: parseMessage
+  // already holds it to MAX_ELEMENTS elements and MAX_TOTAL_LENGTH in all.
+  addMap(session, message) {
+    const { map, name, sets } = message;
+    if (this.mapOrder.includes(map)) return this.goto(session, map);
+    const target = { name, elements: new Map(), total: 0 };
+    for (const [id, json] of sets) this.keep(id, json, target);
+    const full = () =>
+      this.mapOrder.length >= MAX_TABLE_MAPS || this.roomTotal() + target.total > MAX_ROOM_TOTAL_LENGTH;
+    while (full()) {
+      const oldest = this.mapOrder.find((id) => id !== this.current);
+      if (oldest === undefined) break;
+      this.forget(oldest);
+    }
+    this.maps.set(map, target);
+    this.mapOrder.push(map);
+    for (const id of target.elements.keys()) this.dirty.add(`${map}:${id}`);
+    this.orderDirty.add(map);
+    this.orderDeletes.delete(map);
+    this.swapTo(map);
+    this.switched(session);
+    return true;
+  }
+
+  // Forgets a map the table holds but isn't on: its rows are deleted at the next save.
+  forget(id) {
+    const target = this.maps.get(id);
+    for (const elId of target.elements.keys()) this.dirty.add(`${id}:${elId}`); // gone, so they are deleted
+    this.orderDirty.delete(id);
+    this.orderDeletes.add(id);
+    this.maps.delete(id);
+    this.mapOrder = this.mapOrder.filter((m) => m !== id);
+    this.metaDirty = true;
+  }
+
+  // Takes a map the table holds, but isn't on, away for good. False if it is the current one, or isn't held.
+  dropMap(id) {
+    if (!this.maps.has(id)) return false;
+    this.forget(id);
+    const message = JSON.stringify({ type: 'maps', current: this.current, maps: this.mapList() });
+    for (const [ws] of this.sessions()) ws.send(message);
+    return true;
   }
 
   // The room's version of things, as changes: each of these elements as it is now (or deleted), and
@@ -306,7 +469,8 @@ export class InkstoneRoom {
 
   hello(ws, { epoch, since }) {
     const caughtUp = this.initialized && epoch === this.epoch && since !== undefined && since <= this.rev;
-    if (!caughtUp || !this.covers(since)) {
+    const switched = since !== undefined && this.log.some((entry) => entry.switch && entry.rev > since);
+    if (!caughtUp || !this.covers(since) || switched) {
       ws.send(this.documentMessage());
       return;
     }
@@ -339,6 +503,11 @@ export class InkstoneRoom {
   // goes to the others; the sender is told the revision, and sent the room's version of whatever was
   // refused, so it settles on the same map.
   receive(ws, message) {
+    if (message.map !== undefined && message.map !== this.current) {
+      // Built on a map the table has left: the switch is already on its way to this client.
+      ws.send(`{"type":"ack","epoch":"${this.epoch}","rev":${this.rev},"fix":[]}`);
+      return false;
+    }
     const session = this.sessionOf(ws);
     const known = this.covers(message.base);
     const touched = this.touchedSince(message.base, session.cid);
@@ -388,10 +557,11 @@ export class InkstoneRoom {
     this.saveTimer = null;
     const writes = [];
     const deletes = [];
-    for (const id of this.dirty) {
-      const json = this.elements.get(id);
-      if (json === undefined) deletes.push(`el:${id}`);
-      else writes.push([`el:${id}`, json]);
+    for (const key of this.dirty) {
+      const at = key.indexOf(':');
+      const json = this.jsonOf(key.slice(0, at), key.slice(at + 1));
+      if (json === undefined) deletes.push(`el:${key}`);
+      else writes.push([`el:${key}`, json]);
     }
     for (const id of this.imageWrites) writes.push([`img:${id}`, this.images.get(id)]);
     for (const rev of this.logWrites) {
@@ -399,13 +569,24 @@ export class InkstoneRoom {
       if (entry) writes.push([`log:${rev}`, entry]);
     }
     for (const rev of this.logDeletes) deletes.push(`log:${rev}`);
-    if (this.orderDirty) writes.push(['order', [...this.elements.keys()]]);
-    if (this.metaDirty) writes.push(['meta', { name: this.name, epoch: this.epoch, rev: this.rev }]);
+    for (const id of this.orderDirty) {
+      const map = id === this.current ? this : this.maps.get(id);
+      if (map) writes.push([`order:${id}`, [...map.elements.keys()]]);
+    }
+    for (const id of this.orderDeletes) deletes.push(`order:${id}`);
+    if (this.metaDirty) {
+      writes.push([
+        'meta',
+        { epoch: this.epoch, rev: this.rev, current: this.current, maps: this.mapList() },
+      ]);
+    }
     this.dirty = new Set();
     this.imageWrites = new Set();
     this.logWrites = new Set();
     this.logDeletes = new Set();
-    this.orderDirty = this.metaDirty = false;
+    this.orderDirty = new Set();
+    this.orderDeletes = new Set();
+    this.metaDirty = false;
     for (let i = 0; i < writes.length; i += STORAGE_BATCH) {
       await this.state.storage.put(Object.fromEntries(writes.slice(i, i + STORAGE_BATCH)));
     }
@@ -421,6 +602,9 @@ export class InkstoneRoom {
     this.elements.clear();
     this.total = 0;
     this.name = '';
+    this.current = '';
+    this.maps.clear();
+    this.mapOrder = [];
     this.initialized = false;
     this.epoch = '';
     this.rev = 0;
@@ -431,7 +615,9 @@ export class InkstoneRoom {
     this.dirty = new Set();
     this.logWrites = new Set();
     this.logDeletes = new Set();
-    this.orderDirty = this.metaDirty = false;
+    this.orderDirty = new Set();
+    this.orderDeletes = new Set();
+    this.metaDirty = false;
     await this.state.storage.deleteAll();
   }
 
@@ -487,6 +673,12 @@ export class InkstoneRoom {
       }
       this.seed(message);
       ws.send(`{"type":"ack","epoch":"${this.epoch}","rev":0,"fix":[]}`);
+    } else if (message.type === 'addmap') {
+      if (!this.addMap(session, message)) return;
+    } else if (message.type === 'goto') {
+      if (!this.goto(session, message.map)) return;
+    } else if (message.type === 'dropmap') {
+      if (!this.dropMap(message.map)) return;
     } else if (!this.receive(ws, message)) {
       return; // nothing was accepted, so nothing to save
     }

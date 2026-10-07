@@ -79,3 +79,76 @@
   display: flex;
   gap: 8px;
 }
+
+.collab-popover-leave {
+  margin-top: 10px;
+}
+
+/* The maps a table holds: one row each, the one the table is on marked. */
+.table-maps-label {
+  margin-top: 14px;
+}
+
+.table-maps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.table-map {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.table-map-go {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-map-go:hover {
+  background: var(--bg-toolbar-hover);
+  color: var(--text-primary);
+}
+
+.table-map.is-current .table-map-go {
+  color: var(--accent);
+  background: var(--bg-toolbar-hover);
+  cursor: default;
+}
+
+.table-map-remove {
+  padding: 0 9px;
+  font-size: 16px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.table-map-remove:hover {
+  color: var(--text-primary);
+  background: var(--bg-toolbar-hover);
+}
+
+.collab-popover-note {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}

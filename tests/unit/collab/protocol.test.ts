@@ -14,7 +14,47 @@ describe('a doc message', () => {
         name: 'The Sunken Crypt',
         elements: [room],
       }),
-    ).toEqual({ type: 'doc', fresh: true, epoch: 'e1', rev: 4, name: 'The Sunken Crypt', elements: [room] });
+    ).toEqual({
+      type: 'doc',
+      fresh: true,
+      epoch: 'e1',
+      rev: 4,
+      name: 'The Sunken Crypt',
+      elements: [room],
+      map: '',
+      maps: [],
+    });
+  });
+
+  it('says which map the table is on and which maps it holds, tidying their names', () => {
+    const doc = parseMessage({
+      type: 'doc',
+      epoch: 'e1',
+      rev: 4,
+      name: 'Ground',
+      map: 'ground',
+      maps: [
+        { id: 'ground', name: 'Ground' },
+        { id: 'upper', name: '  Up\u0000stairs ' },
+        { id: 'not an id', name: 'Dropped' },
+        { name: 'No id' },
+        'junk',
+      ],
+      elements: [],
+    });
+    expect(doc).toMatchObject({
+      map: 'ground',
+      maps: [
+        { id: 'ground', name: 'Ground' },
+        { id: 'upper', name: 'Up stairs' },
+      ],
+    });
+    expect(
+      parseMessage({ type: 'doc', epoch: 'e', rev: 0, map: 'a b', maps: 'no', elements: [] }),
+    ).toMatchObject({
+      map: '',
+      maps: [],
+    });
   });
 
   it('is not fresh unless it says so, has no name unless it has one, and may have no epoch yet', () => {
@@ -25,6 +65,8 @@ describe('a doc message', () => {
       rev: 0,
       name: '',
       elements: [],
+      map: '',
+      maps: [],
     });
   });
 
@@ -194,5 +236,56 @@ describe('a cursor message', () => {
     ]) {
       expect(parseCursorMessage(data)).toBeNull();
     }
+  });
+});
+
+describe('a switch message', () => {
+  it('is the map the table moved to, whole, like a doc that is not fresh', () => {
+    expect(
+      parseMessage({
+        type: 'switch',
+        epoch: 'e1',
+        rev: 7,
+        name: 'Upstairs',
+        map: 'upper',
+        maps: [
+          { id: 'ground', name: 'Ground' },
+          { id: 'upper', name: 'Upstairs' },
+        ],
+        elements: [room],
+      }),
+    ).toEqual({
+      type: 'switch',
+      epoch: 'e1',
+      rev: 7,
+      name: 'Upstairs',
+      map: 'upper',
+      maps: [
+        { id: 'ground', name: 'Ground' },
+        { id: 'upper', name: 'Upstairs' },
+      ],
+      elements: [room],
+    });
+  });
+
+  it('is null without a revision, or with elements that are not a list', () => {
+    expect(parseMessage({ type: 'switch', epoch: 'e', map: 'a', maps: [], elements: [] })).toBeNull();
+    expect(
+      parseMessage({ type: 'switch', epoch: 'e', rev: 1, map: 'a', maps: [], elements: 'no' }),
+    ).toBeNull();
+  });
+});
+
+describe('a maps message', () => {
+  it('has the map the table is on and the maps it holds', () => {
+    expect(parseMessage({ type: 'maps', current: 'upper', maps: [{ id: 'upper', name: 'Up' }] })).toEqual({
+      type: 'maps',
+      current: 'upper',
+      maps: [{ id: 'upper', name: 'Up' }],
+    });
+  });
+  it('is null without a map id for the one it is on', () => {
+    expect(parseMessage({ type: 'maps', maps: [] })).toBeNull();
+    expect(parseMessage({ type: 'maps', current: 'a b', maps: [] })).toBeNull();
   });
 });

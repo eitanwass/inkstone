@@ -67,11 +67,11 @@
   font-size: 12.5px;
 }
 
-/* The arrow and its label point at the Share button, top-right, under the action cluster. */
+/* The arrow and its label point at the Share button, top-right, in the session panel under the action cluster. */
 .hint-share {
   position: absolute;
-  top: calc(80px + env(safe-area-inset-top, 0px));
-  right: calc(124px + env(safe-area-inset-right, 0px));
+  top: calc(132px + env(safe-area-inset-top, 0px));
+  right: calc(41px + env(safe-area-inset-right, 0px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;

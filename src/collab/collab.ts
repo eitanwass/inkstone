@@ -36,7 +36,7 @@ import { showToast } from '../ui/toast';
 import { applyChanges, type Change, diff, ensureIds } from './changes';
 import { connectCursors, disconnectCursors } from './cursors';
 import { me, onNameChanged } from './player';
-import { type Message, parseMessage } from './protocol';
+import { type Message, parseMessage, type TableMap } from './protocol';
 import { resolveRelayHost } from './relay-host';
 
 // Null in a production build that wasn't given a relay (see relay-host.ts):
@@ -60,6 +60,87 @@ function requireSharing(): boolean {
 }
 
 let socket: PartySocket | null = null;
+let joinedSession: string | null = null; // the room the socket is for
+
+// What the map list (ui/maps.ts) does as the board joins, moves with or leaves a table. Registered rather than
+// imported, since ui/maps.ts sits above this file in the module chain (as history.ts does with the listener).
+export interface TableHooks {
+  // The id the map on the board has in My Maps: a room nobody has used is given the map under it.
+  mapId(): string;
+  // The board's map became the table's (a room nobody had used took it).
+  shared(session: string): void;
+  // The table's map is about to replace the one on the board: put that one away. False if it couldn't be kept.
+  beforeJoin(session: string): boolean;
+  // The table moved to another map, and it is on the board now.
+  switched(): void;
+  // The board left its table.
+  left(): void;
+}
+let tableHooks: TableHooks = {
+  mapId: () => '',
+  shared() {},
+  beforeJoin: () => true,
+  switched() {},
+  left() {},
+};
+export function setTableHooks(hooks: TableHooks): void {
+  tableHooks = hooks;
+}
+
+// ── The table's maps ───────────────────────────────────────────
+// A table holds several maps (the floors of a building) and is on one of them, which is the board of everyone
+// at it. The room keeps them all; we know which they are, and which the table is on. Moving the table, or
+// bringing it another map, is a request: the board changes when the room's `switch` comes back, for everyone,
+// the one who asked included.
+let tableMaps: TableMap[] = [];
+let currentMap = '';
+const tableListeners: (() => void)[] = [];
+
+// The maps at this table, and the one it is on (named as it is on the board, which may be ahead of the room).
+export function tableInfo(): { current: string; maps: TableMap[] } {
+  const maps = tableMaps.map((m) => (m.id === currentMap ? { ...m, name: state.mapName } : m));
+  return { current: currentMap, maps };
+}
+
+export function onTableChanged(fn: () => void): void {
+  tableListeners.push(fn);
+}
+
+function setTable(current: string, maps: TableMap[]): void {
+  currentMap = current;
+  tableMaps = maps;
+  for (const fn of tableListeners) fn();
+}
+
+// The socket, if the table can be asked for something now; if not, tells the player.
+function openSocket(): PartySocket | null {
+  if (socket && socket.readyState === WebSocket.OPEN && caughtUp) return socket;
+  showToast("Can't reach the table right now. Try again in a moment.");
+  return null;
+}
+
+// Moves the table to a map it holds.
+export function gotoTableMap(id: string): void {
+  const sock = openSocket();
+  if (sock && id !== currentMap) sock.send(JSON.stringify({ type: 'goto', map: id }));
+}
+
+// Gives the table a map (a copy of it: the table's is its own from then on) and moves the table to it. A map
+// the table already holds under that id is just moved to. False, with a toast, if the table can't be reached.
+export function addTableMap(map: { id: string; name: string; elements: BoardElement[] }): boolean {
+  const sock = openSocket();
+  if (!sock) return false;
+  ensureIds(map.elements);
+  uploadImages(sock, map.elements);
+  sock.send(JSON.stringify({ type: 'addmap', map: map.id, name: map.name, elements: map.elements }));
+  return true;
+}
+
+// Takes a map the table holds, but isn't on, away from it for good.
+export function dropTableMap(id: string): void {
+  const sock = openSocket();
+  if (sock && id !== currentMap) sock.send(JSON.stringify({ type: 'dropmap', map: id }));
+}
 
 // This tab (new on each page load; the relay doesn't count a client's own earlier batches as
 // conflicts). You, and the name you chose, are in player.ts.
@@ -133,7 +214,7 @@ function broadcastState() {
     socket,
     changes.flatMap((c) => (c.t === 'set' ? [c.el] : [])),
   );
-  socket.send(JSON.stringify({ type: 'changes', base: room.rev, changes }));
+  socket.send(JSON.stringify({ type: 'changes', base: room.rev, map: currentMap || undefined, changes }));
   remember();
 }
 
@@ -193,9 +274,12 @@ function onMessage(sock: PartySocket, message: Message): void {
         ensureIds(state.elements);
         uploadedImages.clear();
         uploadImages(sock, state.elements);
-        sock.send(JSON.stringify({ type: 'doc', name: state.mapName, elements: state.elements }));
+        const map = tableHooks.mapId();
+        sock.send(JSON.stringify({ type: 'doc', map, name: state.mapName, elements: state.elements }));
         remember();
         room = { epoch: '', rev: 0 }; // the ack brings the epoch
+        setTable(map, [{ id: map, name: state.mapName }]);
+        if (joinedSession) tableHooks.shared(joinedSession);
       } else {
         // Nothing to be caught up from (a first visit, or the room's log doesn't reach back to our
         // last revision): the room's map replaces ours.
@@ -203,9 +287,15 @@ function onMessage(sock: PartySocket, message: Message): void {
           showToast('Reconnected — changes you made while offline were replaced by the shared map');
         }
         if (message.epoch !== room.epoch) uploadedImages.clear(); // a new life of the room has none of ours
+        // The table's map takes the board's place: the one that was there is put away, not lost.
+        if (!wasInRoom && joinedSession && !tableHooks.beforeJoin(joinedSession)) {
+          leaveSession();
+          return;
+        }
         applyRemoteDocument(message.name, message.elements);
         remember();
         room = { epoch: message.epoch, rev: message.rev };
+        setTable(message.map, message.maps);
       }
       caughtUp = true;
       unsentEdits = false;
@@ -227,7 +317,7 @@ function onMessage(sock: PartySocket, message: Message): void {
           sock,
           ours.flatMap((c) => (c.t === 'set' ? [c.el] : [])),
         );
-        sock.send(JSON.stringify({ type: 'changes', base, changes: ours }));
+        sock.send(JSON.stringify({ type: 'changes', base, map: currentMap || undefined, changes: ours }));
         remember();
         showToast('Reconnected — your changes while offline were added to the shared map');
       }
@@ -244,6 +334,20 @@ function onMessage(sock: PartySocket, message: Message): void {
       applyFromRoom(message.changes);
       room.rev = message.rev;
       break;
+    case 'switch':
+      // The table moved: its map, whole, replaces the board's, and undo starts again from it.
+      if (!synced) return;
+      applyRemoteDocument(message.name, message.elements);
+      remember();
+      room = { epoch: message.epoch, rev: message.rev };
+      caughtUp = true;
+      unsentEdits = false;
+      setTable(message.map, message.maps);
+      tableHooks.switched();
+      break;
+    case 'maps':
+      setTable(message.current, message.maps);
+      return;
     case 'ack':
       if (!synced) return;
       room = { epoch: message.epoch || room.epoch, rev: message.rev };
@@ -271,6 +375,7 @@ function connect(sessionId: string): void {
   if (socket) socket.close();
   const current = new PartySocket({ host: RELAY_HOST, room: sessionId });
   socket = current;
+  joinedSession = sessionId;
   synced = null;
   room = { epoch: '', rev: 0 };
   caughtUp = false;
@@ -319,6 +424,9 @@ export const isShared = (): boolean => socket !== null;
 export function leaveSession(): void {
   socket?.close();
   socket = null;
+  joinedSession = null;
+  setTable('', []);
+  tableHooks.left();
   synced = null;
   room = { epoch: '', rev: 0 };
   caughtUp = false;
@@ -364,6 +472,7 @@ function openSharePopover() {
     }
     shareCodeInput.value = sessionId;
     hideJoinPopover();
+    setTable(currentMap, tableMaps); // the list shows the names as they are now
     positionPopover(sharePopover, shareBtn);
     shareCodeInput.focus();
   });
@@ -376,6 +485,12 @@ shareBtn.addEventListener('click', (e) => {
 });
 
 shareCodeInput.addEventListener('click', () => shareCodeInput.select());
+
+byId('share-leave').addEventListener('click', () => {
+  leaveSession();
+  hideSharePopover();
+  showToast('Left the session. This map is yours now.');
+});
 
 byId('share-copy-link').addEventListener('click', () => {
   navigator.clipboard

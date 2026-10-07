@@ -1,5 +1,5 @@
-  <!-- Zoom controls: bottom-left (see zoomIn / zoomOut / fitMapToScreen in src/input/controls.ts) -->
-  <div id="zoom-controls" class="floating-panel" role="toolbar" aria-label="Zoom">
+  <!-- Zoom and view controls: bottom-left (see zoomIn / zoomOut / fitMapToScreen / resetView in src/input/controls.ts) -->
+  <div id="zoom-controls" class="floating-panel" role="toolbar" aria-label="Zoom and view">
     <button class="icon-btn" id="btn-zoom-out" aria-label="Zoom out" aria-keyshortcuts="-" title="Zoom out (-)">
       <svg width="18" height="18" aria-hidden="true"><path d="M4 9h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
     </button>
@@ -10,4 +10,7 @@
     <button class="icon-btn" id="btn-zoom-fit" aria-label="Fit map to screen" aria-keyshortcuts="F" title="Fit map to screen (F)">
       <svg width="18" height="18"><use href="/icons.svg#icon-fit"></use></svg>
     </button>
+    <button class="icon-btn" id="btn-reset-view" data-action="reset-view" aria-label="Reset view" aria-keyshortcuts="Home" title="Reset view (Home)">
+        <svg width="18" height="18"><use href="/icons.svg#icon-reset-view"></use></svg>
+      </button>
   </div>

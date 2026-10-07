@@ -54,15 +54,16 @@ test('a failed save says so on hover', async ({ page }) => {
   await expect(status(page)).toHaveAttribute('title', 'Not saved');
 });
 
-test('it is a small chip, the same height as the Live pill', async ({ page }) => {
-  await page.routeWebSocket(/\/parties\//, () => {});
+test('it is a small chip, inside the action bar, before undo and redo', async ({ page }) => {
   await resetBoard(page);
-  await page.click('#btn-share');
-  await expect(page.locator('#collab-status')).toHaveText('Live');
-  const pill = await page.locator('#collab-status').boundingBox();
   const chip = await status(page).boundingBox();
+  const cluster = await page.locator('#action-cluster').boundingBox();
+  const undo = await page.locator('#btn-undo').boundingBox();
   expect(chip.width).toBeLessThanOrEqual(22);
-  expect(chip.height).toBe(pill.height); // the two sit side by side, so they match
+  expect(chip.height).toBe(chip.width);
+  expect(chip.x).toBeGreaterThanOrEqual(cluster.x); // inside the bar
+  expect(chip.x + chip.width).toBeLessThanOrEqual(undo.x); // the first thing in it
+  expect(chip.y + chip.height / 2).toBeCloseTo(undo.y + undo.height / 2, 0); // on the same line
 });
 
 test('renaming the map is saved too', async ({ page }) => {
@@ -118,7 +119,9 @@ test('after a failed save, one that works shows saved again', async ({ page }) =
   await state(page, 'saved');
 });
 
-test('it sits at the right end of the status row, with the Live pill to its left', async ({ page }) => {
+test('it stays in the action bar while sharing: the Live indicator is in the session panel below', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.routeWebSocket(/\/parties\//, () => {});
   await resetBoard(page);
@@ -126,20 +129,9 @@ test('it sits at the right end of the status row, with the Live pill to its left
   await expect(page.locator('#collab-status')).toHaveText('Live');
   await page.keyboard.press('Escape');
 
+  const chip = await status(page).boundingBox();
+  const cluster = await page.locator('#action-cluster').boundingBox();
   const pill = await page.locator('#collab-status').boundingBox();
-  const chip = await status(page).boundingBox();
-  const cluster = await page.locator('#action-cluster').boundingBox();
-  expect(chip.x).toBeGreaterThanOrEqual(pill.x + pill.width); // to the right of the pill
-  expect(chip.y + chip.height / 2).toBeCloseTo(pill.y + pill.height / 2, 0); // on the same line
-  expect(chip.x + chip.width).toBeCloseTo(cluster.x + cluster.width, 0); // flush with the action cluster
-  expect(chip.y).toBeGreaterThan(cluster.y + cluster.height); // below it
-});
-
-test('without sharing it is still there, alone at the right', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await resetBoard(page);
-  await expect(page.locator('#collab-status')).toBeHidden();
-  const chip = await status(page).boundingBox();
-  const cluster = await page.locator('#action-cluster').boundingBox();
-  expect(chip.x + chip.width).toBeCloseTo(cluster.x + cluster.width, 0);
+  expect(chip.y + chip.height).toBeLessThanOrEqual(cluster.y + cluster.height); // in the bar
+  expect(pill.y).toBeGreaterThan(cluster.y + cluster.height); // the indicator is below it
 });

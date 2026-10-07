@@ -70,12 +70,12 @@ Each item is meant to ship on its own. Done items are removed (see CHANGELOG.md)
   everything, the other players don't), so it follows view-only links.
 - **Hex grids and a no-grid mode**: needed for some systems and for scanned maps. Touches the grid, the
   measuring rules and snapping.
-- **Maps and sessions** (decide before building more of My Maps): a session is the table, a map is where it
-  is. A DM who moves the group to another location should not need a new link, and players' own My Maps must
-  not be overwritten when that happens. Today the two are tied together: the board is the session's map, moving to
-  another map leaves the session (it asks first), and joining a session replaces the map on the board with the
-  room's. A way out is a session that holds a *current map* the DM can change (everyone's board follows, each
-  player's own maps untouched), with joined maps kept as a separate "Joined" entry rather than as the working copy.
+- **Only the GM runs the table.** Anyone at a table can move it between its maps, bring one and take one off
+  today (`goto`, `addmap` and `dropmap` in `party/server.js`, and the Share popover and `bringToTable` in the
+  client). With roles (see view-only links) the relay refuses those from anyone but the GM, and the controls only
+  show for them. Also worth building: "Save to My Maps" for a map at the table (a player leaving a session keeps
+  only the map on their board today, the table's other maps stay in the room), and rename, reorder and a thumbnail
+  per map in the table's list.
 - **Sharing in the library** (and the "Public creations" item in the home page menu): players sharing
   maps, models and tokens with each other. The library panel, its filters and its list format
   (`src/core/library.ts`) are built; what is missing is somewhere to keep what players share, and

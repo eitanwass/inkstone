@@ -1,9 +1,12 @@
 // ── What the relay sends us ─────────────────────────────────────
-// Four kinds of message come from the relay, and anyone with the session id could send any of them
+// Several kinds of message come from the relay, and anyone with the session id could send any of them
 // (the relay checks their shape, but the contents are checked here again). `rev` is the room's
 // revision (the count of accepted batches of changes) and `epoch` names this life of the room.
 //   doc      the whole map, when we have nothing to be caught up from. `fresh` means nobody has used
-//            this room yet (it is new, or has expired), so our own map becomes the room's.
+//            this room yet (it is new, or has expired), so our own map becomes the room's. `map` is the
+//            id of the map the table is on and `maps` every map it holds (a table holds several: floors)
+//   switch   the table moved to another map: that map whole, as `doc` (not fresh), to everyone
+//   maps     the table's list of maps changed (one was taken away), the table staying where it is
 //   catchup  the room's version of whatever changed while we were away
 //   changes  what someone else changed (see changes.ts), as revision `rev`
 //   image    a picture we asked for (see `getimages` in collab.ts), by its id
@@ -18,8 +21,25 @@ import { parseElements } from '../core/validate';
 import { normalizeMapName } from '../ui/map-name-text';
 import { type Change, ID_RE } from './changes';
 
+// A map the table holds: its id, and its name ('' is unnamed).
+export interface TableMap {
+  id: string;
+  name: string;
+}
+
+interface MapContents {
+  epoch: string;
+  rev: number;
+  name: string;
+  elements: BoardElement[];
+  map: string;
+  maps: TableMap[];
+}
+
 export type Message =
-  | { type: 'doc'; fresh: boolean; epoch: string; rev: number; name: string; elements: BoardElement[] }
+  | ({ type: 'doc'; fresh: boolean } & MapContents)
+  | ({ type: 'switch' } & MapContents)
+  | { type: 'maps'; current: string; maps: TableMap[] }
   | { type: 'catchup'; epoch: string; rev: number; changes: Change[] }
   | { type: 'changes'; rev: number; changes: Change[] }
   | { type: 'ack'; epoch: string; rev: number; fix: Change[] }
@@ -50,6 +70,18 @@ function parseChange(data: unknown): Change | null {
   }
 }
 
+// How many maps a table holds, as in party/server.js; a longer list than that is cut when read.
+export const TABLE_MAP_LIMIT = 10;
+
+function parseMaps(data: unknown): TableMap[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .slice(0, TABLE_MAP_LIMIT)
+    .flatMap((m): TableMap[] =>
+      isObject(m) && isId(m.id) ? [{ id: m.id, name: normalizeMapName(m.name) }] : [],
+    );
+}
+
 const parseChanges = (data: unknown): Change[] | null =>
   Array.isArray(data) ? data.flatMap((c) => parseChange(c) ?? []) : null;
 
@@ -62,6 +94,9 @@ export function parseMessage(data: unknown): Message | null {
         : [],
     );
     return { type: 'presence', count: data.count, players };
+  }
+  if (isObject(data) && data.type === 'maps') {
+    return isId(data.current) ? { type: 'maps', current: data.current, maps: parseMaps(data.maps) } : null;
   }
   if (isObject(data) && data.type === 'image') {
     // What the picture is, and that it matches its id, is checked when it is stored (receiveImage).
@@ -77,11 +112,14 @@ export function parseMessage(data: unknown): Message | null {
   }
   if (!isEpoch(data.epoch)) return null;
   const epoch = data.epoch;
-  if (data.type === 'doc') {
+  if (data.type === 'doc' || data.type === 'switch') {
     const elements = parseElements(data.elements);
     if (!elements) return null;
     const name = typeof data.name === 'string' ? normalizeMapName(data.name) : '';
-    return { type: 'doc', fresh: data.fresh === true, epoch, rev, name, elements };
+    const map = isId(data.map) ? data.map : ''; // a room nobody has used yet is on no map
+    const contents = { epoch, rev, name, elements, map, maps: parseMaps(data.maps) };
+    if (data.type === 'doc') return { type: 'doc', fresh: data.fresh === true, ...contents };
+    return { type: 'switch', ...contents };
   }
   if (data.type === 'catchup') {
     const changes = parseChanges(data.changes);

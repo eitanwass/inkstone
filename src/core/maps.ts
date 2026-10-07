@@ -15,6 +15,7 @@ export const MAX_MAPS = 50;
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const THUMBNAIL_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
 const MAX_THUMBNAIL = 80_000; // characters
+const SESSION_RE = /^[\w-]{1,100}$/;
 
 export interface MapEntry {
   id: string;
@@ -26,6 +27,7 @@ export interface MapEntry {
 export interface MapIndex {
   current: string; // the id the working copy belongs to
   maps: MapEntry[]; // the parked ones
+  table?: string; // the session (a shared map's room) the working copy is the map of, if it is at one
 }
 
 export const newMapId = (): string => `m-${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}`;
@@ -54,7 +56,7 @@ function parseEntry(raw: unknown): MapEntry | null {
 // also a parked one.
 export function parseIndex(raw: unknown): MapIndex | null {
   if (typeof raw !== 'object' || raw === null) return null;
-  const { current, maps } = raw as { current?: unknown; maps?: unknown };
+  const { current, maps, table } = raw as { current?: unknown; maps?: unknown; table?: unknown };
   if (typeof current !== 'string' || !ID_RE.test(current) || !Array.isArray(maps)) return null;
   const seen = new Set<string>([current]);
   const parked: MapEntry[] = [];
@@ -64,7 +66,8 @@ export function parseIndex(raw: unknown): MapIndex | null {
     seen.add(entry.id);
     parked.push(entry);
   }
-  return { current, maps: parked };
+  const at = typeof table === 'string' && SESSION_RE.test(table) ? { table } : {};
+  return { current, maps: parked, ...at };
 }
 
 // The parked maps, most recently parked first.

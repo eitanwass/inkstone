@@ -17,6 +17,12 @@
       <input type="text" id="share-code-input" class="collab-code-input" readonly />
       <button class="btn-primary" id="share-copy-link">Copy Link</button>
     </div>
+    <!-- The maps this table holds, to move between (see src/ui/table-maps.ts) -->
+    <div class="collab-popover-label table-maps-label" id="share-maps-label">Maps at this table</div>
+    <ul id="share-maps" class="table-maps" aria-labelledby="share-maps-label"></ul>
+    <p class="collab-popover-note">To bring another map to the table, choose it in the library.</p>
+    <!-- Leaving keeps the map as it is on your board; the table carries on without you -->
+    <button type="button" class="btn-secondary collab-popover-leave" id="share-leave">Leave session</button>
   </div>
   <div id="join-popover" class="collab-popover hidden" role="dialog" aria-label="Join a shared map">
     <div class="collab-popover-label">Enter session code or link</div>

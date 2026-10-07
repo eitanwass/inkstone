@@ -16,7 +16,9 @@ import { showConfirm } from './modal';
 import { openMap } from './open-map';
 import { showToast } from './toast';
 
-byId('btn-reset-view').addEventListener('click', resetView);
+// Reset view is in the zoom panel, and on phones, which have none, in the action bar's dropdown.
+for (const button of document.querySelectorAll('[data-action="reset-view"]'))
+  button.addEventListener('click', resetView);
 
 byId('btn-clear').addEventListener('click', () => {
   showConfirm('Clear all elements from the map?', () => {

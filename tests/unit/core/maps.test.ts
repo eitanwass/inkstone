@@ -87,6 +87,12 @@ describe('parseIndex', () => {
     expect(index?.maps[0].thumbnail).toBeUndefined();
     expect(index?.maps[1].thumbnail).toBeUndefined();
   });
+  it('keeps which table the working copy is at, if it is a session id', () => {
+    expect(parseIndex({ current: 'm-1', maps: [], table: 'a1b2-c3' })?.table).toBe('a1b2-c3');
+    expect(parseIndex({ current: 'm-1', maps: [] })).toEqual({ current: 'm-1', maps: [] });
+    expect(parseIndex({ current: 'm-1', maps: [], table: '../x y' })?.table).toBeUndefined();
+    expect(parseIndex({ current: 'm-1', maps: [], table: 5 })?.table).toBeUndefined();
+  });
   it('keeps at most MAX_MAPS', () => {
     const maps = Array.from({ length: MAX_MAPS + 20 }, (_, i) => ({
       id: `m-${i + 10}`,
