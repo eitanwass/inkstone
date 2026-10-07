@@ -4,7 +4,7 @@
 // (elements/background.ts) so it is saved, shared and undone with the map, but never pointed at while
 // drawing. Both are set from the right-click menu on the map itself (ui/context-menu.ts): "Add image" or
 // "Replace image", and a row of colours. A new picture is put straight into *adjusting*: it is then the only
-// thing that can be pointed at (elements/layer.ts), and the Adjust image panel (`#adjust-panel`) is shown for
+// thing that can be pointed at (elements/layer.ts), and the Adjust image panel (ui/adjust-panel.tsx) is shown for
 // moving and resizing it, making it fainter, typing how many squares wide it is, replacing or removing it.
 //
 // Sizing it "to the grid" is by hand for now: drag its corners (to the pixel, with its proportions kept; Shift
@@ -17,7 +17,7 @@ import { detectGrid, fitToGrid, toGray } from '../core/grid-detect';
 import { GRID, state } from '../core/state';
 import type { BackgroundElement } from '../core/types';
 import { DEFAULT_MAP_COLOR } from '../draw/grid';
-import { drawMain, onMainDrawn } from '../draw/render';
+import { drawMain } from '../draw/render';
 import { backgroundOf } from '../elements/background';
 import { addImage, imageFor, imagesSaved, shrinkPicture } from '../elements/token-image';
 import { pushHistory } from '../input/history';
@@ -40,7 +40,7 @@ export const MAP_COLORS = [
   { name: 'Night', hex: '#1c1f26' },
 ] as const;
 
-const round = (n: number, places: number) => String(Math.round(n * 10 ** places) / 10 ** places);
+export const round = (n: number, places: number) => String(Math.round(n * 10 ** places) / 10 ** places);
 
 export const background = (): BackgroundElement | undefined => backgroundOf(state.elements);
 export const hasPicture = (): boolean => !!background()?.image;
@@ -205,7 +205,7 @@ export function fitPictureToGrid(): void {
 
 // ── Opacity and size of the picture ────────────────────────────
 // How strongly the picture shows, as it is dragged (`keepBackground` makes the undo step).
-function setOpacity(opacity: number): void {
+export function setOpacity(opacity: number): void {
   const bg = background();
   if (!bg?.image) return;
   const clamped = Math.min(1, Math.max(MIN_OPACITY, opacity));
@@ -215,7 +215,7 @@ function setOpacity(opacity: number): void {
 }
 
 // Makes the width `squares` cells, keeping its proportions and its top left corner.
-function setWidthInSquares(squares: number): boolean {
+export function setWidthInSquares(squares: number): boolean {
   const bg = background();
   if (!bg?.image || !Number.isFinite(squares) || squares < 0.5 || squares > 2000) return false;
   const aspect = bg.w / bg.h;
@@ -226,24 +226,8 @@ function setWidthInSquares(squares: number): boolean {
 }
 
 // ── Adjusting it on the map ────────────────────────────────────
-const panel = byId('adjust-panel');
-const opacityInput = byId<HTMLInputElement>('adjust-opacity');
-const opacityText = byId('adjust-opacity-text');
-const squaresInput = byId<HTMLInputElement>('adjust-squares');
-const sizeText = byId('adjust-size');
-
-// Brings the panel's controls in line with the picture (a field being typed in is left alone). Also run after
-// every redraw, so dragging a corner shows the new width and an undo shows what it undid.
-function showValues(): void {
-  const bg = background();
-  if (!bg?.image || !state.adjustingBackground) return;
-  const percent = Math.round((bg.opacity ?? 1) * 100);
-  if (document.activeElement !== opacityInput) opacityInput.value = String(percent);
-  opacityText.textContent = `${percent}%`;
-  if (document.activeElement !== squaresInput) squaresInput.value = round(bg.w / GRID, 2);
-  sizeText.textContent = `× ${round(bg.h / GRID, 1)} tall`;
-}
-
+// While adjusting, the picture is the only thing in reach (elements/layer.ts) and the Adjust image panel
+// (ui/adjust-panel.tsx) shows, from `state.adjustingBackground`, in place of the tool dock.
 export function startAdjusting(): void {
   const index = state.elements.findIndex((e) => e.type === 'background');
   if (index < 0 || !hasPicture()) return;
@@ -251,10 +235,7 @@ export function startAdjusting(): void {
   state.adjustingBackground = true;
   state.selected = [index];
   document.documentElement.classList.add('adjusting-background');
-  panel.classList.remove('hidden');
-  showValues();
   drawMain();
-  byId('adjust-done').focus();
 }
 
 export function stopAdjusting(): void {
@@ -262,38 +243,9 @@ export function stopAdjusting(): void {
   state.adjustingBackground = false;
   state.selected = [];
   document.documentElement.classList.remove('adjusting-background');
-  panel.classList.add('hidden');
   drawMain();
 }
 
-byId('adjust-done').addEventListener('click', stopAdjusting);
-byId('adjust-replace').addEventListener('click', chooseBackgroundPicture);
-byId('adjust-remove').addEventListener('click', removePicture);
-byId('adjust-fit').addEventListener('click', fitPictureToGrid);
-byId('adjust-rotate-left').addEventListener('click', () => rotatePicture(-1));
-byId('adjust-rotate-right').addEventListener('click', () => rotatePicture(1));
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && state.adjustingBackground) stopAdjusting();
 });
-
-// The slider shows the change as it is dragged, and keeps it (one undo step) when it is let go.
-opacityInput.addEventListener('input', () => setOpacity(Number(opacityInput.value) / 100));
-opacityInput.addEventListener('change', keepBackground);
-
-// A typed width applies as it is typed, as long as it is a usable one, and is kept (one undo step) when the field
-// is left.
-let sizeChanged = false;
-squaresInput.addEventListener('input', () => {
-  const usable = setWidthInSquares(squaresInput.valueAsNumber);
-  squaresInput.toggleAttribute('aria-invalid', !usable);
-  sizeChanged ||= usable;
-});
-squaresInput.addEventListener('change', () => {
-  squaresInput.removeAttribute('aria-invalid');
-  if (sizeChanged) keepBackground();
-  sizeChanged = false;
-  squaresInput.blur(); // lets the field show the size in use
-  showValues();
-});
-
-onMainDrawn(showValues);

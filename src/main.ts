@@ -20,6 +20,7 @@ import './ui/color-swatches';
 import './input/shortcuts';
 import './ui/view-actions';
 import './ui/action-more';
+import './ui/adjust-panel';
 import './ui/background';
 import './ui/map-name';
 import './collab/collab';
