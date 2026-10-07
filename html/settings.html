@@ -71,45 +71,13 @@
           </div>
         </section>
 
-        <!-- Conditions: make your own, to add to the default ones (see src/settings/conditions.ts) -->
+        <!-- Conditions: make your own, to add to the default ones (see src/settings/conditions.tsx) -->
         <section id="settings-panel-conditions" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-conditions" tabindex="0" hidden>
           <h3>Conditions</h3>
           <p class="settings-note">Shown on tokens as badges. Add your own here and they appear with the default ones when you give a token a condition. Saved in this browser.</p>
 
-          <div class="settings-field">
-            <div class="settings-sublabel" id="cond-custom-heading">Your conditions</div>
-            <ul class="cond-list" id="cond-custom-list" aria-labelledby="cond-custom-heading"></ul>
-            <p class="settings-example" id="cond-custom-empty">None yet. Make one below.</p>
-          </div>
-
-          <form class="settings-field cond-form" id="cond-form" novalidate aria-labelledby="cond-form-title">
-            <div class="settings-sublabel" id="cond-form-title">Add a condition</div>
-            <div class="cond-form-top">
-              <div class="cond-field">
-                <label for="cond-name">Name</label>
-                <input type="text" id="cond-name" maxlength="20" placeholder="e.g. Hexed" autocomplete="off" spellcheck="false" />
-              </div>
-              <div class="cond-preview" aria-hidden="true"><span id="cond-preview-badge"></span><span id="cond-preview-name"></span></div>
-            </div>
-            <fieldset class="cond-field">
-              <legend>Color</legend>
-              <div class="cond-colors" id="cond-colors"></div>
-            </fieldset>
-            <fieldset class="cond-field">
-              <legend>Icon</legend>
-              <div class="cond-icons" id="cond-icons" role="radiogroup" aria-label="Icon"></div>
-            </fieldset>
-            <p class="settings-error" id="cond-problem" role="alert"></p>
-            <div class="cond-actions">
-              <button type="submit" class="btn-primary" id="cond-save">Add condition</button>
-              <button type="button" class="btn-secondary" id="cond-cancel" hidden>Cancel</button>
-            </div>
-          </form>
-
-          <div class="settings-field">
-            <div class="settings-sublabel" id="cond-default-heading">Default conditions</div>
-            <ul class="cond-list cond-list-defaults" id="cond-default-list" aria-labelledby="cond-default-heading"></ul>
-          </div>
+          <!-- Preact draws the panel into this element (see src/settings/conditions.tsx) -->
+          <div id="cond-root"></div>
         </section>
 
         <!-- Profile: your name in shared maps (see src/settings/profile.ts) -->

@@ -4,21 +4,10 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Condition } from '../conditions';
-import { conditionBadge } from '../conditions/icon';
 import { allConditions } from '../conditions/library';
 import { hasCondition, toggleCondition } from '../conditions/tokens';
 import type { TokenElement } from '../core/types';
-
-// The badge is built from DOM nodes (never an HTML string: names and colors are text players typed),
-// so it is put in place by hand. The wrapper takes no room of its own.
-function Badge({ condition, size }: { condition: Condition; size: number }) {
-  return (
-    <span
-      style={{ display: 'contents' }}
-      ref={(el) => el?.replaceChildren(conditionBadge(condition, size))}
-    />
-  );
-}
+import { Badge } from './condition-badge';
 
 export function TokenConditions({ token }: { token: TokenElement }) {
   const [open, setOpen] = useState(false);
