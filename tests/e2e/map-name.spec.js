@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { boardElements, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
+import { boardElements, openActionBar, placeRoom, resetBoard, worldToScreenFn } from './helpers.js';
 
 const NAME_KEY = 'inkstone-map-name';
 const savedName = (page) => page.evaluate((key) => localStorage.getItem(key), NAME_KEY);
@@ -285,6 +285,7 @@ test.describe('the map name never collides with the other controls', () => {
 
       for (const sharing of [false, true]) {
         if (sharing) {
+          await openActionBar(page);
           await page.click('#btn-share');
           await expect(page.locator('#collab-status')).toBeVisible();
           await page.keyboard.press('Escape');

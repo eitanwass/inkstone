@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { resetBoard } from './helpers.js';
+import { openActionBar, resetBoard } from './helpers.js';
 
 const releases = [...readFileSync('CHANGELOG.md', 'utf8').matchAll(/^## (\S+)/gm)].map((m) => m[1]);
 
@@ -65,6 +65,7 @@ test('the modal is centered, about three quarters of the viewport, over a blurre
 
 test('on a phone the modal takes nearly the whole screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await openActionBar(page);
   await openChangelog(page);
 
   const box = await page.locator('#changelog-modal').boundingBox();

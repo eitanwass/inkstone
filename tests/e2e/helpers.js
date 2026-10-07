@@ -22,6 +22,13 @@ export async function resetBoard(page, { named = true } = {}) {
   await page.waitForTimeout(300); // let layout/webfont settle before reading boundingBox()
 }
 
+// On a phone the action bar keeps only undo, redo and a "more" button, and drops the rest down (Share,
+// What's new, ...): open it so those can be clicked. Does nothing on a screen wide enough to show them.
+export async function openActionBar(page) {
+  const more = page.locator('#btn-more');
+  if ((await more.isVisible()) && (await more.getAttribute('aria-expanded')) !== 'true') await more.click();
+}
+
 // World (logical, grid-unit) coords -> screen coords, matching resetView()'s
 // pan formula (panX/Y = 10% of canvas size, zoom = 1) so tests can target
 // exact grid cells without re-deriving the canvas's on-screen position.
