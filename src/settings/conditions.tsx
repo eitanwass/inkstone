@@ -4,16 +4,14 @@
 // What is made is kept in this browser (conditions/library.ts). Editing one brings the copy on every
 // token that has it up to date; removing one only takes it off the list to choose from.
 //
-// It is a Preact component (see ui/library.tsx), drawn into #cond-root. Its state is the form's (what is
+// It is a Preact component (see ui/library.tsx), a panel of the Settings component. Its state is the form's (what is
 // being edited, the name, color and icon, the problem shown); the list of their own conditions is read
 // from conditions/library.ts, and drawn again after each change to it.
 
-import { render } from 'preact';
 import { useLayoutEffect, useReducer, useRef, useState } from 'preact/hooks';
 import { type Condition, DEFAULT_CONDITIONS, ICON_NAMES } from '../conditions';
 import { addCustom, customConditions, draftProblem, removeCustom, updateCustom } from '../conditions/library';
 import { refreshCondition } from '../conditions/tokens';
-import { byId } from '../core/dom';
 import { Badge, Glyph } from '../ui/condition-badge';
 import { showToast } from '../ui/toast';
 import { flashSaved } from './saved';
@@ -46,7 +44,7 @@ function Row({ condition, children }: { condition: Condition; children?: preact.
   );
 }
 
-function Conditions() {
+export function ConditionsPanel({ active }: { active: boolean }) {
   const [, listChanged] = useReducer((n: number) => n + 1, 0);
   const [editingId, setEditingId] = useState<string | null>(null); // the one being edited, or null for a new one
   const [name, setName] = useState('');
@@ -116,7 +114,21 @@ function Conditions() {
   const editing = editingId !== null;
 
   return (
-    <>
+    <section
+      id="settings-panel-conditions"
+      class="settings-panel"
+      role="tabpanel"
+      aria-labelledby="settings-tab-conditions"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: a tab panel is a tab stop, as in the WAI-ARIA tabs pattern
+      tabIndex={0}
+      hidden={!active}
+    >
+      <h3>Conditions</h3>
+      <p class="settings-note">
+        Shown on tokens as badges. Add your own here and they appear with the default ones when you give a
+        token a condition. Saved in this browser.
+      </p>
+
       <div class="settings-field">
         <div class="settings-sublabel" id="cond-custom-heading">
           Your conditions
@@ -273,8 +285,6 @@ function Conditions() {
           ))}
         </ul>
       </div>
-    </>
+    </section>
   );
 }
-
-render(<Conditions />, byId('cond-root'));
