@@ -114,7 +114,8 @@
   gap: 2px;
 }
 
-.library-kind {
+.library-kind,
+.library-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -130,12 +131,14 @@
   cursor: pointer;
 }
 
-.library-kind:hover:not(:disabled) {
+.library-kind:hover:not(:disabled),
+.library-section:hover {
   background: var(--bg-toolbar-hover);
   color: var(--text-primary);
 }
 
-.library-kind[aria-pressed="true"] {
+.library-kind[aria-pressed="true"],
+.library-section[aria-pressed="true"] {
   background: var(--bg-toolbar-hover);
   color: var(--accent);
 }
@@ -152,6 +155,14 @@
   text-transform: uppercase;
   border: 1px solid var(--border);
   border-radius: 99px;
+}
+
+/* The player's own maps, then a line, then what the library offers. */
+.library-separator {
+  height: 0;
+  margin: 8px 4px;
+  border: none;
+  border-top: 1px solid var(--border);
 }
 
 #library-clear {
@@ -228,6 +239,75 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* A map of the player's own: the card, with a small Delete beside it that shows on hover or focus. */
+.library-card-wrap {
+  position: relative;
+}
+
+.library-card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(20, 17, 14, 0.82);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.library-card-wrap:hover .library-card-delete,
+.library-card-delete:focus-visible {
+  opacity: 1;
+}
+
+.library-card-delete:hover {
+  border-color: var(--danger, #c0392b);
+}
+
+@media (hover: none) {
+  /* No hover on a touch screen: the button is always there. */
+  .library-card-delete {
+    opacity: 1;
+  }
+}
+
+/* A map with nothing to show yet: the paper, as the map would be. */
+.library-card-blank {
+  display: block;
+  width: 100%;
+  aspect-ratio: 400 / 260;
+  background: var(--canvas-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* "New map": the same size as a card, drawn as an empty slot. */
+.library-card-new {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 190px;
+  background: none;
+  border-style: dashed;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.library-card-new:hover {
+  color: var(--accent);
+}
+
+.library-card-plus {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 400;
+}
+
 .library-card-body {
   display: flex;
   flex: 1; /* so the author can sit at the bottom of every card */
@@ -293,6 +373,14 @@
   #library-kinds {
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
+  }
+  .library-separator {
+    width: 0;
+    height: 20px;
+    margin: 0 4px;
+    border-top: none;
+    border-left: 1px solid var(--border);
   }
   #library-main {
     padding: 14px 16px 24px;

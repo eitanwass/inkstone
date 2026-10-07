@@ -291,8 +291,11 @@ chain, so there are no circular imports to reason about.
 | `input/touch.ts` | Touch-only input: two-finger pinch-zoom/pan and the long-press context menu. `pointer.ts` offers it each event first. |
 | `ui/popover.ts` | `positionPopover`: places a popover under its anchor button (share, join). |
 | `core/library.ts` | Pure: what the library lists. `LibraryItem` ({ id, kind: map / model / token, title, description, file, thumbnail, author }), `parseLibrary` (the list from `public/library/index.json`; drops anything malformed, and any address that isn't under `/library/`, so the list can't send the page elsewhere), `filterLibrary` (kind, and every search word in the title / description / author). Unit tested. **Tags are not built yet** (see ROADMAP.md): add them to the item, `filterLibrary` and the panel together. |
-| `ui/library.tsx` | The library (**a Preact component**, drawn into `#library-root`): the open-book button under the logo (`#btn-library`; under the map's name at 1100px and under) and its modal (`html/library.html`, `styles/library.css`): a search, the types (Models and Tokens are disabled and marked "Soon" until an item of that kind exists) and a grid of cards. The list is fetched the first time it opens (with a "Try again" when it can't be reached); choosing a map fetches its file and opens it through `ui/open-map.ts`, so it is one undo step with an Undo toast. Sample maps are in `public/library/` (`index.json`, `maps/<id>.inkstone.json`, `thumbs/<id>.jpg`), **made by `npm run build:library`** (`scripts/build-library.mjs`, from the boards in `scripts/sample-maps.mjs`, drawn by the real editor; the generated files are committed). To add a sample: write its board in `sample-maps.mjs`, add it to `SAMPLES`, run the script. Sharing maps, models and tokens between players is meant to use this same list format. |
-| `ui/open-map.ts` | `openMap(map, message)`: puts a parsed map file on the board (token pictures into the image store, the name, one undo step, an Undo toast). Used by Open (the file button) and the library. |
+| `ui/library.tsx` | The library (**a Preact component**, drawn into `#library-root`): the open-book button under the logo (`#btn-library`; under the map's name at 1100px and under) and its modal (`html/library.html`, `styles/library.css`): a search, **My Maps** (`#library-mine`) above a separator line, then the types (Models and Tokens are disabled and marked "Soon" until an item of that kind exists) and a grid of cards. My Maps shows a "New map" card and a card per map (`MyMapCard`: picture, name, "On the board now" or "Kept 3 hours ago", and a Delete button, which asks first and shows on hover or focus); it is the section the library opens on once any map has been put away, otherwise the samples as before. A sample's card opens it as a new map (`openAsNewMap`). The list is fetched the first time it opens (with a "Try again" when it can't be reached); choosing a map fetches its file and opens it through `ui/open-map.ts`, so it is one undo step with an Undo toast. Sample maps are in `public/library/` (`index.json`, `maps/<id>.inkstone.json`, `thumbs/<id>.jpg`), **made by `npm run build:library`** (`scripts/build-library.mjs`, from the boards in `scripts/sample-maps.mjs`, drawn by the real editor; the generated files are committed). To add a sample: write its board in `sample-maps.mjs`, add it to `SAMPLES`, run the script. Sharing maps, models and tokens between players is meant to use this same list format. |
+| `ui/open-map.ts` | `openMap(map, message)`: puts a parsed map file on the board (token pictures into the image store, the name, one undo step, an Undo toast). Used by Open (the file button): it *replaces* the map on the board. (A library sample goes through `openAsNewMap` in `ui/maps.ts` instead, which replaces nothing.) |
+| `core/maps.ts` | Pure: **My Maps**' index (see "My Maps" below). `MapIndex` (`current`, the id of the map on the board, and `maps`, the parked ones as `MapEntry` { id, name, updated, thumbnail? }), `parseIndex` (drops bad, duplicate and working-copy-id entries, a name goes through `normalizeMapName`, a thumbnail is kept only if it is a small jpeg data URL; at most `MAX_MAPS`, 50), `newMapId`, `isBlankMap`, `byRecent`, `filterMaps`, `withEntry` / `withoutEntry`, `whenParked` ("3 hours ago"), `INDEX_KEY` and `slotKey`. Unit tested. |
+| `ui/maps.ts` | The moves between maps: `listMaps` (the one on the board first, with a picture made just now, then the parked ones), `newMap`, `openSavedMap`, `openAsNewMap` (a library sample), `deleteMap`, `hasParkedMaps`. `putOnBoard` parks the working copy (its elements as `inkstone-map:<id>`, its entry in the index `inkstone-maps`, with a thumbnail from `ui/map-thumbnail.ts`) and makes another map the board's through `startMap` (history.ts): a fresh undo baseline, nothing broadcast. It writes to storage first and reports failure with a toast, changing nothing. Registers `setImageKeepers`, so the picture store never prunes a picture a parked map shows. While the board is in a live session, every move asks first ("Leave session") and leaves it (`leaveSession` in collab.ts). |
+| `ui/map-thumbnail.ts` | `makeThumbnail()`: the map on the board framed in 400 by 260 (the library samples' size) as a jpeg data URL, or null for an empty map. |
 | `ui/changelog.tsx` | The "What's new" modal (**a Preact component**, drawn into `#changelog-root`; about 75% of the viewport, page blurred behind): renders CHANGELOG.md, dots the button until the current version is opened. |
 | `ui/use-modal.ts` | The hook every modal opened from a button uses (Settings, What's new): opens on the button's click, moves focus in, keeps Tab inside (`focus.ts`), closes on Escape or a click on the backdrop, gives focus back. The component draws the overlay and puts `modal` and `onBackdropClick` on it. |
 | `ui/changelog-parse.ts` | Parses CHANGELOG.md's `## version - date` + bullet format. |
@@ -345,6 +348,25 @@ chain, so there are no circular imports to reason about.
 
 To add an element type, add a file in `elements/` and register it in
 `elements/index.ts` (see the method list at the top of that file).
+
+## My Maps
+
+The library's first section holds every map in this browser. **The map on the board is the working copy**:
+saved on every change under `inkstone-board` and `inkstone-map-name` exactly as before the feature (so every
+existing save, and the tests that write those keys, are untouched). Other maps are **parked**: elements under
+`inkstone-map:<id>`, and an index under `inkstone-maps` ({ current, maps: [{ id, name, updated, thumbnail }] },
+`core/maps.ts`; created the first time it is needed, with a new id for the working copy). Moving to another
+map parks the one on the board and brings the other out; a blank map (no name, no elements) is not parked.
+Opening a library sample makes a map of its own and never replaces anything; Open file (the file button) still
+replaces the board, with an Undo toast. Undo can't go back into another map. Deliberate points:
+
+- **Storage is localStorage**, one key per map, about 5 MB for everything including pictures; a write that
+  fails stops the move with a toast and changes nothing. The picture store (`inkstone-images`, 100 newest) skips
+  pictures that parked maps show (`setImageKeepers`), so a parked map's pictures aren't pruned.
+- **A session is not a map.** Until the two are told apart (a table that moves from one place to another
+  must not need a new link, and a move must not swap everyone's map under them), moving to another map while
+  the board is shared live asks to leave the session and does (`leaveSession`, collab.ts). **Open question,
+  see ROADMAP.md.** Joining someone else's session still replaces the map on the board with theirs (as before).
 
 ## Preact (for UI that is components)
 

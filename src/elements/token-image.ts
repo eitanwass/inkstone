@@ -15,6 +15,22 @@ const MAX_IMAGES = 100; // the oldest go first; a token whose picture went just 
 
 const store = new Map<string, string>(); // id -> data URL, oldest first
 
+// Pictures that must stay however old they are: those of the maps parked in My Maps (see ui/maps.ts).
+let keepers: () => ReadonlySet<string> = () => new Set();
+export function setImageKeepers(fn: () => ReadonlySet<string>): void {
+  keepers = fn;
+}
+
+// The oldest pictures go first, but not ones a parked map still shows.
+function prune(): void {
+  if (store.size <= MAX_IMAGES) return;
+  const keep = keepers();
+  for (const id of [...store.keys()]) {
+    if (store.size <= MAX_IMAGES) return;
+    if (!keep.has(id)) store.delete(id);
+  }
+}
+
 const saved: unknown = (() => {
   try {
     return JSON.parse(storageGet(STORE_KEY) ?? '{}');
@@ -47,7 +63,7 @@ export function addImage(data: string): string {
   const id = hashImage(data);
   if (!store.has(id)) {
     store.set(id, data);
-    while (store.size > MAX_IMAGES) store.delete(store.keys().next().value as string);
+    prune();
     save();
   }
   return id;

@@ -12,9 +12,10 @@ function closeModal(): void {
   restoreFocus(opener);
 }
 
-export function showConfirm(msg: string, onConfirm: () => void): void {
+export function showConfirm(msg: string, onConfirm: () => void, confirmLabel = 'Delete'): void {
   opener = document.activeElement;
   byId('modal-message').textContent = msg;
+  byId('modal-confirm').textContent = confirmLabel;
   byId('modal-overlay').classList.remove('hidden');
   confirmCallback = onConfirm;
   byId('modal-cancel').focus(); // the safe choice for a destructive confirm

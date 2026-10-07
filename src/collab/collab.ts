@@ -34,7 +34,7 @@ import { showPlayers } from '../ui/players';
 import { closePopover, positionPopover } from '../ui/popover';
 import { showToast } from '../ui/toast';
 import { applyChanges, type Change, diff, ensureIds } from './changes';
-import { connectCursors } from './cursors';
+import { connectCursors, disconnectCursors } from './cursors';
 import { me, onNameChanged } from './player';
 import { type Message, parseMessage } from './protocol';
 import { resolveRelayHost } from './relay-host';
@@ -309,6 +309,28 @@ function connect(sessionId: string): void {
     live = false;
     caughtUp = false;
   });
+}
+
+// Whether this map is in a live session (connecting or reconnecting counts).
+export const isShared = (): boolean => socket !== null;
+
+// Leaves the session: the socket is closed, the Live pill and the players go, and the invite link is taken
+// out of the address, so a reload doesn't join it again. The map stays as it is, now only yours.
+export function leaveSession(): void {
+  socket?.close();
+  socket = null;
+  synced = null;
+  room = { epoch: '', rev: 0 };
+  caughtUp = false;
+  unsentEdits = false;
+  uploadedImages.clear();
+  requestedImages.clear();
+  disconnectCursors();
+  setStatus(null);
+  showPlayers(null, me.id);
+  const url = new URL(window.location.href);
+  url.searchParams.delete('session');
+  window.history.replaceState(null, '', url);
 }
 
 function currentUrlSessionId() {

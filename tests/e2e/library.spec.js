@@ -108,7 +108,9 @@ test('the search filters the maps, and can be cleared', async ({ page }) => {
   await expect(page.locator('#library-clear')).toBeHidden();
 });
 
-test('choosing a map opens it as one undo step, names the map, and closes the library', async ({ page }) => {
+test('choosing a map opens it as a map of its own, names it, and keeps the one you were on', async ({
+  page,
+}) => {
   const toScreen = await worldToScreenFn(page);
   await placeRoom(page, toScreen, 40, 40, 160, 120);
   expect(await boardElements(page)).toHaveLength(1);
@@ -117,15 +119,17 @@ test('choosing a map opens it as one undo step, names the map, and closes the li
   await cards(page).filter({ hasText: 'The Rusty Flagon' }).click();
   await expect(modal(page)).toBeHidden();
   await expect(page.locator('#map-name')).toHaveValue('The Rusty Flagon');
-  await expect(page.locator('#toast')).toContainText('Opened "The Rusty Flagon"');
+  await expect(page.locator('#toast')).toContainText('Opened "The Rusty Flagon" as a new map');
 
   const elements = await boardElements(page);
   expect(elements.length).toBeGreaterThan(30);
   expect(elements.filter((el) => el.type === 'token').length).toBeGreaterThan(10);
   await expect(page.locator('#btn-library')).toBeFocused(); // back where it was
 
-  // The Undo in the toast puts the room back.
-  await page.click('#toast button');
+  // Nothing was replaced: the room is in My Maps, and opening it brings it back.
+  await page.click('#btn-library');
+  await expect(page.locator('#library-mine')).toHaveAttribute('aria-pressed', 'true');
+  await cards(page).filter({ hasText: 'Untitled map' }).click();
   await expect.poll(async () => (await boardElements(page)).length).toBe(1);
   expect((await boardElements(page))[0]).toMatchObject({ type: 'rect' });
 });

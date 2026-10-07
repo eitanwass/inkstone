@@ -157,6 +157,12 @@ export function redo() {
 // The whole map, when connecting to a room: it replaces this one, and is the new starting point for
 // undo (going back to a map from before joining would send the room a map it never had).
 export function applyRemoteDocument(name: string, elements: BoardElement[]): void {
+  startMap(name, elements);
+}
+
+// Puts a different map on the board as its own beginning: no undo step to go back to the one before (it is
+// kept elsewhere, see ui/maps.ts) and nothing sent to a session.
+export function startMap(name: string, elements: BoardElement[]): void {
   ensureIds(elements);
   state.elements = elements;
   state.selected = [];

@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2100; /* above the other modals: it is asked from inside the library, for one */
 }
 
 #modal {

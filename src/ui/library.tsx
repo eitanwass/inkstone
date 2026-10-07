@@ -19,8 +19,10 @@ import {
   parseLibrary,
 } from '../core/library';
 import { parseMapFile } from '../core/map-file';
+import { filterMaps, whenParked } from '../core/maps';
 import { restoreFocus, trapFocus } from './focus';
-import { openMap } from './open-map';
+import { deleteMap, hasParkedMaps, listMaps, type MyMap, newMap, openAsNewMap, openSavedMap } from './maps';
+import { showConfirm } from './modal';
 import { showToast } from './toast';
 
 const INDEX_URL = '/library/index.json';
@@ -69,10 +71,36 @@ function Card({ item, disabled, onOpen }: { item: LibraryItem; disabled: boolean
   );
 }
 
+// A map of the player's own: its card opens it, and a small button beside the card deletes it.
+function MyMapCard({ map, onOpen, onDelete }: { map: MyMap; onOpen: () => void; onDelete: () => void }) {
+  const title = map.name || 'Untitled map';
+  return (
+    <li class="library-card-wrap">
+      <button type="button" class="library-card" onClick={onOpen}>
+        {map.thumbnail ? (
+          <img src={map.thumbnail} alt="" width={400} height={260} />
+        ) : (
+          <span class="library-card-blank" aria-hidden="true" />
+        )}
+        <span class="library-card-body">
+          <span class="library-card-title">{title}</span>
+          <span class="library-card-meta">
+            {map.current ? 'On the board now' : `Kept ${whenParked(map.updated, Date.now())}`}
+          </span>
+        </span>
+      </button>
+      <button type="button" class="library-card-delete" aria-label={`Delete ${title}`} onClick={onDelete}>
+        Delete
+      </button>
+    </li>
+  );
+}
+
 function Library() {
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
-  const [kind, setKind] = useState<LibraryKind>('map');
+  const [section, setSection] = useState<'mine' | LibraryKind>('map');
+  const [mine, setMine] = useState<MyMap[]>([]);
   const [query, setQuery] = useState('');
   const [opening, setOpening] = useState(false);
   const [load, retry] = useLibraryItems(everOpened);
@@ -90,6 +118,8 @@ function Library() {
     const button = byId('btn-library');
     const show = () => {
       opener.current = document.activeElement;
+      setMine(listMaps());
+      setSection(hasParkedMaps() ? 'mine' : 'map'); // the player's own maps first, once there is more than one
       setOpen(true);
       setEverOpened(true);
     };
@@ -106,7 +136,8 @@ function Library() {
     modal.current.focus();
     trapFocus(modal.current); // the element is made anew each time it opens
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      // (not while the confirm dialog, opened from here, is the one being answered)
+      if (e.key === 'Escape' && byId('modal-overlay').classList.contains('hidden')) close();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -121,7 +152,7 @@ function Library() {
       const map = parseMapFile(await response.text());
       if (!map) throw new Error('not a map file');
       close();
-      openMap(map, `Opened "${item.title}"`);
+      openAsNewMap(map, `Opened "${item.title}" as a new map`);
     } catch {
       showToast("Couldn't open that map. Check your connection and try again.");
     } finally {
@@ -131,18 +162,25 @@ function Library() {
 
   if (!open) return null;
 
+  const inMine = section === 'mine';
   const items = load.status === 'ready' ? load.items : [];
+  const kind: LibraryKind = inMine ? 'map' : section;
   const shown = filterLibrary(items, { kind, query });
-  const total = items.filter((item) => item.kind === kind).length;
-  const label = LIBRARY_KINDS.find((k) => k.kind === kind)?.label.toLowerCase() ?? '';
+  const shownMine = filterMaps(mine, query);
+  const total = inMine ? mine.length : items.filter((item) => item.kind === kind).length;
+  const matches = inMine ? shownMine.length : shown.length;
+  const label = inMine ? 'maps' : (LIBRARY_KINDS.find((k) => k.kind === kind)?.label.toLowerCase() ?? '');
   const noun = total === 1 ? label.replace(/s$/, '') : label; // "1 of 3 maps", "1 map"
-  const count = shown.length === total ? `${total} ${noun}` : `${shown.length} of ${total} ${noun}`;
+  const count = matches === total ? `${total} ${noun}` : `${matches} of ${total} ${noun}`;
 
   let message: string | null = null;
-  if (load.status === 'idle' || load.status === 'loading') message = 'Loading the library…';
+  if (inMine) {
+    if (total && !matches) message = 'Nothing matches those filters.';
+  } else if (load.status === 'idle' || load.status === 'loading') message = 'Loading the library…';
   else if (load.status === 'error') message = "Couldn't load the library. Check your connection.";
   else if (!shown.length)
     message = total ? 'Nothing matches those filters.' : `There are no ${label} here yet.`;
+  const showCount = inMine || load.status === 'ready';
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: a click on the backdrop is a convenience; Escape and the Close button are the keyboard ways
@@ -186,8 +224,18 @@ function Library() {
               />
             </div>
             <fieldset class="library-field">
-              <legend>Type</legend>
+              <legend>Browse</legend>
               <div id="library-kinds">
+                <button
+                  type="button"
+                  class="library-section"
+                  id="library-mine"
+                  aria-pressed={inMine}
+                  onClick={() => setSection('mine')}
+                >
+                  My Maps
+                </button>
+                <hr class="library-separator" />
                 {load.status === 'ready' &&
                   LIBRARY_KINDS.map(({ kind: k, label: text }) => {
                     const empty = !items.some((item) => item.kind === k);
@@ -195,9 +243,9 @@ function Library() {
                       <button
                         type="button"
                         class="library-kind"
-                        aria-pressed={k === kind}
+                        aria-pressed={!inMine && k === kind}
                         disabled={empty}
-                        onClick={() => setKind(k)}
+                        onClick={() => setSection(k)}
                       >
                         {text}
                         {empty && <span class="library-soon">Soon</span>}
@@ -221,7 +269,7 @@ function Library() {
           </div>
           <section id="library-main" aria-labelledby="library-count" tabIndex={-1}>
             <p id="library-count" role="status">
-              {load.status === 'ready' ? count : ''}
+              {showCount ? count : ''}
             </p>
             <p id="library-message" hidden={message === null}>
               {message}
@@ -235,9 +283,44 @@ function Library() {
               )}
             </p>
             <ul id="library-grid" aria-busy={opening || undefined}>
-              {shown.map((item) => (
-                <Card key={item.id} item={item} disabled={opening} onOpen={() => void openItem(item)} />
-              ))}
+              {inMine && (
+                <li>
+                  <button
+                    type="button"
+                    class="library-card library-card-new"
+                    id="library-new-map"
+                    onClick={() => {
+                      close();
+                      newMap();
+                    }}
+                  >
+                    <span class="library-card-plus" aria-hidden="true">
+                      +
+                    </span>
+                    New map
+                  </button>
+                </li>
+              )}
+              {inMine
+                ? shownMine.map((map) => (
+                    <MyMapCard
+                      key={map.id}
+                      map={map}
+                      onOpen={() => {
+                        close();
+                        openSavedMap(map.id);
+                      }}
+                      onDelete={() =>
+                        showConfirm(`Delete "${map.name || 'Untitled map'}"? This can't be undone.`, () => {
+                          deleteMap(map.id);
+                          setMine(listMaps());
+                        })
+                      }
+                    />
+                  ))
+                : shown.map((item) => (
+                    <Card key={item.id} item={item} disabled={opening} onOpen={() => void openItem(item)} />
+                  ))}
             </ul>
           </section>
         </div>
